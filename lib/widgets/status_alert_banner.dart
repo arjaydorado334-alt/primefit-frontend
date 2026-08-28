@@ -13,6 +13,8 @@ class StatusAlertBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!session.notificationsEnabled) return const SizedBox.shrink();
+
     final banners = <Widget>[];
 
     if (session.isMembershipExpired) {

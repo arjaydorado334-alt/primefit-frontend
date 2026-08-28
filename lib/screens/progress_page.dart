@@ -12,21 +12,36 @@ import '../services/body_metrics_service.dart';
 import '../services/food_logs_service.dart';
 import '../services/food_search_service.dart';
 import '../services/user_targets_service.dart';
+import '../theme/app_theme.dart';
 import 'user_session.dart';
 
 // ---------------------------------------------------------------------------
 // Design tokens
 // ---------------------------------------------------------------------------
 
+/// Dark-mode-aware token set. Call `_Colors.sync(context)` once at the top
+/// of a build() method before reading any of these -- surface tokens
+/// (bg/cardBorder/text*) swap for dark equivalents; brand/status colors
+/// (cyan, amber, purple, pink, emerald, red) stay identical in both themes
+/// since they already read fine on light and dark backgrounds alike.
 class _Colors {
-  static const bg = Color(0xFFF8FAFC); // slate-50
-  static const cardBorder = Color(0xFFE2E8F0); // slate-200
-  static const textPrimary = Color(0xFF0F172A); // slate-900
-  static const textSecondary = Color(0xFF64748B); // slate-500
-  static const textMuted = Color(0xFF94A3B8); // slate-400
+  static bool _dark = false;
+  static void sync(BuildContext c) => _dark = Theme.of(c).brightness == Brightness.dark;
+
+  static Color get bg => _dark ? AppColors.darkBg : const Color(0xFFF8FAFC); // slate-50
+  static Color get surface => _dark ? AppColors.darkCard : Colors.white;
+  static Color get subtleBg => _dark ? AppColors.darkBorder : const Color(0xFFF1F5F9); // slate-100
+  static Color get cardBorder => _dark ? AppColors.darkBorder : const Color(0xFFE2E8F0); // slate-200
+  static Color get textPrimary => _dark ? Colors.white : const Color(0xFF0F172A); // slate-900
+  static Color get textSecondary => _dark ? AppColors.textMutedOnDark : const Color(0xFF64748B); // slate-500
+  static Color get textMuted => _dark ? AppColors.textMutedOnDark : const Color(0xFF94A3B8); // slate-400
+  static Color get iconMuted => _dark ? AppColors.textMutedOnDark : const Color(0xFFCBD5E1); // slate-300
 
   static const cyan = Color(0xFF06B6D4); // cyan-500
-  static const cyanLight = Color(0xFFECFEFF); // cyan-50
+  static Color get cyanLight =>
+      _dark ? cyan.withValues(alpha: 0.15) : const Color(0xFFECFEFF); // cyan-50
+  static Color get cyanBorder =>
+      _dark ? cyan.withValues(alpha: 0.3) : const Color(0xFFCFFAFE); // cyan-100
   static const cyanText = Color(0xFF0E7490); // cyan-700
 
   static const amber = Color(0xFFFBBF24); // amber-400
@@ -384,7 +399,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
             }
 
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: _Colors.surface,
               insetPadding: const EdgeInsets.symmetric(horizontal: 24),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
@@ -400,7 +415,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Log Personal Record',
+                            Text('Log Personal Record',
                                 style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -408,8 +423,8 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             InkWell(
                               onTap: () => Navigator.of(ctx).pop(),
                               borderRadius: BorderRadius.circular(20),
-                              child: const Padding(
-                                padding: EdgeInsets.all(4),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
                                 child: Icon(Icons.close,
                                     color: _Colors.textMuted, size: 22),
                               ),
@@ -483,10 +498,10 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Expanded(
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  backgroundColor: Colors.white,
+                                  backgroundColor: _Colors.surface,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 15),
-                                  side: const BorderSide(
+                                  side: BorderSide(
                                       color: _Colors.cardBorder),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12)),
@@ -494,7 +509,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                                 onPressed: saving
                                     ? null
                                     : () => Navigator.of(ctx).pop(),
-                                child: const Text('Cancel',
+                                child: Text('Cancel',
                                     style: TextStyle(
                                         color: _Colors.textPrimary,
                                         fontWeight: FontWeight.w600,
@@ -837,7 +852,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
             }
 
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: _Colors.surface,
               insetPadding: const EdgeInsets.symmetric(horizontal: 24),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
@@ -853,7 +868,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Log Body Metrics',
+                            Text('Log Body Metrics',
                                 style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -861,8 +876,8 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             InkWell(
                               onTap: () => Navigator.of(ctx).pop(),
                               borderRadius: BorderRadius.circular(20),
-                              child: const Padding(
-                                padding: EdgeInsets.all(4),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
                                 child: Icon(Icons.close,
                                     color: _Colors.textMuted, size: 22),
                               ),
@@ -907,10 +922,10 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Expanded(
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  backgroundColor: Colors.white,
+                                  backgroundColor: _Colors.surface,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 15),
-                                  side: const BorderSide(
+                                  side: BorderSide(
                                       color: _Colors.cardBorder),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12)),
@@ -918,7 +933,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                                 onPressed: saving
                                     ? null
                                     : () => Navigator.of(ctx).pop(),
-                                child: const Text('Cancel',
+                                child: Text('Cancel',
                                     style: TextStyle(
                                         color: _Colors.textPrimary,
                                         fontWeight: FontWeight.w600,
@@ -1220,7 +1235,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
             }
 
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: _Colors.surface,
               insetPadding: const EdgeInsets.symmetric(horizontal: 24),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
@@ -1236,7 +1251,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Log Food Entry',
+                            Text('Log Food Entry',
                                 style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -1244,8 +1259,8 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             InkWell(
                               onTap: closeDialog,
                               borderRadius: BorderRadius.circular(20),
-                              child: const Padding(
-                                padding: EdgeInsets.all(4),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
                                 child: Icon(Icons.close,
                                     color: _Colors.textMuted, size: 22),
                               ),
@@ -1269,16 +1284,16 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             hint: 'e.g., Grilled Chicken Breast',
                             onChanged: handleFoodNameChanged),
                         if (searching)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 8),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
                             child: Row(
                               children: [
-                                SizedBox(
+                                const SizedBox(
                                     width: 14,
                                     height: 14,
                                     child: CircularProgressIndicator(
                                         strokeWidth: 2, color: _Colors.cyan)),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text('Searching…',
                                     style: TextStyle(
                                         fontSize: 12.5,
@@ -1299,7 +1314,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                               shrinkWrap: true,
                               padding: EdgeInsets.zero,
                               itemCount: searchResults.length,
-                              separatorBuilder: (_, __) => const Divider(
+                              separatorBuilder: (_, __) => Divider(
                                   height: 1, color: _Colors.cardBorder),
                               itemBuilder: (context, i) {
                                 final r = searchResults[i];
@@ -1315,14 +1330,14 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                                         Text(r.name,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 13.5,
                                                 fontWeight: FontWeight.w600,
                                                 color: _Colors.textPrimary)),
                                         const SizedBox(height: 2),
                                         Text(
                                             '${r.calories} kcal · P ${_fmtNum(r.protein)}g · C ${_fmtNum(r.carbs)}g · F ${_fmtNum(r.fats)}g',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 11.5,
                                                 color: _Colors.textSecondary)),
                                       ],
@@ -1333,8 +1348,8 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             ),
                           )
                         else if (showResults && searchResults.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 8),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
                             child: Text('No matches — enter manually.',
                                 style: TextStyle(
                                     fontSize: 12.5, color: _Colors.textMuted)),
@@ -1409,16 +1424,16 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Expanded(
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  backgroundColor: Colors.white,
+                                  backgroundColor: _Colors.surface,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 15),
-                                  side: const BorderSide(
+                                  side: BorderSide(
                                       color: _Colors.cardBorder),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12)),
                                 ),
                                 onPressed: saving ? null : closeDialog,
-                                child: const Text('Cancel',
+                                child: Text('Cancel',
                                     style: TextStyle(
                                         color: _Colors.textPrimary,
                                         fontWeight: FontWeight.w600,
@@ -1625,7 +1640,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
             }
 
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: _Colors.surface,
               insetPadding: const EdgeInsets.symmetric(horizontal: 24),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
@@ -1641,7 +1656,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Set Daily Targets',
+                            Text('Set Daily Targets',
                                 style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -1649,8 +1664,8 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             InkWell(
                               onTap: () => Navigator.of(ctx).pop(),
                               borderRadius: BorderRadius.circular(20),
-                              child: const Padding(
-                                padding: EdgeInsets.all(4),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
                                 child: Icon(Icons.close,
                                     color: _Colors.textMuted, size: 22),
                               ),
@@ -1721,10 +1736,10 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Expanded(
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  backgroundColor: Colors.white,
+                                  backgroundColor: _Colors.surface,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 15),
-                                  side: const BorderSide(
+                                  side: BorderSide(
                                       color: _Colors.cardBorder),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12)),
@@ -1732,7 +1747,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                                 onPressed: saving
                                     ? null
                                     : () => Navigator.of(ctx).pop(),
-                                child: const Text('Cancel',
+                                child: Text('Cancel',
                                     style: TextStyle(
                                         color: _Colors.textPrimary,
                                         fontWeight: FontWeight.w600,
@@ -1776,14 +1791,15 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return Scaffold(
       backgroundColor: _Colors.bg,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(24, 20, 24, 0),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1794,7 +1810,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                         fontWeight: FontWeight.bold,
                         color: _Colors.textPrimary),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     'Monitor your body, records, and personalized programs',
                     style:
@@ -1805,7 +1821,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
             ),
             const SizedBox(height: 16),
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(color: _Colors.cardBorder)),
               ),
               child: TabBar(
@@ -1913,8 +1929,9 @@ class _FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return Text(text,
-        style: const TextStyle(
+        style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: _Colors.textPrimary));
@@ -1934,6 +1951,7 @@ class _TextInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return TextField(
       controller: controller,
       onChanged: onChanged,
@@ -1941,12 +1959,12 @@ class _TextInput extends StatelessWidget {
       style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: _Colors.textMuted),
+        hintStyle: TextStyle(color: _Colors.textMuted),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _Colors.cardBorder),
+          borderSide: BorderSide(color: _Colors.cardBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -1967,6 +1985,7 @@ class _Dropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       decoration: BoxDecoration(
@@ -1977,9 +1996,9 @@ class _Dropdown extends StatelessWidget {
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down,
+          icon: Icon(Icons.keyboard_arrow_down,
               color: _Colors.textSecondary),
-          style: const TextStyle(fontSize: 14.5, color: _Colors.textPrimary),
+          style: TextStyle(fontSize: 14.5, color: _Colors.textPrimary),
           items: items
               .map((m) => DropdownMenuItem(value: m, child: Text(m)))
               .toList(),
@@ -1997,10 +2016,11 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _Colors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _Colors.cardBorder),
       ),
@@ -2044,13 +2064,21 @@ class _OverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LayoutBuilder(builder: (context, constraints) {
-            final crossAxisCount = constraints.maxWidth > 900 ? 3 : 2;
+            // Based on the content area's own width (not full screen
+            // width), since the sidebar already eats ~260px on
+            // tablet/desktop: 1 column when cramped, 2 mid-width, 3 wide.
+            final crossAxisCount = constraints.maxWidth < 420
+                ? 1
+                : constraints.maxWidth < 700
+                    ? 2
+                    : 3;
             final hasCalorieTarget =
                 calorieTarget != null && calorieTarget! > 0;
             final cards = [
@@ -2106,7 +2134,7 @@ class _OverviewTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Monthly Attendance',
+                Text('Monthly Attendance',
                     style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -2123,10 +2151,10 @@ class _OverviewTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.track_changes, size: 18, color: _Colors.cyan),
-                    SizedBox(width: 8),
+                    const Icon(Icons.track_changes, size: 18, color: _Colors.cyan),
+                    const SizedBox(width: 8),
                     Text('Monthly Goal Progress',
                         style: TextStyle(
                             fontSize: 17,
@@ -2167,6 +2195,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return _Card(
       padding: const EdgeInsets.all(14),
       child: Row(
@@ -2184,12 +2213,12 @@ class _StatCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(label,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12.5, color: _Colors.textSecondary),
                     overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
                 Text(value,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: _Colors.textPrimary)),
@@ -2208,6 +2237,7 @@ class _AttendanceChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     final maxValue = data.isEmpty
         ? 1.0
         : data
@@ -2245,7 +2275,7 @@ class _AttendanceChart extends StatelessWidget {
                 Text(
                   m['month'] as String,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12.5, color: _Colors.textSecondary),
                 ),
               ],
@@ -2277,6 +2307,7 @@ class _GoalProgressRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     final pct = target <= 0 ? 0.0 : (current / target).clamp(0.0, 1.0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2285,12 +2316,12 @@ class _GoalProgressRow extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w500,
                     color: _Colors.textPrimary)),
             Text('${_fmtNum(current)}/${_fmtNum(target)}$unit',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13.5, color: _Colors.textSecondary)),
           ],
         ),
@@ -2300,7 +2331,7 @@ class _GoalProgressRow extends StatelessWidget {
           child: LinearProgressIndicator(
             value: pct,
             minHeight: 9,
-            backgroundColor: const Color(0xFFF1F5F9),
+            backgroundColor: _Colors.subtleBg,
             valueColor: const AlwaysStoppedAnimation(_Colors.cyan),
           ),
         ),
@@ -2330,6 +2361,7 @@ class _PrRecordsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -2338,7 +2370,7 @@ class _PrRecordsTab extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Personal Records',
+              Text('Personal Records',
                   style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -2366,14 +2398,14 @@ class _PrRecordsTab extends StatelessWidget {
                 ? const Center(
                     child: CircularProgressIndicator(color: _Colors.cyan))
                 : prs.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                             'No records yet. Log your first PR to get started.',
                             style: TextStyle(color: _Colors.textMuted)),
                       )
                     : Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: _Colors.surface,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: _Colors.cardBorder),
                         ),
@@ -2385,10 +2417,10 @@ class _PrRecordsTab extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Container(
-                              color: const Color(0xFFF8FAFC),
+                              color: _Colors.bg,
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 14),
-                              child: const Row(
+                              child: Row(
                                 children: [
                                   Expanded(
                                       flex: 3,
@@ -2426,7 +2458,7 @@ class _PrRecordsTab extends StatelessWidget {
                                           style: TextStyle(
                                               color: _Colors.textSecondary,
                                               fontWeight: FontWeight.w600))),
-                                  SizedBox(width: 40),
+                                  const SizedBox(width: 40),
                                 ],
                               ),
                             ),
@@ -2437,7 +2469,7 @@ class _PrRecordsTab extends StatelessWidget {
                                     horizontal: 20, vertical: 12),
                                 decoration: BoxDecoration(
                                   border: i < prs.length - 1
-                                      ? const Border(
+                                      ? Border(
                                           bottom: BorderSide(
                                               color: _Colors.cardBorder))
                                       : null,
@@ -2494,14 +2526,14 @@ class _PrRecordsTab extends StatelessWidget {
                                     Expanded(
                                         flex: 2,
                                         child: Text(fmtDate(p.date),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 color: _Colors.textSecondary))),
                                     SizedBox(
                                       width: 40,
                                       child: IconButton(
                                         padding: EdgeInsets.zero,
                                         constraints: const BoxConstraints(),
-                                        icon: const Icon(Icons.delete_outline,
+                                        icon: Icon(Icons.delete_outline,
                                             size: 18, color: _Colors.textMuted),
                                         onPressed: () => onRemove(i),
                                       ),
@@ -2538,6 +2570,7 @@ class _BodyPhotosTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -2546,7 +2579,7 @@ class _BodyPhotosTab extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -2555,7 +2588,7 @@ class _BodyPhotosTab extends StatelessWidget {
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: _Colors.textPrimary)),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                         'Upload photos — AI will generate a personalized insight for each one',
                         style: TextStyle(
@@ -2587,14 +2620,14 @@ class _BodyPhotosTab extends StatelessWidget {
             decoration: BoxDecoration(
               color: _Colors.cyanLight,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFCFFAFE)),
+              border: Border.all(color: _Colors.cyanBorder),
             ),
-            child: const Row(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.psychology_alt_outlined,
+                const Icon(Icons.psychology_alt_outlined,
                     size: 20, color: _Colors.cyan),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'After uploading, our AI analyzes your physique and delivers tailored feedback on muscle development, body composition, and training recommendations specific to your visible progress.',
@@ -2624,16 +2657,16 @@ class _BodyPhotosTab extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: _Colors.cardBorder, width: 1.5),
                 ),
-                child: const Column(
+                child: Column(
                   children: [
                     Icon(Icons.camera_alt_outlined,
-                        size: 40, color: Color(0xFFCBD5E1)),
-                    SizedBox(height: 14),
+                        size: 40, color: _Colors.iconMuted),
+                    const SizedBox(height: 14),
                     Text('Upload your first progress photo',
                         style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: _Colors.textPrimary)),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text('AI insights will be generated automatically',
                         style:
                             TextStyle(fontSize: 13, color: _Colors.textMuted)),
@@ -2642,21 +2675,25 @@ class _BodyPhotosTab extends StatelessWidget {
               ),
             )
           else
-            GridView.builder(
+            LayoutBuilder(builder: (context, constraints) {
+              // 1 column when the content area is cramped (phone, or
+              // tablet with the sidebar open), 2 otherwise.
+              final crossAxisCount = constraints.maxWidth < 420 ? 1 : 2;
+              return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: photos.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
                 mainAxisSpacing: 18,
                 crossAxisSpacing: 18,
-                childAspectRatio: 0.8,
+                childAspectRatio: crossAxisCount == 1 ? 1.6 : 0.8,
               ),
               itemBuilder: (context, i) {
                 final p = photos[i];
                 return Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _Colors.surface,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: _Colors.cardBorder),
                   ),
@@ -2679,9 +2716,9 @@ class _BodyPhotosTab extends StatelessWidget {
                               },
                               errorBuilder: (context, error, stackTrace) =>
                                   Container(
-                                color: const Color(0xFFF1F5F9),
+                                color: _Colors.subtleBg,
                                 alignment: Alignment.center,
-                                child: const Icon(Icons.broken_image_outlined,
+                                child: Icon(Icons.broken_image_outlined,
                                     color: _Colors.textMuted, size: 32),
                               ),
                             ),
@@ -2732,7 +2769,7 @@ class _BodyPhotosTab extends StatelessWidget {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(p.insight,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 12,
                                       color: _Colors.textSecondary,
                                       height: 1.3)),
@@ -2744,7 +2781,8 @@ class _BodyPhotosTab extends StatelessWidget {
                   ),
                 );
               },
-            ),
+              );
+            }),
         ],
       ),
     );
@@ -2791,6 +2829,7 @@ class _BodyMetricsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     final latest = metrics.isNotEmpty ? metrics.first : null;
 
     return SingleChildScrollView(
@@ -2801,7 +2840,7 @@ class _BodyMetricsTab extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('BMI Tracking',
+              Text('BMI Tracking',
                   style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -2855,13 +2894,13 @@ class _BodyMetricsTab extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Current BMI',
+                        Text('Current BMI',
                             style: TextStyle(
                                 fontSize: 13, color: _Colors.textSecondary)),
                         const SizedBox(height: 4),
                         Text(
                           latest == null ? '--' : latest.bmi.toStringAsFixed(1),
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
                               color: _Colors.textPrimary),
@@ -2883,7 +2922,7 @@ class _BodyMetricsTab extends StatelessWidget {
                                     fontWeight: FontWeight.w600)),
                           )
                         else
-                          const Text(
+                          Text(
                               'Log your weight and height to see your BMI.',
                               style: TextStyle(
                                   fontSize: 12.5, color: _Colors.textMuted)),
@@ -2898,7 +2937,7 @@ class _BodyMetricsTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Weight Goal',
+                  Text('Weight Goal',
                       style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
@@ -2917,7 +2956,7 @@ class _BodyMetricsTab extends StatelessWidget {
                               fontWeight: FontWeight.w500)),
                     )
                   else if (latest == null)
-                    const Text(
+                    Text(
                         'Log a weight entry to track progress toward your target.',
                         style:
                             TextStyle(fontSize: 13, color: _Colors.textMuted))
@@ -2936,15 +2975,15 @@ class _BodyMetricsTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('BMI Over Time',
+                  Text('BMI Over Time',
                       style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                           color: _Colors.textPrimary)),
                   const SizedBox(height: 20),
                   metrics.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 40),
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40),
                           child: Center(
                               child: Text('No BMI entries yet.',
                                   style: TextStyle(color: _Colors.textMuted))),
@@ -2960,15 +2999,15 @@ class _BodyMetricsTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('History',
+                  Text('History',
                       style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                           color: _Colors.textPrimary)),
                   const SizedBox(height: 16),
                   if (metrics.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Center(
                           child: Text('Your logged entries will appear here.',
                               style: TextStyle(color: _Colors.textMuted))),
@@ -2976,7 +3015,7 @@ class _BodyMetricsTab extends StatelessWidget {
                   else
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: _Colors.surface,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: _Colors.cardBorder),
                       ),
@@ -2985,10 +3024,10 @@ class _BodyMetricsTab extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Container(
-                            color: const Color(0xFFF8FAFC),
+                            color: _Colors.bg,
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 20, vertical: 14),
-                            child: const Row(
+                            child: Row(
                               children: [
                                 Expanded(
                                     flex: 2,
@@ -3020,7 +3059,7 @@ class _BodyMetricsTab extends StatelessWidget {
                                         style: TextStyle(
                                             color: _Colors.textSecondary,
                                             fontWeight: FontWeight.w600))),
-                                SizedBox(width: 40),
+                                const SizedBox(width: 40),
                               ],
                             ),
                           ),
@@ -3031,7 +3070,7 @@ class _BodyMetricsTab extends StatelessWidget {
                                   horizontal: 20, vertical: 12),
                               decoration: BoxDecoration(
                                 border: i < metrics.length - 1
-                                    ? const Border(
+                                    ? Border(
                                         bottom: BorderSide(
                                             color: _Colors.cardBorder))
                                     : null,
@@ -3041,7 +3080,7 @@ class _BodyMetricsTab extends StatelessWidget {
                                   Expanded(
                                       flex: 2,
                                       child: Text(fmtDate(m.date),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               color: _Colors.textSecondary))),
                                   Expanded(
                                       flex: 2,
@@ -3083,7 +3122,7 @@ class _BodyMetricsTab extends StatelessWidget {
                                     child: IconButton(
                                       padding: EdgeInsets.zero,
                                       constraints: const BoxConstraints(),
-                                      icon: const Icon(Icons.delete_outline,
+                                      icon: Icon(Icons.delete_outline,
                                           size: 18, color: _Colors.textMuted),
                                       onPressed: () => onRemove(i),
                                     ),
@@ -3112,6 +3151,7 @@ class _BmiChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     // metrics is newest-first; the chart reads oldest -> newest, left to right.
     final sorted = metrics.reversed.toList();
     final maxValue =
@@ -3133,7 +3173,7 @@ class _BmiChart extends StatelessWidget {
               children: [
                 Text(m.bmi.toStringAsFixed(1),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 11, color: _Colors.textSecondary)),
                 const SizedBox(height: 4),
                 Expanded(
@@ -3155,7 +3195,7 @@ class _BmiChart extends StatelessWidget {
                 Text(
                   fmtDate(m.date),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 10.5, color: _Colors.textSecondary),
                 ),
               ],
@@ -3235,12 +3275,12 @@ class _FoodLogTab extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w500,
                   color: _Colors.textPrimary)),
           Text('${_fmtNum(current)}$unit',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13.5, color: _Colors.textSecondary)),
         ],
       );
@@ -3251,6 +3291,7 @@ class _FoodLogTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     // `logs` is already scoped server-side to `selectedDate`.
     final isToday = _isSameDay(selectedDate, DateTime.now());
     final totalCalories = logs.fold<int>(0, (sum, l) => sum + l.calories);
@@ -3271,7 +3312,7 @@ class _FoodLogTab extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Food Log',
+              Text('Food Log',
                   style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -3326,10 +3367,10 @@ class _FoodLogTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.track_changes, size: 18, color: _Colors.cyan),
-                      SizedBox(width: 8),
+                      const Icon(Icons.track_changes, size: 18, color: _Colors.cyan),
+                      const SizedBox(width: 8),
                       Text('Daily Goals',
                           style: TextStyle(
                               fontSize: 17,
@@ -3387,7 +3428,7 @@ class _FoodLogTab extends StatelessWidget {
                   onTap: () => _pickDate(context),
                   borderRadius: BorderRadius.circular(8),
                   child: Text(_fmtHeaderDate(selectedDate),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                           color: _Colors.textPrimary)),
@@ -3415,7 +3456,7 @@ class _FoodLogTab extends StatelessWidget {
                         isToday
                             ? 'No food logged today yet.'
                             : 'No food logged on this day.',
-                        style: const TextStyle(color: _Colors.textMuted))),
+                        style: TextStyle(color: _Colors.textMuted))),
               )
             else
               ...kMealTypes
@@ -3428,14 +3469,14 @@ class _FoodLogTab extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(meal,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: _Colors.textSecondary)),
                       const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: _Colors.surface,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: _Colors.cardBorder),
                         ),
@@ -3449,7 +3490,7 @@ class _FoodLogTab extends StatelessWidget {
                                   horizontal: 20, vertical: 12),
                               decoration: BoxDecoration(
                                 border: i < entries.length - 1
-                                    ? const Border(
+                                    ? Border(
                                         bottom: BorderSide(
                                             color: _Colors.cardBorder))
                                     : null,
@@ -3474,26 +3515,26 @@ class _FoodLogTab extends StatelessWidget {
                                       flex: 2,
                                       child: Text(
                                           'P ${entry.protein.toStringAsFixed(0)}g',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               color: _Colors.textSecondary))),
                                   Expanded(
                                       flex: 2,
                                       child: Text(
                                           'C ${entry.carbs.toStringAsFixed(0)}g',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               color: _Colors.textSecondary))),
                                   Expanded(
                                       flex: 2,
                                       child: Text(
                                           'F ${entry.fats.toStringAsFixed(0)}g',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               color: _Colors.textSecondary))),
                                   SizedBox(
                                     width: 40,
                                     child: IconButton(
                                       padding: EdgeInsets.zero,
                                       constraints: const BoxConstraints(),
-                                      icon: const Icon(Icons.delete_outline,
+                                      icon: Icon(Icons.delete_outline,
                                           size: 18, color: _Colors.textMuted),
                                       onPressed: globalIndex == -1
                                           ? null

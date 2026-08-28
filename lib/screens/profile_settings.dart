@@ -7,6 +7,9 @@ import 'user_session.dart';
 // if these service files live somewhere else.
 import '../services/profile_service.dart';
 import '../services/profile_picture_service.dart';
+import '../services/notification_prefs_service.dart';
+import '../theme/theme_controller.dart';
+import '../theme/app_theme.dart';
 
 /// Profile Settings screen.
 ///
@@ -24,11 +27,16 @@ class ProfileSettingsPage extends StatefulWidget {
 }
 
 class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
-  static const Color cyan = Color(0xFF22B8D8);
-  static const Color bgGrey = Color(0xFFF7F8FA);
-  static const Color textDark = Color(0xFF1A1A1A);
-  static const Color textGrey = Color(0xFF6B7280);
-  static const Color borderGrey = Color(0xFFE1E4E8);
+  bool _dark = false;
+
+  Color get cyan => _dark ? const Color(0xFF4DD8EF) : const Color(0xFF22B8D8);
+  Color get bgGrey => _dark ? AppColors.darkBg : const Color(0xFFF7F8FA);
+  Color get cardBg => _dark ? AppColors.darkCard : Colors.white;
+  Color get fieldFill => _dark ? AppColors.darkBg : Colors.white;
+  Color get textDark => _dark ? Colors.white : const Color(0xFF1A1A1A);
+  Color get textGrey => _dark ? AppColors.textMutedOnDark : const Color(0xFF6B7280);
+  Color get borderGrey => _dark ? AppColors.darkBorder : const Color(0xFFE1E4E8);
+  Color get hintColor => _dark ? AppColors.textMutedOnDark : const Color(0xFFB0B4BA);
 
   late final TextEditingController _firstNameCtrl;
   late final TextEditingController _lastNameCtrl;
@@ -40,6 +48,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   bool _saving = false;
   bool _uploadingPhoto = false;
   String _profilePictureUrl = '';
+  bool _notificationsEnabled = true;
 
   @override
   void initState() {
@@ -53,6 +62,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     _addressCtrl = TextEditingController(text: session.address);
     _profilePictureUrl = session.profilePictureUrl;
     _loadProfile();
+    _loadNotificationPref();
   }
 
   @override
@@ -105,6 +115,25 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     }
   }
 
+  Future<void> _loadNotificationPref() async {
+    final memberId = UserSession.instance.dbMemberId;
+    if (memberId == null) return;
+
+    final enabled = await NotificationPrefsService.isEnabled(memberId);
+    if (!mounted) return;
+
+    setState(() => _notificationsEnabled = enabled);
+  }
+
+  Future<void> _handleNotificationsToggle(bool value) async {
+    setState(() => _notificationsEnabled = value);
+    UserSession.instance.notificationsEnabled = value;
+
+    final memberId = UserSession.instance.dbMemberId;
+    if (memberId == null) return;
+    await NotificationPrefsService.setEnabled(memberId, value);
+  }
+
   Future<void> _pickDateOfBirth() async {
     DateTime initial = DateTime(1995, 1, 1);
     final parts = _dobCtrl.text.split('/');
@@ -120,7 +149,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       firstDate: DateTime(1930),
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(colorScheme: const ColorScheme.light(primary: cyan)),
+        data: Theme.of(context).copyWith(colorScheme: ColorScheme.light(primary: cyan)),
         child: child!,
       ),
     );
@@ -241,6 +270,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    _dark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: bgGrey,
       body: SafeArea(
@@ -251,9 +282,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Profile Settings', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: textDark)),
+                Text('Profile Settings', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: textDark)),
                 const SizedBox(height: 6),
-                const Text('Manage your personal information and preferences',
+                Text('Manage your personal information and preferences',
                     style: TextStyle(color: textGrey, fontSize: 15)),
                 const SizedBox(height: 28),
                 LayoutBuilder(
@@ -268,6 +299,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                         _card(child: _buildQuickStats()),
                         const SizedBox(height: 24),
                         _card(child: _buildSecurity()),
+                        const SizedBox(height: 24),
+                        _card(child: _buildPreferences()),
                       ],
                     );
 
@@ -303,7 +336,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: borderGrey),
       ),
@@ -316,7 +349,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       children: [
         Icon(icon, color: cyan, size: 20),
         const SizedBox(width: 10),
-        Text(text, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: textDark)),
+        Text(text, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: textDark)),
       ],
     );
   }
@@ -387,7 +420,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: textDark)),
+          Text(label, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: textDark)),
           const SizedBox(height: 8),
           TextField(
             controller: controller,
@@ -395,19 +428,19 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             onTap: onTap,
             maxLines: maxLines,
             keyboardType: keyboardType,
-            style: const TextStyle(fontSize: 14.5),
+            style: TextStyle(fontSize: 14.5, color: textDark),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: Color(0xFFB0B4BA)),
+              hintStyle: TextStyle(color: hintColor),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: fieldFill,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               suffixIcon: suffixIcon != null ? Icon(suffixIcon, size: 19, color: textGrey) : null,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: borderGrey)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: borderGrey)),
               enabledBorder:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: borderGrey)),
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: borderGrey)),
               focusedBorder:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: cyan, width: 1.5)),
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: cyan, width: 1.5)),
             ),
           ),
         ],
@@ -422,7 +455,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Profile Picture', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: textDark)),
+        Text('Profile Picture', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: textDark)),
         const SizedBox(height: 20),
         Center(
           child: Column(
@@ -451,7 +484,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               OutlinedButton(
                 onPressed: _uploadingPhoto ? null : _handleUploadPhoto,
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: borderGrey),
+                  side: BorderSide(color: borderGrey),
                   foregroundColor: textDark,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -473,7 +506,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Quick Stats', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: textDark)),
+        Text('Quick Stats', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: textDark)),
         const SizedBox(height: 18),
         _statRow(Icons.calendar_today_outlined, 'Member Since', session.memberSinceLabel),
         const SizedBox(height: 16),
@@ -493,9 +526,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: textGrey, fontSize: 12.5)),
+            Text(label, style: TextStyle(color: textGrey, fontSize: 12.5)),
             const SizedBox(height: 2),
-            Text(value, style: const TextStyle(color: textDark, fontSize: 15, fontWeight: FontWeight.w700)),
+            Text(value, style: TextStyle(color: textDark, fontSize: 15, fontWeight: FontWeight.w700)),
           ],
         ),
       ],
@@ -519,7 +552,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                 ..showSnackBar(const SnackBar(content: Text('Change password flow not wired up yet.')));
             },
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: borderGrey),
+              side: BorderSide(color: borderGrey),
               foregroundColor: textDark,
               padding: const EdgeInsets.symmetric(vertical: 13),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -540,6 +573,58 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
           ),
         ),
+      ],
+    );
+  }
+
+  // ==================== PREFERENCES ====================
+
+  Widget _buildPreferences() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle(Icons.tune, 'Preferences'),
+        const SizedBox(height: 18),
+        ListenableBuilder(
+          listenable: ThemeController.instance,
+          builder: (context, _) => _preferenceSwitchRow(
+            label: 'Dark Mode',
+            subtitle: 'Switch the app to a darker color theme',
+            value: ThemeController.instance.isDark,
+            onChanged: (v) => ThemeController.instance.setDarkMode(v),
+          ),
+        ),
+        const SizedBox(height: 16),
+        _preferenceSwitchRow(
+          label: 'Notifications',
+          subtitle: 'Show membership and reminder alerts',
+          value: _notificationsEnabled,
+          onChanged: _handleNotificationsToggle,
+        ),
+      ],
+    );
+  }
+
+  Widget _preferenceSwitchRow({
+    required String label,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5, color: textDark)),
+              const SizedBox(height: 2),
+              Text(subtitle, style: TextStyle(color: textGrey, fontSize: 12.5)),
+            ],
+          ),
+        ),
+        Switch(value: value, activeThumbColor: cyan, onChanged: onChanged),
       ],
     );
   }

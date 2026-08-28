@@ -2,7 +2,28 @@ import 'package:flutter/material.dart';
 import '../screens/user_session.dart';
 import '../services/membership_service.dart';
 import '../services/payment_history_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/status_alert_banner.dart';
+
+/// Dark-mode-aware surface/text tokens for this screen. `sync(context)` is
+/// called once at the top of `build()` (and inside each dialog builder,
+/// which gets its own context) to snapshot the current brightness before
+/// any of these getters are read.
+class _Colors {
+  static bool _dark = false;
+  static void sync(BuildContext c) => _dark = Theme.of(c).brightness == Brightness.dark;
+
+  static Color get bg => _dark ? AppColors.darkBg : Colors.grey.shade50;
+  static Color get cardBg => _dark ? AppColors.darkCard : Colors.white;
+  static Color get cardBorder => _dark ? AppColors.darkBorder : Colors.grey.shade200;
+  static Color get surfaceAlt => _dark ? const Color(0xFF1C1D22) : Colors.grey.shade50;
+  static Color get borderMuted => _dark ? AppColors.darkBorder : Colors.grey.shade300;
+  static Color get textSecondary => _dark ? AppColors.textMutedOnDark : Colors.grey.shade600;
+  static Color get textMuted => _dark ? AppColors.textMutedOnDark : Colors.grey.shade500;
+  static Color get textBody => _dark ? AppColors.textMutedOnDark : Colors.grey.shade800;
+  static Color get iconMuted => _dark ? AppColors.textMutedOnDark : Colors.grey.shade700;
+  static Color get planHighlightBg => _dark ? const Color(0xFF0E3A42) : Colors.cyan.shade50;
+}
 
 class MembershipPage extends StatefulWidget {
   const MembershipPage({super.key});
@@ -170,7 +191,9 @@ class _MembershipPageState extends State<MembershipPage> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) {
+        _Colors.sync(context);
+        return AlertDialog(
         title: const Text('Select payment method'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -178,7 +201,7 @@ class _MembershipPageState extends State<MembershipPage> {
           children: [
             Text(
               '${plan.duration}  ·  ₱${_formatPrice(price)}',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 13, color: _Colors.textSecondary),
             ),
             const SizedBox(height: 16),
             _paymentMethodTile('GCash', Colors.blue, planIndex),
@@ -193,7 +216,8 @@ class _MembershipPageState extends State<MembershipPage> {
             child: const Text('Cancel'),
           ),
         ],
-      ),
+      );
+      },
     );
   }
 
@@ -237,7 +261,9 @@ class _MembershipPageState extends State<MembershipPage> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) {
+        _Colors.sync(context);
+        return AlertDialog(
         title: Text('Pay via $method'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -246,13 +272,13 @@ class _MembershipPageState extends State<MembershipPage> {
               width: 180,
               height: 180,
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: _Colors.borderMuted),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 Icons.qr_code_2,
                 size: 130,
-                color: Colors.grey.shade700,
+                color: _Colors.iconMuted,
               ),
             ),
             const SizedBox(height: 16),
@@ -266,13 +292,13 @@ class _MembershipPageState extends State<MembershipPage> {
             ),
             Text(
               plan.duration,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 12, color: _Colors.textSecondary),
             ),
             const SizedBox(height: 12),
             Text(
               'Scan this QR code using your $method app to complete payment.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 12, color: _Colors.textSecondary),
             ),
           ],
         ),
@@ -293,7 +319,8 @@ class _MembershipPageState extends State<MembershipPage> {
             child: const Text("I've paid"),
           ),
         ],
-      ),
+      );
+      },
     );
   }
 
@@ -423,6 +450,7 @@ class _MembershipPageState extends State<MembershipPage> {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     final session = UserSession.instance;
     final plan = plans[currentPlanIndex];
     final price = plan.price;
@@ -430,7 +458,7 @@ class _MembershipPageState extends State<MembershipPage> {
     final renewalDate = _addMonths(membershipStartDate, durationMonths);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: _Colors.bg,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
@@ -443,7 +471,7 @@ class _MembershipPageState extends State<MembershipPage> {
             const SizedBox(height: 4),
             Text(
               'Manage your subscription and billing information',
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 14, color: _Colors.textSecondary),
             ),
             const SizedBox(height: 20),
             StatusAlertBanner(session: session),
@@ -467,9 +495,11 @@ class _MembershipPageState extends State<MembershipPage> {
           children: [
             Row(
               children: [
-                const Text(
-                  'No active membership',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                const Flexible(
+                  child: Text(
+                    'No active membership',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 _statusBadge('Cancelled', Colors.red),
@@ -478,7 +508,7 @@ class _MembershipPageState extends State<MembershipPage> {
             const SizedBox(height: 8),
             Text(
               'Choose a plan below to reactivate your membership.',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 13, color: _Colors.textSecondary),
             ),
           ],
         ),
@@ -495,11 +525,14 @@ class _MembershipPageState extends State<MembershipPage> {
               Expanded(
                 child: Row(
                   children: [
-                    Text(
-                      '${plan.duration} Membership',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        '${plan.duration} Membership',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -520,7 +553,7 @@ class _MembershipPageState extends State<MembershipPage> {
                   ),
                   Text(
                     plan.duration,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 12, color: _Colors.textSecondary),
                   ),
                 ],
               ),
@@ -531,7 +564,7 @@ class _MembershipPageState extends State<MembershipPage> {
             children: [
               Text(
                 'Duration: ',
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 13, color: _Colors.textSecondary),
               ),
               Text(
                 plan.duration,
@@ -544,33 +577,32 @@ class _MembershipPageState extends State<MembershipPage> {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _infoBox(
-                  Icons.calendar_today,
-                  'Start Date',
-                  _formatDate(membershipStartDate),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _infoBox(
-                  Icons.access_time,
-                  'Next Renewal',
-                  _formatDate(renewalDate),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _infoBox(
-                  Icons.attach_money,
-                  'Total Paid (${today.year})',
-                  '₱${_formatPrice(_totalPaidThisYear())}',
-                ),
-              ),
-            ],
-          ),
+          Builder(builder: (context) {
+            final boxes = [
+              _infoBox(Icons.calendar_today, 'Start Date', _formatDate(membershipStartDate)),
+              _infoBox(Icons.access_time, 'Next Renewal', _formatDate(renewalDate)),
+              _infoBox(Icons.attach_money, 'Total Paid (${today.year})',
+                  '₱${_formatPrice(_totalPaidThisYear())}'),
+            ];
+            if (context.isMobile) {
+              return Column(
+                children: [
+                  for (int i = 0; i < boxes.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 12),
+                    boxes[i],
+                  ],
+                ],
+              );
+            }
+            return Row(
+              children: [
+                for (int i = 0; i < boxes.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 12),
+                  Expanded(child: boxes[i]),
+                ],
+              ],
+            );
+          }),
           const SizedBox(height: 20),
           const Text(
             'Included Features',
@@ -626,7 +658,7 @@ class _MembershipPageState extends State<MembershipPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: _Colors.surfaceAlt,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -634,11 +666,11 @@ class _MembershipPageState extends State<MembershipPage> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: Colors.grey.shade600),
+              Icon(icon, size: 14, color: _Colors.textSecondary),
               const SizedBox(width: 6),
               Text(
                 label,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 12, color: _Colors.textSecondary),
               ),
             ],
           ),
@@ -661,7 +693,7 @@ class _MembershipPageState extends State<MembershipPage> {
           const SizedBox(width: 8),
           Text(
             text,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade800),
+            style: TextStyle(fontSize: 13, color: _Colors.textBody),
           ),
         ],
       ),
@@ -689,24 +721,52 @@ class _MembershipPageState extends State<MembershipPage> {
             ],
           ),
           const SizedBox(height: 20),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: plans
-                .asMap()
-                .entries
-                .map(
-                  (entry) => Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: _planCard(entry.value, entry.key),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
+          _buildPlansGrid(context),
         ],
       ),
     );
+  }
+
+  // Column count is based on the actual content width available here
+  // (via LayoutBuilder), not full screen width -- the sidebar already
+  // eats ~260px on tablet/desktop, so screen-width breakpoints alone
+  // would overestimate how much room this section really has.
+  Widget _buildPlansGrid(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final availableWidth = constraints.maxWidth;
+      if (availableWidth >= 900) {
+        // Wide enough for the original 4-across Row, unchanged.
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: plans
+              .asMap()
+              .entries
+              .map(
+                (entry) => Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: _planCard(entry.value, entry.key),
+                  ),
+                ),
+              )
+              .toList(),
+        );
+      }
+
+      const spacing = 12.0;
+      final columns = availableWidth >= 480 ? 2 : 1;
+      final cardWidth = (availableWidth - spacing * (columns - 1)) / columns;
+      return Wrap(
+        spacing: spacing,
+        runSpacing: spacing,
+        children: plans
+            .asMap()
+            .entries
+            .map((entry) => SizedBox(
+                width: cardWidth, child: _planCard(entry.value, entry.key)))
+            .toList(),
+      );
+    });
   }
 
   Widget _planCard(_Plan plan, int planIndex) {
@@ -715,10 +775,10 @@ class _MembershipPageState extends State<MembershipPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isCurrent ? Colors.cyan.shade50 : Colors.white,
+        color: isCurrent ? _Colors.planHighlightBg : _Colors.cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isCurrent ? Colors.cyan.shade400 : Colors.grey.shade300,
+          color: isCurrent ? Colors.cyan.shade400 : _Colors.borderMuted,
           width: isCurrent ? 2 : 1,
         ),
       ),
@@ -811,9 +871,11 @@ class _MembershipPageState extends State<MembershipPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Payment History',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              const Flexible(
+                child: Text(
+                  'Payment History',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
               OutlinedButton.icon(
                 onPressed: () {},
@@ -823,8 +885,28 @@ class _MembershipPageState extends State<MembershipPage> {
             ],
           ),
           const SizedBox(height: 16),
-          Table(
-            columnWidths: const {
+          _buildPaymentHistoryTableBody(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentHistoryTableBody(BuildContext context) {
+    final table = Table(
+      // On mobile, fixed pixel widths (inside a horizontal scroll) so
+      // columns stay legible instead of being squeezed by Flex; tablet
+      // and desktop keep the original Flex-based sizing, which already
+      // fits without scrolling.
+      columnWidths: context.isMobile
+          ? const {
+              0: FixedColumnWidth(90),
+              1: FixedColumnWidth(90),
+              2: FixedColumnWidth(90),
+              3: FixedColumnWidth(80),
+              4: FixedColumnWidth(80),
+              5: FixedColumnWidth(110),
+            }
+          : const {
               0: FlexColumnWidth(1.2),
               1: FlexColumnWidth(1.5),
               2: FlexColumnWidth(1),
@@ -832,51 +914,54 @@ class _MembershipPageState extends State<MembershipPage> {
               4: FlexColumnWidth(1),
               5: FlexColumnWidth(1),
             },
+      children: [
+        TableRow(
+          children: [
+            _headerCell('Date'),
+            _headerCell('Plan'),
+            _headerCell('Amount'),
+            _headerCell('Method'),
+            _headerCell('Status'),
+            _headerCell('Receipt'),
+          ],
+        ),
+        ...paymentHistory.map(
+          (r) => TableRow(
             children: [
-              TableRow(
-                children: [
-                  _headerCell('Date'),
-                  _headerCell('Plan'),
-                  _headerCell('Amount'),
-                  _headerCell('Method'),
-                  _headerCell('Status'),
-                  _headerCell('Receipt'),
-                ],
+              _cell(r[0]),
+              _cell(r[1]),
+              _cell(r[2], color: const Color(0xFFCB8A00), bold: true),
+              _cell(r[3]),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: _statusBadge(r[4], Colors.green),
               ),
-              ...paymentHistory.map(
-                (r) => TableRow(
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Row(
                   children: [
-                    _cell(r[0]),
-                    _cell(r[1]),
-                    _cell(r[2], color: const Color(0xFFCB8A00), bold: true),
-                    _cell(r[3]),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: _statusBadge(r[4], Colors.green),
+                    Text(
+                      'Download',
+                      style: TextStyle(fontSize: 12, color: Colors.blue),
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Download',
-                            style: TextStyle(fontSize: 12, color: Colors.blue),
-                          ),
-                          Icon(
-                            Icons.arrow_forward,
-                            size: 12,
-                            color: Colors.blue,
-                          ),
-                        ],
-                      ),
+                    Icon(
+                      Icons.arrow_forward,
+                      size: 12,
+                      color: Colors.blue,
                     ),
                   ],
                 ),
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+
+    if (!context.isMobile) return table;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(width: 90 + 90 + 90 + 80 + 80 + 110, child: table),
     );
   }
 
@@ -884,7 +969,7 @@ class _MembershipPageState extends State<MembershipPage> {
     padding: const EdgeInsets.symmetric(vertical: 8),
     child: Text(
       text,
-      style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+      style: TextStyle(fontSize: 12, color: _Colors.textMuted),
     ),
   );
 
@@ -905,9 +990,9 @@ class _MembershipPageState extends State<MembershipPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _Colors.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: _Colors.cardBorder),
       ),
       child: child,
     );

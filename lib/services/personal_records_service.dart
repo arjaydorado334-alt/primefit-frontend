@@ -7,7 +7,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class PersonalRecordsService {
-  static const String apiUrl = "http://member-account-backend.infinityfreeapp.com/personal_records_api.php";
+  static const String apiUrl = "http://localhost/memberaccount/personal_records_api.php";
 
   static Future<Map<String, dynamic>> fetchRecords(int memberId) async {
     try {

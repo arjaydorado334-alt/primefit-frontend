@@ -63,6 +63,11 @@ class UserSession {
   /// Empty until the member uploads one.
   String profilePictureUrl = '';
 
+  /// Per-member notifications preference, loaded from shared_preferences
+  /// (keyed by dbMemberId) by `MemberPortalScreen` once available. Gates
+  /// `StatusAlertBanner`. Defaults true until loaded/toggled.
+  bool notificationsEnabled = true;
+
   /// True once `MemberPortalScreen` has completed its one-time food/body-
   /// metrics reminder check for this session. Gates [needsFoodReminder]
   /// and [needsWeighInReminder] so they never fire on stale/default data

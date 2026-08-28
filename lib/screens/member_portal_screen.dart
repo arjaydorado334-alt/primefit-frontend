@@ -14,6 +14,7 @@ import 'dart:async';
 import '../services/attendance_stats_service.dart';
 import '../services/body_metrics_service.dart';
 import '../services/food_logs_service.dart';
+import '../services/notification_prefs_service.dart';
 
 /// The authenticated area of the app. Holds the sidebar and swaps the
 /// main content area based on which nav item is selected.
@@ -38,6 +39,17 @@ class _MemberPortalScreenState extends State<MemberPortalScreen> {
     _attendanceTimer = Timer.periodic(
         const Duration(seconds: 10), (_) => _fetchAttendanceStats());
     _checkReminders();
+    _loadNotificationPref();
+  }
+
+  Future<void> _loadNotificationPref() async {
+    final memberId = UserSession.instance.dbMemberId;
+    if (memberId == null) return;
+
+    final enabled = await NotificationPrefsService.isEnabled(memberId);
+    if (!mounted) return;
+
+    setState(() => UserSession.instance.notificationsEnabled = enabled);
   }
 
   /// One-time check (not polled -- nothing here changes fast enough to
@@ -131,7 +143,9 @@ class _MemberPortalScreenState extends State<MemberPortalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 760;
+    // Sidebar collapses to a drawer only on phone; tablet keeps the
+    // (fixed-width) sidebar visible alongside content, same as desktop.
+    final isWide = !context.isMobile;
     final session = UserSession.instance;
 
     final content = ChatFabOverlay(
@@ -139,7 +153,7 @@ class _MemberPortalScreenState extends State<MemberPortalScreen> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.lightGray,
+      backgroundColor: context.isDarkMode ? AppColors.darkBg : AppColors.lightGray,
       drawer: isWide
           ? null
           : Drawer(
@@ -157,8 +171,8 @@ class _MemberPortalScreenState extends State<MemberPortalScreen> {
       appBar: isWide
           ? null
           : AppBar(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
+              backgroundColor: context.isDarkMode ? AppColors.darkCard : Colors.white,
+              foregroundColor: context.isDarkMode ? Colors.white : Colors.black,
               elevation: 0,
               title: Text(sidebarItems[_selectedIndex].label),
             ),

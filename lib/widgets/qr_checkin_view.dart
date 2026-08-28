@@ -10,6 +10,28 @@ import 'status_alert_banner.dart';
 import 'dart:async';
 import '../services/session_status_service.dart';
 
+/// Brightness-aware color tokens for this screen -- call `_Colors.sync`
+/// once at the top of a build() before reading any of these getters.
+class _Colors {
+  static bool _dark = false;
+  static void sync(BuildContext c) => _dark = Theme.of(c).brightness == Brightness.dark;
+
+  static Color get cardBg => _dark ? AppColors.darkCard : Colors.white;
+  static Color get cardBorder => _dark ? AppColors.darkBorder : AppColors.cardBorder;
+  static Color get textPrimary => _dark ? Colors.white : Colors.black87;
+  static Color get textSecondary => _dark ? AppColors.textMutedOnDark : const Color(0xFF64748B);
+  static Color get textMuted => _dark ? AppColors.textMutedOnDark : const Color(0xFF94A3B8);
+  static Color get qrPlaceholderIcon => _dark ? const Color(0xFF475569) : const Color(0xFFCBD5E1);
+  static Color get progressTrack => _dark ? AppColors.darkBorder : const Color(0xFFF3F4F6);
+
+  static Color get remainingTint => _dark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5);
+  static Color get usedTint => _dark ? const Color(0xFF78350F) : const Color(0xFFFFFBEB);
+  static Color get totalTint => _dark ? const Color(0xFF0E4550) : const Color(0xFFDDF7FC);
+
+  static Color get infoBoxBg => _dark ? const Color(0xFF0E3440) : const Color(0xFFEAFAFF);
+  static Color get infoBoxBorder => _dark ? const Color(0xFF1B5468) : const Color(0xFFCDEFFB);
+}
+
 class QrCheckinView extends StatefulWidget {
   final String memberName;
   final String memberId;
@@ -178,6 +200,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     final isWide = MediaQuery.of(context).size.width > 900;
     final progress = _creditsTotal == 0 ? 0.0 : _sessionsUsed / _creditsTotal;
     final usedPercent = (progress * 100).round();
@@ -249,11 +272,11 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                         : Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.qr_code_2, size: 60, color: Color(0xFFCBD5E1)),
+                              Icon(Icons.qr_code_2, size: 60, color: _Colors.qrPlaceholderIcon),
                               const SizedBox(height: 12),
-                              const Text(
+                              Text(
                                 'QR code not yet available',
-                                style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                                style: TextStyle(color: _Colors.textSecondary, fontSize: 13),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 12),
@@ -270,14 +293,14 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                           ),
                 ),
                 const SizedBox(height: 16),
-                Text(widget.memberId, style: TextStyle(color: Colors.grey.shade500, letterSpacing: 1)),
+                Text(widget.memberId, style: TextStyle(color: _Colors.textMuted, letterSpacing: 1)),
                 const SizedBox(height: 4),
                 Text.rich(
                   TextSpan(
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    style: TextStyle(color: _Colors.textSecondary, fontSize: 13),
                     children: [
                       const TextSpan(text: 'Valid until: '),
-                      TextSpan(text: widget.renewsOn, style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black87)),
+                      TextSpan(text: widget.renewsOn, style: TextStyle(fontWeight: FontWeight.w700, color: _Colors.textPrimary)),
                     ],
                   ),
                 ),
@@ -291,7 +314,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                   'This QR code is unique to your account. Do not share it with others. '
                   'Present it to the front desk for each gym session.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5),
+                  style: TextStyle(color: _Colors.textMuted, fontSize: 11.5),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -301,7 +324,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      side: const BorderSide(color: AppColors.cardBorder),
+                      side: BorderSide(color: _Colors.cardBorder),
                     ),
                     child: Text(
                       _checkingIn ? 'Checking in…' : 'Check In Now',
@@ -335,7 +358,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                     child: const Icon(Icons.confirmation_number_outlined, color: AppColors.cyan, size: 18),
                   ),
                   const SizedBox(width: 10),
-                  const Text('Session Credits', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  Text('Session Credits', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: _Colors.textPrimary)),
                 ],
               ),
               const SizedBox(height: 20),
@@ -346,7 +369,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                       label: 'Remaining',
                       value: '$_creditsLeft',
                       color: const Color(0xFF059669),
-                      bg: const Color(0xFFECFDF5),
+                      bg: _Colors.remainingTint,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -355,7 +378,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                       label: 'Used',
                       value: '$_sessionsUsed',
                       color: const Color(0xFFD97706),
-                      bg: const Color(0xFFFFFBEB),
+                      bg: _Colors.usedTint,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -364,7 +387,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                       label: 'Total',
                       value: '$_creditsTotal',
                       color: AppColors.cyan,
-                      bg: const Color(0xFFDDF7FC),
+                      bg: _Colors.totalTint,
                     ),
                   ),
                 ],
@@ -376,8 +399,8 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('$usedPercent% used', style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
-                      Text('Resets on renewal', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                      Text('$usedPercent% used', style: TextStyle(fontSize: 12, color: _Colors.textSecondary, fontWeight: FontWeight.w500)),
+                      Text('Resets on renewal', style: TextStyle(fontSize: 12, color: _Colors.textMuted)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -386,7 +409,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                     child: LinearProgressIndicator(
                       value: progress.clamp(0, 1),
                       minHeight: 8,
-                      backgroundColor: const Color(0xFFF3F4F6),
+                      backgroundColor: _Colors.progressTrack,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         progress > 0.8 ? const Color(0xFFEF4444) : AppColors.cyan,
                       ),
@@ -407,9 +430,9 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                   children: [
                     const Icon(Icons.access_time, color: AppColors.cyan, size: 20),
                     const SizedBox(height: 10),
-                    Text('Last Check-In', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
-                    Text(_lastCheckIn, style: const TextStyle(fontWeight: FontWeight.w700)),
-                    Text(_lastCheckInTime, style: TextStyle(color: Colors.grey.shade500, fontSize: 11.5)),
+                    Text('Last Check-In', style: TextStyle(color: _Colors.textMuted, fontSize: 12)),
+                    Text(_lastCheckIn, style: TextStyle(fontWeight: FontWeight.w700, color: _Colors.textPrimary)),
+                    Text(_lastCheckInTime, style: TextStyle(color: _Colors.textMuted, fontSize: 11.5)),
                   ],
                 ),
               ),
@@ -422,8 +445,8 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                   children: [
                     const Icon(Icons.calendar_today_outlined, color: AppColors.yellow, size: 20),
                     const SizedBox(height: 10),
-                    Text('Sessions This Month', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
-                    Text('$_sessionsUsed sessions', style: const TextStyle(fontWeight: FontWeight.w700)),
+                    Text('Sessions This Month', style: TextStyle(color: _Colors.textMuted, fontSize: 12)),
+                    Text('$_sessionsUsed sessions', style: TextStyle(fontWeight: FontWeight.w700, color: _Colors.textPrimary)),
                   ],
                 ),
               ),
@@ -434,9 +457,9 @@ class _QrCheckinViewState extends State<QrCheckinView> {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: const Color(0xFFEAFAFF),
+            color: _Colors.infoBoxBg,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFCDEFFB)),
+            border: Border.all(color: _Colors.infoBoxBorder),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,13 +470,13 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('How it works', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                    Text('How it works', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: _Colors.textPrimary)),
                     const SizedBox(height: 6),
                     Text(
                       'Each time you visit PrimeFit, present your QR code to the front desk. '
                       'The staff scanner reads your member ID and subscription — 1 credit is '
                       'deducted per session automatically.',
-                      style: TextStyle(color: Colors.grey.shade700, fontSize: 12.5, height: 1.5),
+                      style: TextStyle(color: _Colors.textSecondary, fontSize: 12.5, height: 1.5),
                     ),
                   ],
                 ),
@@ -469,10 +492,10 @@ class _QrCheckinViewState extends State<QrCheckinView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('My QR Check-In Code', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+          Text('My QR Check-In Code', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: _Colors.textPrimary)),
           const SizedBox(height: 4),
           Text('Show your QR code at the front desk — the staff scanner will log your session automatically.',
-              style: TextStyle(color: Colors.grey.shade600)),
+              style: TextStyle(color: _Colors.textSecondary)),
           const SizedBox(height: 20),
           StatusAlertBanner(session: UserSession.instance),
           const SizedBox(height: 4),
@@ -496,10 +519,10 @@ class _QrCheckinViewState extends State<QrCheckinView> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.grey.shade500),
+          Icon(icon, size: 16, color: _Colors.textMuted),
           const SizedBox(width: 10),
-          Expanded(child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 13))),
-          Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: valueColor ?? Colors.black87)),
+          Expanded(child: Text(label, style: TextStyle(color: _Colors.textSecondary, fontSize: 13))),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: valueColor ?? _Colors.textPrimary)),
         ],
       ),
     );
@@ -523,7 +546,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 11, color: _Colors.textSecondary, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -538,13 +561,14 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return Container(
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _Colors.cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: _Colors.cardBorder),
       ),
       child: child,
     );

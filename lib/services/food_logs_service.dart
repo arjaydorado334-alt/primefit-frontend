@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 
 class FoodLogsService {
   static const String apiUrl =
-      "http://member-account-backend.infinityfreeapp.com/food_logs_api.php";
+      "http://localhost/memberaccount/food_logs_api.php";
 
   static Future<Map<String, dynamic>> fetchLogs(int memberId,
       {DateTime? date}) async {

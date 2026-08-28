@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 class PlanService {
   // Update this to match where your PHP files live (see register_service.dart
   // for notes on localhost vs. your PC's IP address).
-  static const String apiUrl = "http://member-account-backend.infinityfreeapp.com/get_plans.php";
+  static const String apiUrl = "http://localhost/memberaccount/get_plans.php";
 
   /// Returns a map of { DurationLabel : PlanID }, e.g. { "1 Year": 4 }.
   /// Returns an empty map if the request fails -- callers should handle

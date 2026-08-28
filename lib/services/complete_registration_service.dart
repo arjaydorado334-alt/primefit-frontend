@@ -18,7 +18,7 @@ import 'package:http/http.dart' as http;
 
 class CompleteRegistrationService {
   static const String apiUrl =
-      "http://member-account-backend.infinityfreeapp.com/complete_registration_api.php";
+      "http://localhost/memberaccount/complete_registration_api.php";
 
   static Future<Map<String, dynamic>> register({
     required String firstName,

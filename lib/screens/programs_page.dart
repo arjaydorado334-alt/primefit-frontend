@@ -4,7 +4,27 @@ import 'package:image_picker/image_picker.dart';
 // 👇 Connects this screen to your PHP programs API (programs_api.php).
 // Adjust the path if programs_service.dart lives somewhere else.
 import '../services/programs_service.dart';
+import '../theme/app_theme.dart';
 import 'user_session.dart';
+
+/// Dark-mode-aware color tokens for this screen's chrome (page/dialog
+/// backgrounds, card surfaces, borders, and text) -- per-program brand
+/// colors (cardBg/borderColor/themeColor/badge colors, all data-driven
+/// from the Programs table) are left untouched since they're content,
+/// not page theme. Call [sync] once at the top of each build() in this
+/// file before reading any other getter.
+class _Colors {
+  static bool _dark = false;
+  static void sync(BuildContext c) => _dark = Theme.of(c).brightness == Brightness.dark;
+
+  static Color get bg => _dark ? AppColors.darkBg : Colors.white;
+  static Color get surface => _dark ? AppColors.darkCard : const Color(0xFFF8FAFC);
+  static Color get surfaceAlt => _dark ? AppColors.darkCard : const Color(0xFFF1F5F9);
+  static Color get border => _dark ? AppColors.darkBorder : const Color(0xFFE2E8F0);
+  static Color get textPrimary => _dark ? Colors.white : Colors.black87;
+  static Color get textSecondary => _dark ? AppColors.textMutedOnDark : Colors.grey.shade600;
+  static Color get textMuted => _dark ? AppColors.textMutedOnDark : Colors.grey.shade400;
+}
 
 // --- MAIN WORKOUT INTERFACE WITH PERSISTENT SIDEBAR ---
 class WorkoutProgramsScreen extends StatefulWidget {
@@ -138,6 +158,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
     await showDialog(
       context: context,
       builder: (ctx) {
+        _Colors.sync(ctx);
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             Future<void> pickImage() async {
@@ -252,7 +273,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
             }
 
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: _Colors.bg,
               insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               child: ConstrainedBox(
@@ -269,7 +290,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                           const Text('Create Program', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                           InkWell(
                             onTap: () => Navigator.of(ctx).pop(),
-                            child: const Icon(Icons.close, color: Colors.grey, size: 22),
+                            child: Icon(Icons.close, color: _Colors.textMuted, size: 22),
                           ),
                         ],
                       ),
@@ -285,7 +306,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                     width: 64,
                                     height: 64,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
+                                      color: _Colors.surfaceAlt,
                                       borderRadius: BorderRadius.circular(10),
                                       image: imageBytes != null
                                           ? DecorationImage(image: MemoryImage(imageBytes!), fit: BoxFit.cover)
@@ -293,7 +314,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                     ),
                                     alignment: Alignment.center,
                                     child: imageBytes == null
-                                        ? const Icon(Icons.image_outlined, color: Colors.grey)
+                                        ? Icon(Icons.image_outlined, color: _Colors.textMuted)
                                         : null,
                                   ),
                                   const SizedBox(width: 12),
@@ -338,7 +359,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                 margin: const EdgeInsets.only(bottom: 16),
                                 padding: const EdgeInsets.symmetric(horizontal: 14),
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  border: Border.all(color: _Colors.border),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: DropdownButtonHideUnderline(
@@ -363,9 +384,9 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                   margin: const EdgeInsets.only(bottom: 16),
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
+                                    color: _Colors.surface,
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    border: Border.all(color: _Colors.border),
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -430,7 +451,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                                 ),
                                               ),
                                               IconButton(
-                                                icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                                                icon: Icon(Icons.close, size: 18, color: _Colors.textMuted),
                                                 onPressed: () => removeExercise(dayIndex, exIndex),
                                               ),
                                             ],
@@ -509,12 +530,13 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     final List<Map<String, dynamic>> displayedWorkouts = _selectedFilter == 'All'
         ? _allWorkouts
         : _allWorkouts.where((workout) => workout['level'] == _selectedFilter).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _Colors.bg,
       body: SafeArea(
         child: _selectedWorkout == null
             ? _buildMainGridPanel(displayedWorkouts)
@@ -557,10 +579,10 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF00B4D8)))
                 : _loadError != null
-                    ? Center(child: Text(_loadError!, style: TextStyle(color: Colors.grey.shade600)))
+                    ? Center(child: Text(_loadError!, style: TextStyle(color: _Colors.textSecondary)))
                     : displayedWorkouts.isEmpty
                         ? Center(
-                            child: Text('No programs found.', style: TextStyle(color: Colors.grey.shade600)),
+                            child: Text('No programs found.', style: TextStyle(color: _Colors.textSecondary)),
                           )
                         : SingleChildScrollView(
                             child: Align(
@@ -604,8 +626,8 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
       child: OutlinedButton(
         onPressed: () => setState(() => _selectedFilter = text),
         style: OutlinedButton.styleFrom(
-          backgroundColor: isActive ? const Color(0xFF00B4D8) : Colors.white,
-          side: BorderSide(color: isActive ? const Color(0xFF00B4D8) : Colors.grey.shade200),
+          backgroundColor: isActive ? const Color(0xFF00B4D8) : _Colors.surface,
+          side: BorderSide(color: isActive ? const Color(0xFF00B4D8) : _Colors.border),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           elevation: 0,
@@ -613,7 +635,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
         child: Text(
           text,
           style: TextStyle(
-            color: isActive ? Colors.white : Colors.grey.shade700,
+            color: isActive ? Colors.white : _Colors.textSecondary,
             fontWeight: FontWeight.w500,
             fontSize: 14,
           ),
@@ -660,6 +682,10 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                         Expanded(
                           child: Text(
                             workout['title'],
+                            // Fixed (not _Colors.*): this card's background is
+                            // workout['cardBg'] -- a per-program pastel color
+                            // from the DB that stays light in both themes, so
+                            // its text must stay dark regardless of app theme.
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -742,6 +768,7 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     var data = widget.programData;
     List<dynamic> currentExercises = (data['routines'] != null && _activeSubTab.isNotEmpty)
         ? (data['routines'][_activeSubTab] ?? [])
@@ -754,8 +781,8 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
         children: [
           TextButton.icon(
             onPressed: widget.onBack,
-            icon: const Icon(Icons.arrow_back, size: 16, color: Colors.grey),
-            label: const Text('Back to programs', style: TextStyle(color: Colors.grey, fontSize: 14)),
+            icon: Icon(Icons.arrow_back, size: 16, color: _Colors.textMuted),
+            label: Text('Back to programs', style: TextStyle(color: _Colors.textMuted, fontSize: 14)),
             style: TextButton.styleFrom(padding: EdgeInsets.zero),
           ),
           const SizedBox(height: 16),
@@ -772,6 +799,10 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
             ),
             const SizedBox(height: 16),
           ],
+          // Fixed (not _Colors.*) throughout: this card's background is
+          // data['cardBg'] -- a per-program pastel color from the DB that
+          // stays light in both themes, so its content must stay dark
+          // regardless of app theme.
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
@@ -786,7 +817,7 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(data['title'], style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                    Text(data['title'], style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(color: data['badgeBg'], borderRadius: BorderRadius.circular(12)),
@@ -823,10 +854,10 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                     child: ElevatedButton(
                       onPressed: () => setState(() => _activeSubTab = tabName),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isTabActive ? const Color(0xFF00B4D8) : Colors.white,
-                        foregroundColor: isTabActive ? Colors.white : Colors.grey.shade700,
+                        backgroundColor: isTabActive ? const Color(0xFF00B4D8) : _Colors.surface,
+                        foregroundColor: isTabActive ? Colors.white : _Colors.textSecondary,
                         elevation: 0,
-                        side: BorderSide(color: isTabActive ? const Color(0xFF00B4D8) : Colors.grey.shade200),
+                        side: BorderSide(color: isTabActive ? const Color(0xFF00B4D8) : _Colors.border),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
@@ -842,9 +873,9 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFFF9F9F9),
+                color: _Colors.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: _Colors.border),
               ),
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Column(
@@ -863,7 +894,7 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                           Container(
                             width: 28,
                             height: 28,
-                            decoration: BoxDecoration(color: const Color(0xFFEDF7F6), borderRadius: BorderRadius.circular(6)),
+                            decoration: BoxDecoration(color: _Colors.surfaceAlt, borderRadius: BorderRadius.circular(6)),
                             alignment: Alignment.center,
                             child: Text(exercise['num'], style: TextStyle(color: data['themeColor'], fontWeight: FontWeight.bold)),
                           ),
@@ -872,12 +903,12 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(exercise['name'], style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87)),
+                                Text(exercise['name'], style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: _Colors.textPrimary)),
                                 if ((exercise['tip'] as String).isNotEmpty) ...[
                                   const SizedBox(height: 2),
                                   Text(
                                     'Tip: ${exercise['tip']}',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
+                                    style: TextStyle(fontSize: 12, color: _Colors.textMuted, fontStyle: FontStyle.italic),
                                   ),
                                 ]
                               ],
@@ -887,7 +918,7 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(exercise['sets'], style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange.shade700)),
-                              const Text('sets', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                              Text('sets', style: TextStyle(fontSize: 11, color: _Colors.textMuted)),
                             ],
                           ),
                           const SizedBox(width: 16),
@@ -895,15 +926,15 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(exercise['reps'], style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF00B4D8))),
-                              const Text('reps', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                              Text('reps', style: TextStyle(fontSize: 11, color: _Colors.textMuted)),
                             ],
                           ),
                           const SizedBox(width: 16),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(exercise['rest'], style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-                              const Text('rest', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                              Text(exercise['rest'], style: TextStyle(fontWeight: FontWeight.bold, color: _Colors.textMuted)),
+                              Text('rest', style: TextStyle(fontSize: 11, color: _Colors.textMuted)),
                             ],
                           ),
                         ],

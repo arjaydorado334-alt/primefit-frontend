@@ -7,7 +7,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class LoginService {
-  static const String apiUrl = "https://member-account-backend.onrender.com/login_api.php";
+  static const String apiUrl = "http://localhost/memberaccount/login_api.php";
 
   static Future<Map<String, dynamic>> login({
     required String email,
@@ -16,13 +16,9 @@ class LoginService {
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json",
-        "Accept": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "u": email.trim(),
-          "p": password,
-          "email": email.trim(),
+          "email": email,
           "password": password,
         }),
       );

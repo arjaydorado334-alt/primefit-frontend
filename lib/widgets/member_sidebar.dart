@@ -1,39 +1,39 @@
 import 'package:flutter/material.dart';
 
-/// PrimeFit brand palette — soft pastel cyan background (easier on the
-/// eyes than the earlier neon shade). "PrimeFit" at the top is gold
-/// (brand accent); every other text is white with a subtle drop shadow
-/// so it still reads clearly against the lighter background. Icons stay
-/// white. Hover/click just darken the row/chip — no border or dot marks
-/// the active item.
+/// PrimeFit brand palette — black background, all text white. "PrimeFit"
+/// and "Member Portal" are white; icons stay white. Hover/click lighten
+/// the row/chip (since darkening black would be invisible) — no border
+/// or dot marks the active item.
 class _SidebarColors {
-  // Slightly lighter, softer teal-cyan — less neon/saturated than the
-  // original bright turquoise, so it's easier on the eyes while text
-  // still stays readable on top of it.
-  static const Color cyan = Color(0xFF4FC7D4);
+  // Flat black background.
+  static const Color background = Color(0xFF000000);
 
-  // Gold — brand accent, used for the "PrimeFit" wordmark and the
-  // membership tier badge.
+  // Gold — brand accent, used for the membership tier badge and the
+  // "Fit" half of the PrimeFit wordmark.
   static const Color gold = Color(0xFFFFC400);
   static const Color goldText = Color(0xFF4A3600); // readable text on a gold chip
 
-  // Text on the cyan background — white, bumped close to full opacity
-  // so "Member Portal" / "MENU" stay clearly visible against the
-  // lighter background.
-  static const Color textPrimary = Color.fromARGB(255, 255, 255, 255);
-  static const Color textSecondary = Color.fromARGB(249, 255, 255, 255); // white @ 95%
-  static const Color textMuted = Color.fromARGB(246, 255, 255, 255); // white @ 88%
+  // Cyan — brand accent, used for the menu icons and the "Prime" half
+  // of the PrimeFit wordmark.
+  static const Color cyan = Color(0xFF22D3EE);
+
+  // Red — used for the Logout row's hover/pressed state.
+  static const Color red = Color(0xFFEF4444);
+  static Color redOverlay(double opacity) => red.withValues(alpha: opacity);
+
+  // All sidebar text is white.
+  static const Color textPrimary = Colors.white;
+  static const Color textSecondary = Colors.white;
+  static const Color textMuted = Colors.white;
 
   // Icons keep their own white color.
   static const Color iconColor = Colors.white;
 
-  // Darkening overlay for hover/active/click — black at some opacity,
-  // layered over the flat cyan background/chips.
-  static Color darken(double opacity) => Colors.black.withValues(alpha: opacity);
+  // Lightening overlay for hover/active/click — white at some opacity,
+  // layered over the flat black background/chips (darkening black would
+  // be invisible).
+  static Color darken(double opacity) => Colors.white.withValues(alpha: opacity);
 
-  // A soft dark shadow behind text so white stays readable even against
-  // the lighter/pastel cyan — plain white alone was too close in
-  // "lightness" to the background to pop clearly.
   static const List<Shadow> textShadow = [
     Shadow(color: Color(0x59000000), blurRadius: 3, offset: Offset(0, 1)),
   ];
@@ -75,16 +75,12 @@ class MemberSidebar extends StatelessWidget {
     return Container(
       width: 260,
       // Flat single shade — no gradient.
-      color: _SidebarColors.cyan,
+      color: _SidebarColors.background,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ---------------- Branding ----------------
-            // "PrimeFit" is built as a plain Text here (not the
-            // PrimeFitWordmark widget) so its color can be set directly
-            // to gold, since that widget's internal styling isn't
-            // editable from this file.
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
               child: Row(
@@ -101,13 +97,19 @@ class MemberSidebar extends StatelessWidget {
                   const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('PrimeFit',
+                      Text.rich(
+                        TextSpan(
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: _SidebarColors.gold,
                             shadows: _SidebarColors.textShadow,
-                          )),
+                          ),
+                          children: [
+                            TextSpan(text: 'Prime', style: TextStyle(color: _SidebarColors.cyan)),
+                            TextSpan(text: 'Fit', style: TextStyle(color: _SidebarColors.gold)),
+                          ],
+                        ),
+                      ),
                       Text('Member Portal',
                           style: TextStyle(
                             fontSize: 11,
@@ -276,7 +278,7 @@ class _SidebarTileState extends State<_SidebarTile> {
                         borderRadius: BorderRadius.circular(9),
                       ),
                       alignment: Alignment.center,
-                      child: Icon(widget.data.icon, size: 18, color: _SidebarColors.iconColor),
+                      child: Icon(widget.data.icon, size: 18, color: _SidebarColors.cyan),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -301,8 +303,7 @@ class _SidebarTileState extends State<_SidebarTile> {
   }
 }
 
-/// Logout row — same treatment: darkens on hover, darkens further on
-/// click, no border/dot.
+/// Logout row — turns red on hover, and a deeper red while pressed.
 class _LogoutTile extends StatefulWidget {
   final VoidCallback onTap;
   const _LogoutTile({required this.onTap});
@@ -313,11 +314,18 @@ class _LogoutTile extends StatefulWidget {
 
 class _LogoutTileState extends State<_LogoutTile> {
   bool _hovered = false;
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
-    final Color rowBg = _SidebarColors.darken(_hovered ? 0.12 : 0);
-    final Color chipBg = _SidebarColors.darken(_hovered ? 0.24 : 0.14);
+    final bool active = _hovered || _pressed;
+    final Color rowBg = active
+        ? _SidebarColors.redOverlay(_pressed ? 0.30 : 0.16)
+        : _SidebarColors.darken(0);
+    final Color chipBg = active
+        ? _SidebarColors.redOverlay(_pressed ? 0.55 : 0.35)
+        : _SidebarColors.darken(0.14);
+    final Color fgColor = active ? _SidebarColors.red : _SidebarColors.textPrimary;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -333,8 +341,9 @@ class _LogoutTileState extends State<_LogoutTile> {
           child: InkWell(
             borderRadius: BorderRadius.circular(10),
             onTap: widget.onTap,
-            splashColor: _SidebarColors.darken(0.18),
-            highlightColor: _SidebarColors.darken(0.12),
+            onHighlightChanged: (pressed) => setState(() => _pressed = pressed),
+            splashColor: _SidebarColors.redOverlay(0.30),
+            highlightColor: _SidebarColors.redOverlay(0.20),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               child: Row(
@@ -348,12 +357,12 @@ class _LogoutTileState extends State<_LogoutTile> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(Icons.logout, size: 16, color: _SidebarColors.iconColor),
+                    child: Icon(Icons.logout, size: 16, color: fgColor),
                   ),
                   const SizedBox(width: 10),
-                  const Text('Logout',
+                  Text('Logout',
                       style: TextStyle(
-                        color: _SidebarColors.textPrimary,
+                        color: fgColor,
                         fontWeight: FontWeight.w500,
                         fontSize: 13.5,
                         shadows: _SidebarColors.textShadow,

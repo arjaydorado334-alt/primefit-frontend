@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 class ProgramsService {
-  static const String apiUrl = "http://member-account-backend.infinityfreeapp.com/programs_api.php";
+  static const String apiUrl = "http://localhost/memberaccount/programs_api.php";
 
   static Future<Map<String, dynamic>> fetchPrograms() async {
     try {

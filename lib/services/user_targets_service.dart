@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 
 class UserTargetsService {
   static const String apiUrl =
-      "http://member-account-backend.infinityfreeapp.com/user_targets_api.php";
+      "http://localhost/memberaccount/user_targets_api.php";
 
   static Future<Map<String, dynamic>> fetchTargets(int memberId) async {
     try {

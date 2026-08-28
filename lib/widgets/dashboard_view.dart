@@ -3,6 +3,18 @@ import '../theme/app_theme.dart';
 import '../screens/user_session.dart';
 import 'status_alert_banner.dart';
 
+class _Colors {
+  static bool _dark = false;
+  static void sync(BuildContext c) => _dark = Theme.of(c).brightness == Brightness.dark;
+
+  static Color get cardBg => _dark ? AppColors.darkCard : Colors.white;
+  static Color get cardBorder => _dark ? AppColors.darkBorder : AppColors.cardBorder;
+  static Color get textSecondary => _dark ? AppColors.textMutedOnDark : Colors.grey.shade600;
+  static Color get textMuted => _dark ? AppColors.textMutedOnDark : Colors.grey.shade500;
+  static Color get mutedSurface => _dark ? AppColors.darkBorder : const Color(0xFFF1F2F4);
+  static Color get progressTrackBg => _dark ? AppColors.darkBorder : const Color(0xFFEDEEF0);
+}
+
 class DashboardView extends StatelessWidget {
   final String memberFirstName;
   final int visitsThisWeek;
@@ -39,6 +51,7 @@ class DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return SingleChildScrollView(
@@ -48,7 +61,7 @@ class DashboardView extends StatelessWidget {
         children: [
           Text('Welcome back, $memberFirstName', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
-          Text("Here's a quick look at your activity.", style: TextStyle(color: Colors.grey.shade600)),
+          Text("Here's a quick look at your activity.", style: TextStyle(color: _Colors.textSecondary)),
           const SizedBox(height: 20),
           StatusAlertBanner(session: UserSession.instance, onManageTap: onGoToMembership),
           const SizedBox(height: 4),
@@ -79,7 +92,7 @@ class DashboardView extends StatelessWidget {
                             Container(
                               height: 44,
                               decoration: BoxDecoration(
-                                color: state == true ? AppColors.cyan : const Color(0xFFF1F2F4),
+                                color: state == true ? AppColors.cyan : _Colors.mutedSurface,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               alignment: Alignment.center,
@@ -88,7 +101,7 @@ class DashboardView extends StatelessWidget {
                                   : null,
                             ),
                             const SizedBox(height: 6),
-                            Text(_days[i], style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                            Text(_days[i], style: TextStyle(fontSize: 12, color: _Colors.textSecondary)),
                           ],
                         ),
                       ),
@@ -110,7 +123,7 @@ class DashboardView extends StatelessWidget {
                 )
               : Column(children: [_sessionCreditsCard(), const SizedBox(height: 20), _membershipCard()]),
           const SizedBox(height: 24),
-          const Text('QUICK ACTIONS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey, letterSpacing: 1)),
+          Text('QUICK ACTIONS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _Colors.textMuted, letterSpacing: 1)),
           const SizedBox(height: 12),
           Wrap(
             spacing: 16,
@@ -154,7 +167,7 @@ class DashboardView extends StatelessWidget {
                     CircularProgressIndicator(
                       value: progress,
                       strokeWidth: 6,
-                      backgroundColor: const Color(0xFFEDEEF0),
+                      backgroundColor: _Colors.progressTrackBg,
                       valueColor: const AlwaysStoppedAnimation(AppColors.cyan),
                     ),
                     Column(
@@ -171,7 +184,7 @@ class DashboardView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('$sessionCreditsLeft/$sessionCreditsTotal', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-                  Text('$sessionsUsed sessions used', style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
+                  Text('$sessionsUsed sessions used', style: TextStyle(color: _Colors.textSecondary, fontSize: 12.5)),
                 ],
               ),
             ],
@@ -198,13 +211,13 @@ class DashboardView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Text('Current Plan', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+          Text('Current Plan', style: TextStyle(color: _Colors.textMuted, fontSize: 12)),
           Text(planName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
           const SizedBox(height: 12),
-          Text('Renews on', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+          Text('Renews on', style: TextStyle(color: _Colors.textMuted, fontSize: 12)),
           Text(renewsOn, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
           const SizedBox(height: 12),
-          Text('Monthly Rate', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+          Text('Monthly Rate', style: TextStyle(color: _Colors.textMuted, fontSize: 12)),
           Text(monthlyRate, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.yellow)),
         ],
       ),
@@ -218,13 +231,14 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _Colors.cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: _Colors.cardBorder),
       ),
       child: child,
     );
@@ -241,13 +255,14 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return Container(
       width: 220,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _Colors.cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: _Colors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,7 +276,7 @@ class _StatCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
-          Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+          Text(label, style: TextStyle(color: _Colors.textSecondary, fontSize: 13)),
         ],
       ),
     );
@@ -278,8 +293,9 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _Colors.sync(context);
     return Material(
-      color: Colors.white,
+      color: _Colors.cardBg,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -289,7 +305,7 @@ class _QuickAction extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: _Colors.cardBorder),
           ),
           child: Row(
             children: [

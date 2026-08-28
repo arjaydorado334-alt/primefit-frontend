@@ -1,6 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
 // ignore: unused_import
@@ -97,8 +99,40 @@ class _Fonts {
 
 const double _kNavBarHeight = 84;
 
+/// Responsive breakpoints used throughout the landing page:
+/// mobile < 600, tablet 600-1024, desktop >= 1024.
+const double _kMobileMaxWidth = 600;
+const double _kTabletMaxWidth = 1024;
+
+enum _Breakpoint { mobile, tablet, desktop }
+
+_Breakpoint _breakpointOf(BuildContext context) {
+  final w = MediaQuery.of(context).size.width;
+  if (w < _kMobileMaxWidth) return _Breakpoint.mobile;
+  if (w < _kTabletMaxWidth) return _Breakpoint.tablet;
+  return _Breakpoint.desktop;
+}
+
+/// Shared padding for the big content sections (About, Mission, Pricing,
+/// Location, Merch, Contact) so they scale together per breakpoint.
+EdgeInsets _sectionPadding(BuildContext context) {
+  switch (_breakpointOf(context)) {
+    case _Breakpoint.mobile:
+      return const EdgeInsets.symmetric(horizontal: 16, vertical: 56);
+    case _Breakpoint.tablet:
+      return const EdgeInsets.symmetric(horizontal: 24, vertical: 72);
+    case _Breakpoint.desktop:
+      return const EdgeInsets.symmetric(horizontal: 24, vertical: 90);
+  }
+}
+
 const String _primeFitAddress =
     '31 Bernardo St, near Army Road, Central Signal, Taguig, Metro Manila, Philippines 1633';
+
+// Approximate coordinates for Central Signal, Taguig (not precisely
+// geocoded for 31 Bernardo St specifically) -- replace with the exact
+// lat/lng if/when you have it geocoded.
+const LatLng _primeFitLatLng = LatLng(14.5175, 121.0472);
 
 // Footer copyright year -- update this each January rather than computing
 // it from DateTime.now(), so the footer doesn't silently roll over mid-way
@@ -179,6 +213,15 @@ class LandingPage extends StatelessWidget {
     // SingleChildScrollView below -- this is what makes the nav "sticky."
     return Scaffold(
       backgroundColor: _Palette.bgNearBlack,
+      endDrawer: _MobileNavDrawer(
+        onSignIn: () => _goToLogin(context),
+        onJoin: () => _goToCreateAccount(context),
+        onAbout: () => _scrollToAbout(context),
+        onMission: () => _scrollToMission(context),
+        onMembership: () => _scrollToMembership(context),
+        onMerchandise: () => _scrollToMerch(context),
+        onContact: () => _scrollToContact(context),
+      ),
       body: Column(
         children: [
           _NavBar(
@@ -292,12 +335,18 @@ class _NavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 760;
+    final bp = _breakpointOf(context);
+    final isWide = bp == _Breakpoint.desktop;
+    final horizontalPadding = switch (bp) {
+      _Breakpoint.mobile => 16.0,
+      _Breakpoint.tablet => 32.0,
+      _Breakpoint.desktop => 72.0,
+    };
     return Container(
       height: _kNavBarHeight,
       // Extra horizontal breathing room so the logo and the Sign In /
       // Join Now buttons aren't hugging the very edge of the screen.
-      padding: const EdgeInsets.only(left: 72, right: 72),
+      padding: EdgeInsets.only(left: horizontalPadding, right: horizontalPadding),
       decoration: const BoxDecoration(
         color: _Palette.bgDeepBlack,
         border:
@@ -307,7 +356,6 @@ class _NavBar extends StatelessWidget {
         children: [
           // Logo + wordmark (left)
           Expanded(
-            flex: isWide ? 2 : 1,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -354,41 +402,151 @@ class _NavBar extends StatelessWidget {
                 ],
               ),
             ),
-          // Sign In + Join Now (right)
-          Expanded(
-            flex: isWide ? 2 : 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (isWide) ...[
-                  TextButton(
-                    onPressed: onSignIn,
-                    style: TextButton.styleFrom(
-                        foregroundColor: _Palette.lightGray),
-                    child: Text('SIGN IN',
-                        style: _Fonts.button(color: _Palette.lightGray)),
+          // Sign In + Join Now (right) on desktop; hamburger menu (which
+          // holds the nav links + Sign In) + Join Now on phone/tablet.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (isWide) ...[
+                TextButton(
+                  onPressed: onSignIn,
+                  style: TextButton.styleFrom(
+                      foregroundColor: _Palette.lightGray),
+                  child: Text('SIGN IN',
+                      style: _Fonts.button(color: _Palette.lightGray)),
+                ),
+                const SizedBox(width: 10),
+              ],
+              ElevatedButton(
+                onPressed: onJoin,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _Palette.yellow,
+                  foregroundColor: Colors.black,
+                  padding: EdgeInsets.symmetric(
+                      horizontal: isWide ? 20 : 14, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  elevation: 0,
+                ),
+                child: Text('JOIN NOW', style: _Fonts.button(size: 14)),
+              ),
+              if (!isWide) ...[
+                const SizedBox(width: 6),
+                Builder(
+                  builder: (context) => IconButton(
+                    onPressed: () => Scaffold.of(context).openEndDrawer(),
+                    icon: const Icon(Icons.menu, color: Colors.white),
+                    tooltip: 'Menu',
                   ),
-                  const SizedBox(width: 10),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    ).animate().fade(duration: 400.ms);
+  }
+}
+
+/// Nav-links + Sign In, shown as a right-side drawer on phone/tablet
+/// (opened via the navbar's hamburger icon) since the navbar itself is
+/// too narrow to show them inline below desktop width.
+class _MobileNavDrawer extends StatelessWidget {
+  final VoidCallback onSignIn;
+  final VoidCallback onJoin;
+  final VoidCallback onAbout;
+  final VoidCallback onMission;
+  final VoidCallback onMembership;
+  final VoidCallback onMerchandise;
+  final VoidCallback onContact;
+  const _MobileNavDrawer({
+    required this.onSignIn,
+    required this.onJoin,
+    required this.onAbout,
+    required this.onMission,
+    required this.onMembership,
+    required this.onMerchandise,
+    required this.onContact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    void closeThen(VoidCallback action) {
+      Navigator.of(context).pop();
+      action();
+    }
+
+    Widget link(String label, VoidCallback onTap) => ListTile(
+          title: Text(label, style: _Fonts.nav(color: Colors.white)),
+          onTap: () => closeThen(onTap),
+        );
+
+    return Drawer(
+      backgroundColor: _Palette.bgDeepBlack,
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  ClipOval(
+                    child: Image.asset(
+                      'assets/images/primefit_logo.jpg',
+                      width: 34,
+                      height: 34,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 9),
+                  RichText(
+                    text: const TextSpan(
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      children: [
+                        TextSpan(
+                            text: 'Prime',
+                            style: TextStyle(color: _Palette.cyan)),
+                        TextSpan(
+                            text: 'Fit',
+                            style: TextStyle(color: _Palette.yellow)),
+                      ],
+                    ),
+                  ),
                 ],
-                ElevatedButton(
-                  onPressed: onJoin,
+              ),
+            ),
+            const Divider(color: _Palette.cardBorder),
+            link('About', onAbout),
+            link('Mission', onMission),
+            link('Membership', onMembership),
+            link('Merchandise', onMerchandise),
+            link('Contact', onContact),
+            const Divider(color: _Palette.cardBorder),
+            link('Sign In', onSignIn),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => closeThen(onJoin),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _Palette.yellow,
                     foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                     elevation: 0,
                   ),
                   child: Text('JOIN NOW', style: _Fonts.button(size: 14)),
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ).animate().fade(duration: 400.ms);
+    );
   }
 }
 
@@ -439,6 +597,39 @@ class _HeroSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bp = _breakpointOf(context);
+    // Big display text and padding scale down per breakpoint so "FIT FOR" /
+    // "ALL." don't force awkward wrapping or overflow on narrow screens.
+    final displaySize = switch (bp) {
+      _Breakpoint.mobile => 44.0,
+      _Breakpoint.tablet => 64.0,
+      _Breakpoint.desktop => 90.0,
+    };
+    final subheadSize = switch (bp) {
+      _Breakpoint.mobile => 24.0,
+      _Breakpoint.tablet => 30.0,
+      _Breakpoint.desktop => 38.0,
+    };
+    final bodySize = switch (bp) {
+      _Breakpoint.mobile => 15.0,
+      _Breakpoint.tablet => 17.0,
+      _Breakpoint.desktop => 20.0,
+    };
+    final buttonPadding = switch (bp) {
+      _Breakpoint.mobile => const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+      _Breakpoint.tablet ||
+      _Breakpoint.desktop =>
+        const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+    };
+    final heroPadding = switch (bp) {
+      _Breakpoint.mobile =>
+        const EdgeInsets.only(left: 20, right: 20, top: 32, bottom: 32),
+      _Breakpoint.tablet =>
+        const EdgeInsets.only(left: 40, right: 24, top: 40, bottom: 40),
+      _Breakpoint.desktop =>
+        const EdgeInsets.only(left: 72, right: 24, top: 40, bottom: 40),
+    };
+
     final textColumn = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -459,24 +650,24 @@ class _HeroSection extends StatelessWidget {
           shaderCallback: (bounds) =>
               _Palette.yellowCyanGradient.createShader(bounds),
           blendMode: BlendMode.srcIn,
-          child: Text('FIT FOR', style: _Fonts.display(size: 90)),
+          child: Text('FIT FOR', style: _Fonts.display(size: displaySize)),
         ).animate().fade(delay: 300.ms).slideX(begin: -0.5),
         ShaderMask(
           shaderCallback: (bounds) =>
               _Palette.yellowCyanGradient.createShader(bounds),
           blendMode: BlendMode.srcIn,
-          child: Text('ALL.', style: _Fonts.display(size: 90)),
+          child: Text('ALL.', style: _Fonts.display(size: displaySize)),
         ).animate().fade(delay: 350.ms).slideX(begin: -0.5),
         const SizedBox(height: 6),
         Text('WHERE YOUR FITNESS',
                 style: _Fonts.display(
-                    size: 38, color: _Palette.cyan, height: 1.15))
+                    size: subheadSize, color: _Palette.cyan, height: 1.15))
             .animate()
             .fade(delay: 420.ms)
             .slideX(begin: -0.4),
         Text('JOURNEY BEGINS.',
                 style: _Fonts.display(
-                    size: 38, color: _Palette.yellow, height: 1.15))
+                    size: subheadSize, color: _Palette.yellow, height: 1.15))
             .animate()
             .fade(delay: 480.ms)
             .slideX(begin: -0.4),
@@ -486,7 +677,7 @@ class _HeroSection extends StatelessWidget {
           child: Text(
             'PrimeFit Fitness Gym is your complete training destination — '
             'equipped, supportive, and built for every level of athlete.',
-            style: _Fonts.body(size: 20, height: 1.6),
+            style: _Fonts.body(size: bodySize, height: 1.6),
           ),
         ).animate().fade(delay: 540.ms).slideX(begin: -0.3),
         const SizedBox(height: 28),
@@ -514,8 +705,7 @@ class _HeroSection extends StatelessWidget {
                       ],
                     ),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 30, vertical: 20),
+                      padding: buttonPadding,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -537,8 +727,7 @@ class _HeroSection extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: const BorderSide(color: Color(0xFF3A3A3D)),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                  padding: buttonPadding,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
@@ -561,8 +750,12 @@ class _HeroSection extends StatelessWidget {
       // That mismatch was what caused the blank screen / "render box
       // has never been laid out" crash. The extra "+140" that used to be
       // here made the section taller than the actual viewport, which is
-      // why the text looked pushed toward the bottom on first load.
-      height: screenHeight - _kNavBarHeight,
+      // why the text looked pushed toward the bottom on first load. A
+      // floor is applied on mobile/tablet so short landscape/small
+      // viewports still have room for the (smaller, but still multi-line)
+      // hero text without clipping.
+      height: (screenHeight - _kNavBarHeight)
+          .clamp(bp == _Breakpoint.desktop ? 0 : 560, double.infinity),
       clipBehavior: Clip.hardEdge,
       decoration: const BoxDecoration(color: _Palette.bgNearBlack),
       child: Stack(
@@ -612,8 +805,7 @@ class _HeroSection extends StatelessWidget {
             ),
           ),
           Padding(
-            padding:
-                const EdgeInsets.only(left: 72, right: 24, top: 40, bottom: 40),
+            padding: heroPadding,
             child: Align(
               alignment: Alignment.centerLeft,
               child: ConstrainedBox(
@@ -769,7 +961,7 @@ class _AboutSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 900;
+    final isWide = _breakpointOf(context) == _Breakpoint.desktop;
 
     final visual = Stack(
       clipBehavior: Clip.none,
@@ -895,7 +1087,7 @@ class _AboutSection extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: _Palette.bgDarkSection,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 90),
+      padding: _sectionPadding(context),
       child: isWide
           ? rowContent
           : columnContent.animate().fade(duration: 500.ms).slideY(begin: 0.2),
@@ -931,7 +1123,7 @@ class _MissionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 900;
+    final isWide = _breakpointOf(context) == _Breakpoint.desktop;
 
     const missionCard = _MissionCard(
       accent: _Palette.cyan,
@@ -968,7 +1160,7 @@ class _MissionSection extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: _Palette.bgDarkGraySection,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 90),
+      padding: _sectionPadding(context),
       child: Column(
         children: [
           Text('WHO WE ARE', style: _Fonts.sectionLabel()),
@@ -1110,7 +1302,8 @@ class _PricingSectionState extends State<_PricingSection> {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 900;
+    final bp = _breakpointOf(context);
+    final sectionPadding = _sectionPadding(context);
 
     final plans = [
       _PlanCard(
@@ -1167,10 +1360,40 @@ class _PricingSectionState extends State<_PricingSection> {
       ),
     ];
 
+    // Desktop keeps the existing 4-across Row untouched. Mobile/tablet use
+    // a Wrap with an explicit per-card width (1 column on mobile, 2 on
+    // tablet) computed from the section's own content width, so cards
+    // stack/reflow instead of shrinking to fit their own content.
+    final Widget plansLayout;
+    if (bp == _Breakpoint.desktop) {
+      plansLayout = Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: plans
+            .map((p) => Expanded(
+                child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: p)))
+            .toList(),
+      );
+    } else {
+      final screenWidth = MediaQuery.of(context).size.width;
+      final contentWidth =
+          screenWidth - sectionPadding.horizontal;
+      const spacing = 16.0;
+      final columns = bp == _Breakpoint.tablet ? 2 : 1;
+      final cardWidth = (contentWidth - spacing * (columns - 1)) / columns;
+      plansLayout = Wrap(
+        spacing: spacing,
+        runSpacing: spacing,
+        children:
+            plans.map((p) => SizedBox(width: cardWidth, child: p)).toList(),
+      );
+    }
+
     return Container(
       width: double.infinity,
       color: _Palette.bgNearBlack,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 90),
+      padding: sectionPadding,
       child: Column(
         children: [
           Text('PLANS & PRICING', style: _Fonts.sectionLabel()),
@@ -1183,22 +1406,7 @@ class _PricingSectionState extends State<_PricingSection> {
               style: _Fonts.body(size: 13.5, color: _Palette.mutedGray),
               textAlign: TextAlign.center),
           const SizedBox(height: 36),
-          isWide
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: plans
-                      .map((p) => Expanded(
-                          child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              child: p)))
-                      .toList(),
-                )
-              : Column(
-                  children: plans
-                      .map((p) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16), child: p))
-                      .toList()),
+          plansLayout,
           const SizedBox(height: 22),
           RichText(
             text: TextSpan(
@@ -1258,7 +1466,21 @@ class _PlanCardState extends State<_PlanCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedScale(
+      child: GestureDetector(
+        // Opens the plan-details popup. The "GET STARTED" button below
+        // has its own onPressed and consumes its own tap, so tapping it
+        // does not also trigger this.
+        onTap: () => showDialog(
+          context: context,
+          builder: (_) => _PlanDetailsDialog(
+            name: widget.name,
+            price: widget.price,
+            badge: widget.badge,
+            accent: widget.accent,
+            features: widget.features,
+          ),
+        ),
+        child: AnimatedScale(
         scale: _hovered ? 1.02 : 1.0,
         duration: const Duration(milliseconds: 200),
         child: AnimatedContainer(
@@ -1346,6 +1568,157 @@ class _PlanCardState extends State<_PlanCard> {
             ],
           ),
         ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentOptionInfo {
+  final String name;
+  final String subtitle;
+  final IconData icon;
+  const _PaymentOptionInfo(this.name, this.subtitle, this.icon);
+}
+
+const List<_PaymentOptionInfo> _kPlanPaymentOptions = [
+  _PaymentOptionInfo('GCash', 'Mobile wallet — instant transfer',
+      Icons.smartphone_outlined),
+  _PaymentOptionInfo('Maya', 'Mobile wallet — e-money',
+      Icons.account_balance_wallet_outlined),
+];
+
+/// Shown when a member taps a plan card in the Membership Subscriptions
+/// section -- displays that plan's full details plus the available
+/// payment methods (GCash/Maya). UI only; no payment processing here --
+/// actual purchase still happens through "GET STARTED" -> create account.
+class _PlanDetailsDialog extends StatelessWidget {
+  final String name;
+  final String price;
+  final String? badge;
+  final Color accent;
+  final List<String> features;
+
+  const _PlanDetailsDialog({
+    required this.name,
+    required this.price,
+    required this.badge,
+    required this.accent,
+    required this.features,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Container(
+          decoration: BoxDecoration(
+            color: _Palette.bgCard,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _Palette.cardBorder),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    badge != null
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                                color: accent,
+                                borderRadius: BorderRadius.circular(20)),
+                            child: Text(badge!,
+                                style: _Fonts.sectionLabel(color: Colors.black)
+                                    .copyWith(fontSize: 10, letterSpacing: 1)),
+                          )
+                        : const SizedBox.shrink(),
+                    InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(20),
+                      child: const Padding(
+                        padding: EdgeInsets.all(4),
+                        child: Icon(Icons.close,
+                            color: _Palette.lightGray, size: 22),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(name.toUpperCase(), style: _Fonts.heading(size: 18)),
+                const SizedBox(height: 6),
+                Text(price, style: _Fonts.display(size: 32)),
+                const SizedBox(height: 18),
+                ...features.map((f) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.check_circle, color: accent, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                              child:
+                                  Text(f, style: _Fonts.body(size: 13.5))),
+                        ],
+                      ),
+                    )),
+                const SizedBox(height: 24),
+                Text('PAYMENT METHOD', style: _Fonts.sectionLabel()),
+                const SizedBox(height: 4),
+                Text('Choose how you\'ll pay once you sign up.',
+                    style: _Fonts.body(size: 12, color: _Palette.mutedGray)),
+                const SizedBox(height: 12),
+                for (final option in _kPlanPaymentOptions)
+                  _paymentOptionTile(option),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _paymentOptionTile(_PaymentOptionInfo option) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _Palette.bgDarkSection,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _Palette.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: _Palette.cyan.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Icon(option.icon, color: _Palette.cyan, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(option.name, style: _Fonts.heading(size: 14)),
+                const SizedBox(height: 2),
+                Text(option.subtitle, style: _Fonts.body(size: 11.5)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1360,7 +1733,7 @@ class _LocationSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 900;
+    final isWide = _breakpointOf(context) == _Breakpoint.desktop;
 
     void openInMaps() => _launchUri(Uri.parse(
           'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(_primeFitAddress)}',
@@ -1371,65 +1744,110 @@ class _LocationSection extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: openInMaps,
-          child: Container(
-            height: 320,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE9EDF1),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: _Palette.cardBorder),
-            ),
-            child: Stack(
-              children: [
-                CustomPaint(size: Size.infinite, painter: _MockMapPainter()),
-                const Positioned(
-                  bottom: 14,
-                  left: 14,
-                  child: _MapChip(text: 'TAP TO OPEN IN GOOGLE MAPS'),
+        child: Container(
+          height: 320,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE9EDF1),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _Palette.cardBorder),
+          ),
+          child: Stack(
+            children: [
+              // Real map tiles via OpenStreetMap (flutter_map) -- no API
+              // key needed. Pan/zoom is interactive; tapping the map
+              // itself doesn't navigate away (that's what the chip/badge
+              // below are for), so dragging to pan doesn't conflict with
+              // "open in Google Maps".
+              FlutterMap(
+                options: const MapOptions(
+                  initialCenter: _primeFitLatLng,
+                  initialZoom: 16,
+                  interactionOptions: InteractionOptions(
+                    flags: InteractiveFlag.pinchZoom |
+                        InteractiveFlag.drag |
+                        InteractiveFlag.doubleTapZoom |
+                        InteractiveFlag.scrollWheelZoom,
+                  ),
                 ),
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.location_on,
-                          color: _Palette.yellow, size: 40),
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.75),
-                            borderRadius: BorderRadius.circular(8)),
-                        child: const Text('Taguig',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700)),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.primefit.app',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: _primeFitLatLng,
+                        width: 120,
+                        height: 76,
+                        alignment: Alignment.topCenter,
+                        child: IgnorePointer(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.location_on,
+                                  color: _Palette.yellow, size: 40),
+                              Container(
+                                margin: const EdgeInsets.only(top: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.75),
+                                    borderRadius: BorderRadius.circular(8)),
+                                child: const Text('Taguig',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700)),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                ),
-                Positioned(
-                  top: 14,
-                  right: 14,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8)),
-                    child: Text('Opens in a new tab',
-                        style: GoogleFonts.inter(
-                            fontSize: 10.5,
-                            color: _Palette.mutedGray,
-                            fontWeight: FontWeight.w600)),
+                ],
+              ),
+              Positioned(
+                bottom: 14,
+                left: 14,
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: openInMaps,
+                    child: const _MapChip(text: 'TAP TO OPEN IN GOOGLE MAPS'),
                   ),
                 ),
-              ],
-            ),
+              ),
+              Positioned(
+                top: 14,
+                right: 14,
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: openInMaps,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8)),
+                      child: Text('Opens in a new tab',
+                          style: GoogleFonts.inter(
+                              fontSize: 10.5,
+                              color: _Palette.mutedGray,
+                              fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1475,7 +1893,7 @@ class _LocationSection extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: _Palette.bgDarkSection,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 90),
+      padding: _sectionPadding(context),
       child: Column(
         children: [
           Text('FIND US', style: _Fonts.sectionLabel()),
@@ -1578,30 +1996,6 @@ class _MapChip extends StatelessWidget {
   }
 }
 
-class _MockMapPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final roadPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 8;
-    final roadPaintThin = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 4;
-
-    canvas.drawLine(Offset(0, size.height * 0.3),
-        Offset(size.width, size.height * 0.35), roadPaint);
-    canvas.drawLine(Offset(0, size.height * 0.65),
-        Offset(size.width, size.height * 0.6), roadPaint);
-    canvas.drawLine(Offset(size.width * 0.25, 0),
-        Offset(size.width * 0.3, size.height), roadPaintThin);
-    canvas.drawLine(Offset(size.width * 0.7, 0),
-        Offset(size.width * 0.65, size.height), roadPaintThin);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
 /// ---------------------------------------------------------------------
 /// MERCHANDISE / PRIMEFIT STORE (in-store only — no cart/checkout)
 /// ---------------------------------------------------------------------
@@ -1667,7 +2061,7 @@ class _MerchSection extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: _Palette.bgNearBlack,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 90),
+      padding: _sectionPadding(context),
       child: Column(
         children: [
           Text('PRIMEFIT STORE',
@@ -1725,7 +2119,16 @@ class _MerchCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _HoverScale(
       endScale: 1.02,
-      child: Container(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => showDialog(
+            context: context,
+            builder: (_) => _MerchDetailsDialog(item: item),
+          ),
+          child: Container(
         width: 290,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
@@ -1781,6 +2184,122 @@ class _MerchCard extends StatelessWidget {
             Text(item.price,
                 style: _Fonts.display(size: 24, color: _Palette.yellow)),
           ],
+        ),
+      ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown when a member taps a merch card -- displays that item's full
+/// details (photo, category, name, code, price) plus the in-store-only
+/// purchase note. UI-only, no cart/checkout wired up here.
+class _MerchDetailsDialog extends StatelessWidget {
+  final _MerchItem item;
+  const _MerchDetailsDialog({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 380),
+        child: Container(
+          decoration: BoxDecoration(
+            color: _Palette.bgCard,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _Palette.cardBorder),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: InkWell(
+                    onTap: () => Navigator.of(context).pop(),
+                    borderRadius: BorderRadius.circular(20),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.close,
+                          color: _Palette.lightGray, size: 22),
+                    ),
+                  ),
+                ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    height: 220,
+                    width: double.infinity,
+                    color: const Color(0xFFF3F3F4),
+                    padding: const EdgeInsets.all(16),
+                    child: Image.asset(
+                      item.imagePath,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        item.icon,
+                        color: item.badgeColor.withValues(alpha: 0.5),
+                        size: 64,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: item.badgeColor.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(item.category,
+                      style: _Fonts.sectionLabel(color: item.badgeColor)
+                          .copyWith(fontSize: 10.5)),
+                ),
+                const SizedBox(height: 12),
+                Text(item.name,
+                    style: _Fonts.heading(size: 18, weight: FontWeight.w700)
+                        .copyWith(height: 1.3)),
+                const SizedBox(height: 4),
+                Text(item.code,
+                    style: _Fonts.body(size: 12.5, color: _Palette.mutedGray)),
+                const SizedBox(height: 14),
+                Text(item.price,
+                    style: _Fonts.display(size: 28, color: _Palette.yellow)),
+                const SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _Palette.bgDarkSection,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: _Palette.cardBorder),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.storefront_outlined,
+                          color: _Palette.yellow, size: 15),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          'IN-STORE PURCHASE ONLY · VISIT US TO BUY',
+                          style: _Fonts.sectionLabel(color: _Palette.offWhite)
+                              .copyWith(fontSize: 11.5),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -1861,7 +2380,7 @@ class _ContactSection extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: _Palette.bgDarkGraySection,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 90),
+      padding: _sectionPadding(context),
       child: Column(
         children: [
           Text('GET IN TOUCH',
@@ -2020,7 +2539,7 @@ class _Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 900;
+    final isWide = _breakpointOf(context) == _Breakpoint.desktop;
 
     return Column(
       children: [
