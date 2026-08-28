@@ -7,7 +7,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class CheckinService {
-  static const String apiUrl = "http://localhost/memberaccount/checkin_api.php";
+  static const String apiUrl = "https://member-account-backend.onrender.com/checkin_api.php";
 
   /// Preferred: check in using the member's signed, tamper-proof QR token.
   static Future<Map<String, dynamic>> checkInWithQr({required String qrData}) async {

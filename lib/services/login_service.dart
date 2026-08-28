@@ -7,7 +7,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class LoginService {
-  static const String apiUrl = "http://localhost/memberaccount/login_api.php";
+  static const String apiUrl = "https://member-account-backend.onrender.com";
 
   static Future<Map<String, dynamic>> login({
     required String email,

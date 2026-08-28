@@ -9,7 +9,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class SessionStatusService {
-  static const String apiUrl = "http://localhost/memberaccount/session_status_api.php";
+  static const String apiUrl = "https://member-account-backend.onrender.com/session_status_api.php";
 
   static Future<Map<String, dynamic>> fetchStatus(int memberId) async {
     try {

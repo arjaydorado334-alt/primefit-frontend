@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 class BodyPhotosService {
-  static const String apiUrl = "http://localhost/memberaccount/body_photos_api.php";
+  static const String apiUrl = "https://member-account-backend.onrender.com/body_photos_api.php";
 
   static Future<Map<String, dynamic>> fetchPhotos(int memberId) async {
     try {

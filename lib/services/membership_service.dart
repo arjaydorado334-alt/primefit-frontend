@@ -7,7 +7,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class MembershipService {
-  static const String apiUrl = "http://localhost/memberaccount/membership_api.php";
+  static const String apiUrl = "https://member-account-backend.onrender.com/membership_api.php";
 
   static Future<Map<String, dynamic>> createMembership({
     required int memberId,

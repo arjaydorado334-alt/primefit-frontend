@@ -7,7 +7,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ProfileService {
-  static const String apiUrl = "http://localhost/memberaccount/profile_api.php";
+  static const String apiUrl = "https://member-account-backend.onrender.com/profile_api.php";
 
   static Future<Map<String, dynamic>> fetchProfile(int memberId) async {
     try {

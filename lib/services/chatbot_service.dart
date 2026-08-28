@@ -6,7 +6,7 @@ import 'package:http_parser/http_parser.dart';
 class ChatbotService {
   // Match whatever base URL your other member services use
   // (db_connect.php's project, served via XAMPP/localhost).
-  static const String _baseUrl = 'http://localhost/memberaccount';
+  static const String _baseUrl = 'https://member-account-backend.onrender.com';
 
   static final List<Map<String, String>> _history = [];
 

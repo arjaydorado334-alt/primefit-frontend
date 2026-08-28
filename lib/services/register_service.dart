@@ -18,15 +18,11 @@ import 'package:http/http.dart' as http;
 class RegisterService {
   // IMPORTANT: Update this URL to match where your PHP files live.
   //
-  // - If you're running Flutter Web on the SAME machine as XAMPP:
-  //     "http://localhost/memberaccount/register_api.php"
-  //
-  // - If you're testing on a phone/emulator connecting to your PC's XAMPP:
-  //   use your PC's local IP address instead of "localhost", e.g.
-  //     "http://192.168.1.10/memberaccount/register_api.php"
+  // - If you're running against the deployed backend:
+  //     "https://member-account-backend.onrender.com/register_api.php"
   //   (Find your IP via `ipconfig` on Windows -> look for IPv4 Address)
 
-  static const String apiUrl = "http://localhost/memberaccount/register_api.php";
+  static const String apiUrl = "https://member-account-backend.onrender.com/register_api.php";
 
   static Future<Map<String, dynamic>> registerMember({
     required String firstName,

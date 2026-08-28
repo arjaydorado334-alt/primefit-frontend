@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 class ProfilePictureService {
-  static const String apiUrl = "http://localhost/memberaccount/upload_profile_picture.php";
+  static const String apiUrl = "https://member-account-backend.onrender.com/upload_profile_picture.php";
 
   static Future<Map<String, dynamic>> upload({
     required int memberId,

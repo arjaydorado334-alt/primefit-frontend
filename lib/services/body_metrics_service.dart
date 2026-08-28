@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 
 class BodyMetricsService {
   static const String apiUrl =
-      "http://localhost/memberaccount/body_metrics_api.php";
+      "https://member-account-backend.onrender.com/body_metrics_api.php";
 
   static Future<Map<String, dynamic>> fetchHistory(int memberId) async {
     try {
