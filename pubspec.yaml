@@ -1,0 +1,41 @@
+name: primefit
+description: PrimeFit Fitness Gym - landing, login, dashboard and QR check-in.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  qr_flutter: ^4.1.0
+  flutter_animate: ^4.5.0
+  http: ^1.2.0
+  image_picker: ^1.1.2
+  http_parser: ^4.0.2
+  url_launcher: ^6.3.0
+  flutter_markdown: ^0.7.4
+  google_fonts: ^6.2.1
+
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/primefit_logo.jpg
+    - assets/qr/gcash_qr.jpg
+    - assets/qr/maya_qr.jpg
+    - assets/images/hero_bg.jpg
+    - assets/images/about_gym.jpg
+    - assets/images/merch/sando_muscle_tee.jpg
+    - assets/images/merch/sando_sleeveless.jpg
+    - assets/images/merch/tshirt.jpg
+    - assets/images/auth_bg.jpg
+    
