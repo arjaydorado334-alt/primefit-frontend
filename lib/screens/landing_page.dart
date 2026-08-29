@@ -247,7 +247,7 @@ class _Fonts {
                       _PricingSection(
                           key: _pricingKey,
                           onGetStarted: () => _goToCreateAccount(context)),
-                     // const _LocationSection(),
+                      const _LocationSection(),
                       _MerchSection(key: _merchKey),
                       _ContactSection(key: _contactKey),
                       _Footer(
