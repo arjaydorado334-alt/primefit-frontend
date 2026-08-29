@@ -101,6 +101,34 @@ class _GlassCell extends StatelessWidget {
   }
 }
 
+/// Muted "← Back" link for the bottom-left corner of the auth card. Its
+/// icon size (15), gap (5), Inter label (12.5), and grey
+/// (`AppColors.textMutedOnLight` == 0xFF6B7280) are identical to the
+/// `_backButton` helper on the Create Account steps, so the affordance is
+/// the same on both entry screens and sits natively on the white card.
+class _BackLink extends StatelessWidget {
+  final VoidCallback onTap;
+  const _BackLink({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.arrow_back,
+              size: 15, color: AppColors.textMutedOnLight),
+          const SizedBox(width: 5),
+          Text('Back',
+              style: GoogleFonts.inter(
+                  color: AppColors.textMutedOnLight, fontSize: 12.5)),
+        ],
+      ),
+    );
+  }
+}
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -305,6 +333,12 @@ class _LoginPageState extends State<LoginPage> {
                             onBack: () => Navigator.of(context).pop(),
                             onCreateAccount: _handleCreateAccount,
                           ),
+                          const SizedBox(height: 22),
+                          // Back to the previous screen (the landing page, or
+                          // wherever the user came from). Sits at the
+                          // bottom-left inside the card; the Create Account
+                          // form uses this exact control in the same spot.
+                          _BackLink(onTap: () => Navigator.of(context).pop()),
                         ],
                       ),
                     ),

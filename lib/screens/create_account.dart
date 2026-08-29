@@ -1060,6 +1060,12 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
             ),
           ),
         ),
+        const SizedBox(height: 22),
+        // Back to the previous screen (landing page, or wherever the user
+        // came from). Bottom-left inside the card, using the same
+        // `_backButton` helper the later steps use, so the Login form and
+        // this one share one affordance.
+        _backButton(() => Navigator.of(context).pop()),
       ],
     );
   }
