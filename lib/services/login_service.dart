@@ -5,6 +5,7 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginService {
   static const String apiUrl = "https://member-account-backend.onrender.com/login_api.php";
@@ -22,7 +23,23 @@ class LoginService {
           "password": password,
         }),
       );
-      return jsonDecode(response.body);
+
+      final Map<String, dynamic> data = jsonDecode(response.body);
+
+      if (data["success"] == true && data["member"] != null) {
+        final member = data["member"];
+        final dynamic rawId = member["member_id"] ?? member["MemberID"];
+
+        if (rawId != null) {
+          final int memberId = int.tryParse(rawId.toString()) ?? 0;
+          if (memberId > 0) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setInt("member_id", memberId);
+          }
+        }
+      }
+
+      return data;
     } catch (e) {
       return {"success": false, "message": "Connection error: $e"};
     }
