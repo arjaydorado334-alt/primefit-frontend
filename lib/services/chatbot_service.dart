@@ -2,22 +2,44 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChatbotService {
   static const String _baseUrl = 'https://member-account-backend.onrender.com';
 
   static final List<Map<String, String>> _history = [];
 
+  /// Helper method to fetch member_id from local storage automatically
+  static Future<int> _getMemberId(int? explicitMemberId) async {
+    if (explicitMemberId != null && explicitMemberId > 0) {
+      return explicitMemberId;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    // Tries reading 'member_id', fallback to 'MemberID' or 'user_id' based on standard keys
+    return prefs.getInt('member_id') ?? 
+           prefs.getInt('MemberID') ?? 
+           prefs.getInt('user_id') ?? 
+           0;
+  }
+
   static Future<String> sendTextMessage(String text, {int? memberId}) async {
     final uri = Uri.parse('$_baseUrl/chatbot_api.php');
+    
+    // Automatically retrieve the stored member ID
+    final activeMemberId = await _getMemberId(memberId);
+
+    if (activeMemberId <= 0) {
+      throw Exception('Member ID not found. Please log in again.');
+    }
 
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json; charset=UTF-8'},
       body: jsonEncode({
         'message': text,
         'history': _history,
-        'member_id': memberId ?? 0,
+        'member_id': activeMemberId,
       }),
     );
 
@@ -44,11 +66,20 @@ class ChatbotService {
     List<Uint8List> imagesBytes,
     List<String> filenames, {
     String caption = '',
+    int? memberId,
   }) async {
     final uri = Uri.parse('$_baseUrl/chatbot_image_api.php');
 
+    // Automatically retrieve the stored member ID
+    final activeMemberId = await _getMemberId(memberId);
+
+    if (activeMemberId <= 0) {
+      throw Exception('Member ID not found. Please log in again.');
+    }
+
     final request = http.MultipartRequest('POST', uri);
     request.fields['message'] = caption;
+    request.fields['member_id'] = activeMemberId.toString();
 
     for (var i = 0; i < imagesBytes.length; i++) {
       final filename = filenames[i];

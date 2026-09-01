@@ -162,6 +162,7 @@ class _ChatPanelState extends State<ChatPanel> {
               images.map((e) => e.bytes).toList(),
               images.map((e) => e.name).toList(),
               caption: text,
+              memberId: widget.memberId,
             );
       setState(() {
         _currentSession.messages.add(ChatMessage(text: reply, isMe: false));
