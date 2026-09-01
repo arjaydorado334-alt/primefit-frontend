@@ -17,17 +17,19 @@ class ChatbotService {
       body: jsonEncode({
         'message': text,
         'history': _history,
-        'member_id': memberId,
+        'member_id': memberId ?? 0,
       }),
     );
 
-    if (response.statusCode != 200) {
-      throw Exception('Chatbot error: ${response.statusCode}');
+    Map<String, dynamic> data = {};
+    try {
+      data = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw Exception('Server error (${response.statusCode}): ${response.body}');
     }
 
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (data['success'] != true) {
-      throw Exception(data['error'] ?? 'Unknown chatbot error');
+    if (response.statusCode != 200 || data['success'] != true) {
+      throw Exception(data['error'] ?? 'Chatbot error: ${response.statusCode}');
     }
 
     final reply = data['reply'] as String;
@@ -68,13 +70,15 @@ class ChatbotService {
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
 
-    if (response.statusCode != 200) {
-      throw Exception('Chatbot error: ${response.statusCode}');
+    Map<String, dynamic> data = {};
+    try {
+      data = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw Exception('Server error (${response.statusCode}): ${response.body}');
     }
 
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (data['success'] != true) {
-      throw Exception(data['error'] ?? 'Unknown chatbot error');
+    if (response.statusCode != 200 || data['success'] != true) {
+      throw Exception(data['error'] ?? 'Chatbot error: ${response.statusCode}');
     }
 
     return data['reply'] as String;
