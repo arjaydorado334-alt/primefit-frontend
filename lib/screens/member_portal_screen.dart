@@ -149,8 +149,9 @@ class _MemberPortalScreenState extends State<MemberPortalScreen> {
     final session = UserSession.instance;
 
     final content = ChatFabOverlay(
-      child: _buildContent(),
-    );
+  memberId: session.dbMemberId,
+  child: _buildContent(),
+);
 
     return Scaffold(
       backgroundColor: context.isDarkMode ? AppColors.darkBg : AppColors.lightGray,

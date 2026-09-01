@@ -6,10 +6,12 @@ import 'chat_panel.dart';
 /// from the right edge of the screen.
 class ChatFabOverlay extends StatefulWidget {
   final Widget child;
+  final int? memberId;
 
   const ChatFabOverlay({
     super.key,
     required this.child,
+    this.memberId,
   });
 
   @override
@@ -75,7 +77,7 @@ class _ChatFabOverlayState extends State<ChatFabOverlay>
                   child: SizedBox(
                     width: panelWidth,
                     height: panelHeight,
-                    child: ChatPanel(onClose: _close),
+                    child: ChatPanel(onClose: _close, memberId: widget.memberId),
                   ),
                 ),
               ),

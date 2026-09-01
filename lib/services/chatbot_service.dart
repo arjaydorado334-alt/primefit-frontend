@@ -4,13 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 class ChatbotService {
-  // Match whatever base URL your other member services use
-  // (db_connect.php's project, served via XAMPP/localhost).
   static const String _baseUrl = 'https://member-account-backend.onrender.com';
 
   static final List<Map<String, String>> _history = [];
 
-  static Future<String> sendTextMessage(String text) async {
+  static Future<String> sendTextMessage(String text, {int? memberId}) async {
     final uri = Uri.parse('$_baseUrl/chatbot_api.php');
 
     final response = await http.post(
@@ -19,6 +17,7 @@ class ChatbotService {
       body: jsonEncode({
         'message': text,
         'history': _history,
+        'member_id': memberId,
       }),
     );
 

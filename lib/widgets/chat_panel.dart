@@ -46,7 +46,8 @@ class _ChatSession {
 
 class ChatPanel extends StatefulWidget {
   final VoidCallback onClose;
-  const ChatPanel({super.key, required this.onClose});
+  final int? memberId;
+  const ChatPanel({super.key, required this.onClose, this.memberId});
 
   @override
   State<ChatPanel> createState() => _ChatPanelState();
@@ -156,7 +157,7 @@ class _ChatPanelState extends State<ChatPanel> {
 
     try {
       final reply = images.isEmpty
-          ? await ChatbotService.sendTextMessage(text)
+          ? await ChatbotService.sendTextMessage(text, memberId: widget.memberId)
           : await ChatbotService.sendImagesMessage(
               images.map((e) => e.bytes).toList(),
               images.map((e) => e.name).toList(),
@@ -293,12 +294,10 @@ class _ChatPanelState extends State<ChatPanel> {
                   const SizedBox(height: 6),
                 if (msg.text.isNotEmpty)
                   msg.isMe
-                      // User's own messages are plain text (not markdown).
                       ? Text(
                           msg.text,
                           style: const TextStyle(color: Colors.white),
                         )
-                      // AI replies are rendered as markdown (bold, lists, etc.).
                       : MarkdownBody(
                           data: msg.text,
                           selectable: true,
