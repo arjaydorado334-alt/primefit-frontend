@@ -31713,8 +31713,9 @@ _.a=a
 _.V$=0
 _.Y$=b
 _.az$=_.a2$=0},
-CG:function CG(a,b){this.c=a
-this.a=b},
+CG:function CG(a,b,c){this.c=a
+this.d=b
+this.a=c},
 JK:function JK(a,b){var _=this
 _.d=!1
 _.f=_.e=$
@@ -31735,8 +31736,9 @@ this.c=c},
 azW:function azW(){},
 azX:function azX(){},
 azY:function azY(){},
-CH:function CH(a,b){this.c=a
-this.a=b},
+CH:function CH(a,b,c){this.c=a
+this.d=b
+this.a=c},
 JL:function JL(a,b,c,d){var _=this
 _.d=a
 _.e=b
@@ -33167,14 +33169,14 @@ break
 case 6:case 1:return A.w(q,r)
 case 2:return A.v(o.at(-1),r)}})
 return A.x($async$aai,r)},
-ab4(a){var s=0,r=A.y(t.N),q,p,o,n,m,l,k
-var $async$ab4=A.u(function(b,c){if(b===1)return A.v(c,r)
+ab4(a,b){var s=0,r=A.y(t.N),q,p,o,n,m,l,k
+var $async$ab4=A.u(function(c,d){if(c===1)return A.v(d,r)
 for(;;)switch(s){case 0:n=A.bW("https://member-account-backend.onrender.com/chatbot_api.php",0,null)
 m=t.N
 l=A.a7(["Content-Type","application/json"],m,m)
 s=3
-return A.r(A.oH(n,B.Q.kr(A.a7(["message",a,"history",$.aSg],m,t.K),null),l),$async$ab4)
-case 3:k=c
+return A.r(A.oH(n,B.Q.kr(A.a7(["message",a,"history",$.aSg,"member_id",b],m,t.X),null),l),$async$ab4)
+case 3:k=d
 l=k.b
 if(l!==200)throw A.f(A.d4("Chatbot error: "+l))
 p=t.P.a(B.Q.d7(A.dq(A.dp(k.e)).bT(k.w),null))
@@ -108531,15 +108533,15 @@ D0(a){return this.K(new A.aGb(this,a))},
 arM(){var s=this.c
 s.toString
 A.c8(s,!1).a7B(A.tK(new A.aG9(),null,t.z),new A.aGa())},
-E(a){var s,r,q,p=this,o=null,n=A.aqK(a)!==B.ho,m=$.ch(),l=p.ah5(),k=A.O(a).ax.a===B.P?B.cN:B.rw,j=n?o:A.aXO(o,new A.Fm(p.d,new A.aGc(p,a),p.gYt(),B.c.aR(m.a+" "+m.b),m.r,o))
+E(a){var s,r,q,p=this,o=null,n=A.aqK(a)!==B.ho,m=$.ch(),l=m.ax,k=p.ah5(),j=A.O(a).ax.a===B.P?B.cN:B.rw,i=n?o:A.aXO(o,new A.Fm(p.d,new A.aGc(p,a),p.gYt(),B.c.aR(m.a+" "+m.b),m.r,o))
 if(n)s=o
 else{s=A.O(a).ax.a===B.P?B.aM:B.j
 r=A.O(a).ax.a===B.P?B.j:B.q
 q=A.l(B.v_[p.d].b,o,o,o,o,o,o,o,o)
 s=new A.Cd(q,0,s,r,new A.a3q(o,o,1/0,56),o)}r=A.b([],t.p)
 if(n)r.push(new A.Fm(p.d,p.gaxi(),p.gYt(),B.c.aR(m.a+" "+m.b),m.r,o))
-r.push(A.ai(new A.CG(l,o),1,o))
-return A.uu(s,k,A.ac(r,B.m,B.e,B.f,0,o),j,o)},
+r.push(A.ai(new A.CG(k,l,o),1,o))
+return A.uu(s,j,A.ac(r,B.m,B.e,B.f,0,o),i,o)},
 ah5(){var s,r,q,p,o,n,m,l,k,j,i=$.ch()
 switch(this.d){case 0:s=i.a
 r=i.ch
@@ -111208,7 +111210,7 @@ r=o.f
 if(r===$){q=t.Ni
 p=A.cu(B.rN,o.gt_(),n)
 o.f!==$&&A.aE()
-r=o.f=new A.aI(p,new A.aH(B.a0E,B.l,q),q.i("aI<aB.T>"))}s=A.hW(96,A.jJ(A.nV(new A.dt(o.gt_(),!1,A.dR(!1,B.K,!0,A.V(16),A.c_(new A.CH(o.gahY(),n),j,k),B.an,n,12,n,n,n,n,n,B.be),n),r,n,!0),!s,n),n,n,n,16,n,n)
+r=o.f=new A.aI(p,new A.aH(B.a0E,B.l,q),q.i("aI<aB.T>"))}s=A.hW(96,A.jJ(A.nV(new A.dt(o.gt_(),!1,A.dR(!1,B.K,!0,A.V(16),A.c_(new A.CH(o.gahY(),o.a.d,n),j,k),B.an,n,12,n,n,n,n,n,B.be),n),r,n,!0),!s,n),n,n,n,16,n,n)
 q=o.d
 p=q?B.cT:B.u1
 q=A.b6Q(A.bE(p,B.j,new A.cW(q,t.gT),n,n),B.t3,A.bhW(),A.bhX())
@@ -111297,7 +111299,7 @@ p=4
 s=J.ci(d)===0?7:9
 break
 case 7:s=10
-return A.r(A.ab4(e),$async$tB)
+return A.r(A.ab4(e,m.a.d),$async$tB)
 case 10:j=b
 s=8
 break
