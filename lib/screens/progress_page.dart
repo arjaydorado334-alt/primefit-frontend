@@ -28,10 +28,17 @@ class _Colors {
   static bool _dark = false;
   static void sync(BuildContext c) => _dark = Theme.of(c).brightness == Brightness.dark;
 
-  static Color get bg => _dark ? AppColors.darkBg : const Color(0xFFF8FAFC); // slate-50
+  static Color get bg => _dark ? AppColors.darkBg : AppColors.portalPageBg;
   static Color get surface => _dark ? AppColors.darkCard : Colors.white;
   static Color get subtleBg => _dark ? AppColors.darkBorder : const Color(0xFFF1F5F9); // slate-100
   static Color get cardBorder => _dark ? AppColors.darkBorder : const Color(0xFFE2E8F0); // slate-200
+  static List<BoxShadow> get cardShadow =>
+      _dark ? const [] : AppColors.softCardShadow;
+
+  static Color cardBgFor(Color? accent) =>
+      (accent == null || _dark) ? surface : AppColors.cardTint(accent);
+  static Color cardBorderFor(Color? accent) =>
+      (accent == null || _dark) ? cardBorder : AppColors.cardTintBorder(accent);
   static Color get textPrimary => _dark ? Colors.white : const Color(0xFF0F172A); // slate-900
   static Color get textSecondary => _dark ? AppColors.textMutedOnDark : const Color(0xFF64748B); // slate-500
   static Color get textMuted => _dark ? AppColors.textMutedOnDark : const Color(0xFF94A3B8); // slate-400
@@ -1805,10 +1812,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                 children: [
                   Text(
                     'Progress Tracker',
-                    style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: _Colors.textPrimary),
+                    style: AppText.pageTitle(size: 26, color: _Colors.textPrimary),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -2012,7 +2016,12 @@ class _Dropdown extends StatelessWidget {
 class _Card extends StatelessWidget {
   final Widget child;
   final EdgeInsets padding;
-  const _Card({required this.child, this.padding = const EdgeInsets.all(20)});
+  final Color? accent;
+  const _Card({
+    required this.child,
+    this.padding = const EdgeInsets.all(20),
+    this.accent,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -2020,9 +2029,10 @@ class _Card extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: _Colors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _Colors.cardBorder),
+        color: _Colors.cardBgFor(accent),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _Colors.cardBorderFor(accent)),
+        boxShadow: _Colors.cardShadow,
       ),
       child: child,
     );
@@ -2131,15 +2141,20 @@ class _OverviewTab extends StatelessWidget {
           }),
           const SizedBox(height: 20),
           _Card(
+            accent: _Colors.cyan,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Monthly Attendance',
                     style: TextStyle(
                         fontSize: 17,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
                         color: _Colors.textPrimary)),
-                const SizedBox(height: 20),
+                const SizedBox(height: 3),
+                Text('Gym sessions logged per month',
+                    style: TextStyle(
+                        fontSize: 12.5, color: _Colors.textSecondary)),
+                const SizedBox(height: 22),
                 SizedBox(
                     height: 220,
                     child: _AttendanceChart(data: monthlyAttendance)),
@@ -2148,6 +2163,7 @@ class _OverviewTab extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           _Card(
+            accent: _Colors.cyan,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -2198,13 +2214,18 @@ class _StatCard extends StatelessWidget {
     _Colors.sync(context);
     return _Card(
       padding: const EdgeInsets.all(14),
+      accent: iconColor,
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(color: iconColor, shape: BoxShape.circle),
-            child: Icon(icon, color: Colors.white, size: 20),
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: _Colors._dark ? 0.22 : 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -2243,46 +2264,111 @@ class _AttendanceChart extends StatelessWidget {
         : data
             .map((m) => (m['sessions'] as num).toDouble())
             .fold(1.0, (a, b) => b > a ? b : a);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: data.map((m) {
-        final value = (m['sessions'] as num).toDouble();
-        final heightFactor =
-            maxValue == 0 ? 0.0 : (value / maxValue).clamp(0.0, 1.0);
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: FractionallySizedBox(
-                      heightFactor: heightFactor <= 0 ? 0.01 : heightFactor,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          color: _Colors.cyan,
-                          borderRadius:
-                              BorderRadius.vertical(top: Radius.circular(6)),
-                        ),
-                      ),
+    return Column(
+      children: [
+        Expanded(
+          child: Stack(
+            children: [
+              const Positioned.fill(child: _ChartGridlines()),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: data.map((m) {
+                  final value = (m['sessions'] as num).toDouble();
+                  final hf = maxValue == 0
+                      ? 0.0
+                      : (value / maxValue).clamp(0.0, 1.0);
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 7),
+                      child: _ChartBar(heightFactor: hf, color: _Colors.cyan),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  m['month'] as String,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 12.5, color: _Colors.textSecondary),
-                ),
-              ],
-            ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: data
+              .map((m) => Expanded(
+                    child: Text(
+                      m['month'] as String,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: 12, color: _Colors.textSecondary),
+                    ),
+                  ))
+              .toList(),
+        ),
+      ],
+    );
+  }
+}
+
+/// Four faint, evenly-spaced horizontal gridlines behind a bar chart.
+class _ChartGridlines extends StatelessWidget {
+  const _ChartGridlines();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(
+        4,
+        (_) => Expanded(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Container(height: 1, color: _Colors.cardBorder),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A single rounded, softly-gradiented bar with a small ring marker at its
+/// top. `heightFactor` is 0..1 of the available height.
+class _ChartBar extends StatelessWidget {
+  final double heightFactor;
+  final Color color;
+  const _ChartBar({required this.heightFactor, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final barH = (c.maxHeight * heightFactor).clamp(3.0, c.maxHeight);
+        return Stack(
+          alignment: Alignment.bottomCenter,
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              height: barH,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [color, color.withValues(alpha: 0.55)],
+                ),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(7)),
+              ),
+            ),
+            Positioned(
+              bottom: barH - 5,
+              child: Container(
+                width: 9,
+                height: 9,
+                decoration: BoxDecoration(
+                  color: _Colors.surface,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: color, width: 2),
+                ),
+              ),
+            ),
+          ],
         );
-      }).toList(),
+      },
     );
   }
 }
@@ -2327,10 +2413,10 @@ class _GoalProgressRow extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           child: LinearProgressIndicator(
             value: pct,
-            minHeight: 9,
+            minHeight: 10,
             backgroundColor: _Colors.subtleBg,
             valueColor: const AlwaysStoppedAnimation(_Colors.cyan),
           ),
@@ -2870,6 +2956,7 @@ class _BodyMetricsTab extends StatelessWidget {
                     child: CircularProgressIndicator(color: _Colors.cyan)))
           else ...[
             _Card(
+              accent: _Colors.purple,
               child: Row(
                 children: [
                   Container(
@@ -2934,6 +3021,7 @@ class _BodyMetricsTab extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             _Card(
+              accent: _Colors.emerald,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -2972,15 +3060,20 @@ class _BodyMetricsTab extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             _Card(
+              accent: _Colors.purple,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('BMI Over Time',
                       style: TextStyle(
                           fontSize: 17,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w800,
                           color: _Colors.textPrimary)),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 3),
+                  Text('Relative trend across your recorded entries',
+                      style: TextStyle(
+                          fontSize: 12.5, color: _Colors.textSecondary)),
+                  const SizedBox(height: 22),
                   metrics.isEmpty
                       ? Padding(
                           padding: const EdgeInsets.symmetric(vertical: 40),
@@ -2996,6 +3089,7 @@ class _BodyMetricsTab extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             _Card(
+              accent: _Colors.purple,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -3160,49 +3254,55 @@ class _BmiChart extends StatelessWidget {
         sorted.map((m) => m.bmi).fold(maxValue, (a, b) => b < a ? b : a);
     final range = (maxValue - minValue) <= 0 ? 1.0 : (maxValue - minValue);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: sorted.map((m) {
-        final heightFactor = ((m.bmi - minValue) / range).clamp(0.0, 1.0);
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(m.bmi.toStringAsFixed(1),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 11, color: _Colors.textSecondary)),
-                const SizedBox(height: 4),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: FractionallySizedBox(
-                      heightFactor: heightFactor <= 0 ? 0.05 : heightFactor,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          color: _Colors.purple,
-                          borderRadius:
-                              BorderRadius.vertical(top: Radius.circular(6)),
-                        ),
-                      ),
+    return Column(
+      children: [
+        Row(
+          children: sorted
+              .map((m) => Expanded(
+                    child: Text(m.bmi.toStringAsFixed(1),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: _Colors.textSecondary)),
+                  ))
+              .toList(),
+        ),
+        const SizedBox(height: 6),
+        Expanded(
+          child: Stack(
+            children: [
+              const Positioned.fill(child: _ChartGridlines()),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: sorted.map((m) {
+                  final hf =
+                      ((m.bmi - minValue) / range).clamp(0.0, 1.0);
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 7),
+                      child: _ChartBar(
+                          heightFactor: hf <= 0 ? 0.06 : hf,
+                          color: _Colors.purple),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  fmtDate(m.date),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 10.5, color: _Colors.textSecondary),
-                ),
-              ],
-            ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
-        );
-      }).toList(),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: sorted
+              .map((m) => Expanded(
+                    child: Text(fmtDate(m.date),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 10.5, color: _Colors.textSecondary)),
+                  ))
+              .toList(),
+        ),
+      ],
     );
   }
 }
@@ -3364,6 +3464,7 @@ class _FoodLogTab extends StatelessWidget {
                     child: CircularProgressIndicator(color: _Colors.cyan)))
           else ...[
             _Card(
+              accent: _Colors.amber,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

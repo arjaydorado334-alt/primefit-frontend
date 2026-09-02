@@ -1,9 +1,18 @@
+import 'dart:convert';
+// Web-only download of the per-transaction receipt file. This app ships only
+// as a Flutter web build (Chrome), so dart:html is the right tool here; the
+// receipt is rendered from that transaction's own recorded data.
+// ignore: avoid_web_libraries_in_flutter, deprecated_member_use
+import 'dart:html' as html;
+
 import 'package:flutter/material.dart';
+import '../data/membership_plans.dart';
 import '../screens/user_session.dart';
 import '../services/membership_service.dart';
 import '../services/payment_history_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/status_alert_banner.dart';
+import 'submit_receipt_page.dart';
 
 /// Dark-mode-aware surface/text tokens for this screen. `sync(context)` is
 /// called once at the top of `build()` (and inside each dialog builder,
@@ -13,8 +22,15 @@ class _Colors {
   static bool _dark = false;
   static void sync(BuildContext c) => _dark = Theme.of(c).brightness == Brightness.dark;
 
-  static Color get bg => _dark ? AppColors.darkBg : Colors.grey.shade50;
+  static Color get bg => _dark ? AppColors.darkBg : AppColors.portalPageBg;
   static Color get cardBg => _dark ? AppColors.darkCard : Colors.white;
+  static List<BoxShadow> get cardShadow =>
+      _dark ? const [] : AppColors.softCardShadow;
+  static Color cardBgFor(Color? accent) =>
+      (accent == null || _dark) ? cardBg : AppColors.cardTint(accent);
+  static Color cardBorderFor(Color? accent) => (accent == null || _dark)
+      ? cardBorder
+      : AppColors.cardTintBorder(accent);
   static Color get cardBorder => _dark ? AppColors.darkBorder : Colors.grey.shade200;
   static Color get surfaceAlt => _dark ? const Color(0xFF1C1D22) : Colors.grey.shade50;
   static Color get borderMuted => _dark ? AppColors.darkBorder : Colors.grey.shade300;
@@ -44,52 +60,7 @@ class _MembershipPageState extends State<MembershipPage> {
 
   final List<String> durationNames = const ['4 Months', '5 Months', '7 Months', '1 Year'];
 
-  final List<_Plan> plans = const [
-    _Plan(
-      planId: 1,
-      duration: '4 Months',
-      price: 2400,
-      features: [
-        'Unlimited time',
-        'Free Coach',
-        'Free Drinking Water',
-        'Clean Facility & Toilets',
-      ],
-    ),
-    _Plan(
-      planId: 2,
-      duration: '5 Months',
-      price: 2800,
-      features: [
-        'Unlimited time',
-        'Free Coach',
-        'Free Drinking Water',
-        'Clean Facility & Toilets',
-      ],
-    ),
-    _Plan(
-      planId: 3,
-      duration: '7 Months',
-      price: 3500,
-      features: [
-        'Unlimited time',
-        'Free Coach',
-        'Free Drinking Water',
-        'Clean Facility & Toilets',
-      ],
-    ),
-    _Plan(
-      planId: 4,
-      duration: '1 Year',
-      price: 4800,
-      features: [
-        'Unlimited time',
-        'Free Coach',
-        'Free Drinking Water',
-        'Clean Facility & Toilets',
-      ],
-    ),
-  ];
+  final List<MembershipPlan> plans = kMembershipPlans;
 
   List<List<String>> paymentHistory = [
     ['June 10, 2026', '1 Year', '₱4,800', 'Cash', 'Paid'],
@@ -464,9 +435,9 @@ class _MembershipPageState extends State<MembershipPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Membership & Payments',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              style: AppText.pageTitle(size: 28),
             ),
             const SizedBox(height: 4),
             Text(
@@ -487,9 +458,10 @@ class _MembershipPageState extends State<MembershipPage> {
     );
   }
 
-  Widget _buildCurrentMembershipCard(UserSession session, _Plan plan, int price, int durationMonths, DateTime renewalDate) {
+  Widget _buildCurrentMembershipCard(UserSession session, MembershipPlan plan, int price, int durationMonths, DateTime renewalDate) {
     if (!hasActiveMembership) {
       return _card(
+        accent: AppColors.accentAmber,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -515,7 +487,10 @@ class _MembershipPageState extends State<MembershipPage> {
       );
     }
 
+    final needsAttention =
+        session.isMembershipExpired || session.isMembershipExpiringSoon;
     return _card(
+      accent: needsAttention ? AppColors.accentAmber : AppColors.accentGreen,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -644,6 +619,8 @@ class _MembershipPageState extends State<MembershipPage> {
                   foregroundColor: Colors.red,
                   side: BorderSide(color: Colors.red.shade200),
                   backgroundColor: Colors.red.shade50,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 child: const Text('Cancel Membership'),
               ),
@@ -656,28 +633,36 @@ class _MembershipPageState extends State<MembershipPage> {
 
   Widget _infoBox(IconData icon, String label, String value) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _Colors.surfaceAlt,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _Colors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: _Colors.textSecondary),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(fontSize: 12, color: _Colors.textSecondary),
-              ),
-            ],
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _Colors._dark
+                  ? AppColors.cyan.withValues(alpha: 0.16)
+                  : AppColors.cyanTint,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 16, color: const Color(0xFF0E7490)),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 10),
           Text(
             value,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 1),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11.5, color: _Colors.textSecondary),
           ),
         ],
       ),
@@ -702,6 +687,7 @@ class _MembershipPageState extends State<MembershipPage> {
 
   Widget _buildChangePlanSection() {
     return _card(
+      accent: AppColors.accentCyan,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -722,6 +708,33 @@ class _MembershipPageState extends State<MembershipPage> {
           ),
           const SizedBox(height: 20),
           _buildPlansGrid(context),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (_) => const SubmitReceiptPage()),
+                );
+              },
+              icon: const Icon(Icons.receipt_long_outlined, size: 18),
+              label: const Text('Pay via GCash / Maya'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.cyan.shade700,
+                side: BorderSide(color: Colors.cyan.shade400),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Pay manually and upload your receipt for admin review.',
+            style: TextStyle(fontSize: 12, color: _Colors.textSecondary),
+          ),
         ],
       ),
     );
@@ -769,18 +782,19 @@ class _MembershipPageState extends State<MembershipPage> {
     });
   }
 
-  Widget _planCard(_Plan plan, int planIndex) {
+  Widget _planCard(MembershipPlan plan, int planIndex) {
     final isCurrent = hasActiveMembership && planIndex == currentPlanIndex;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isCurrent ? _Colors.planHighlightBg : _Colors.cardBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isCurrent ? Colors.cyan.shade400 : _Colors.borderMuted,
-          width: isCurrent ? 2 : 1,
+          width: isCurrent ? 1.5 : 1,
         ),
+        boxShadow: isCurrent ? const [] : _Colors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -844,6 +858,8 @@ class _MembershipPageState extends State<MembershipPage> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.cyan.shade700,
                       side: BorderSide(color: Colors.cyan.shade400),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     child: const Text('Renew Plan'),
                   )
@@ -852,6 +868,9 @@ class _MembershipPageState extends State<MembershipPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.cyan.shade500,
                       foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     child: Text(
                       hasActiveMembership ? 'Upgrade' : 'Choose Plan',
@@ -868,21 +887,9 @@ class _MembershipPageState extends State<MembershipPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Flexible(
-                child: Text(
-                  'Payment History',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              OutlinedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.download, size: 16),
-                label: const Text('Export'),
-              ),
-            ],
+          const Text(
+            'Payment History',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           _buildPaymentHistoryTableBody(context),
@@ -893,6 +900,9 @@ class _MembershipPageState extends State<MembershipPage> {
 
   Widget _buildPaymentHistoryTableBody(BuildContext context) {
     final table = Table(
+      // Every column is left-aligned (header + cells) and vertically centred,
+      // so the badge/link columns line up with the plain-text ones.
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       // On mobile, fixed pixel widths (inside a horizontal scroll) so
       // columns stay legible instead of being squeezed by Flex; tablet
       // and desktop keep the original Flex-based sizing, which already
@@ -934,22 +944,32 @@ class _MembershipPageState extends State<MembershipPage> {
               _cell(r[3]),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
-                child: _statusBadge(r[4], Colors.green),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _statusBadge(r[4], Colors.green),
+                ),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Row(
-                  children: [
-                    Text(
-                      'Download',
-                      style: TextStyle(fontSize: 12, color: Colors.blue),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: InkWell(
+                    onTap: () => _downloadReceipt(r),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Download',
+                          style: TextStyle(fontSize: 12, color: Colors.blue),
+                        ),
+                        Icon(
+                          Icons.arrow_forward,
+                          size: 12,
+                          color: Colors.blue,
+                        ),
+                      ],
                     ),
-                    Icon(
-                      Icons.arrow_forward,
-                      size: 12,
-                      color: Colors.blue,
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -963,6 +983,72 @@ class _MembershipPageState extends State<MembershipPage> {
       scrollDirection: Axis.horizontal,
       child: SizedBox(width: 90 + 90 + 90 + 80 + 80 + 110, child: table),
     );
+  }
+
+  /// Builds and downloads the receipt for one payment-history row. Each row
+  /// gets its own file, rendered from that transaction's recorded data
+  /// (date, plan, amount, method, status) plus the member's identity — i.e.
+  /// the receipt as it stood when that payment was completed.
+  void _downloadReceipt(List<String> row) {
+    final session = UserSession.instance;
+    final date = row.isNotEmpty ? row[0] : '';
+    final plan = row.length > 1 ? row[1] : '';
+    final amount = row.length > 2 ? row[2] : '';
+    final method = row.length > 3 ? row[3] : '';
+    final status = row.length > 4 ? row[4] : '';
+
+    String esc(String s) => const HtmlEscape().convert(s);
+    String slug(String s) => s.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '-');
+
+    final receiptHtml = '''<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>PrimeFit Receipt — ${esc(plan)} — ${esc(date)}</title>
+<style>
+  body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#f6f8fb;margin:0;padding:32px;color:#1a1a1a}
+  .r{max-width:520px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden}
+  .h{background:linear-gradient(135deg,#22b8d8,#1ba0b8);color:#fff;padding:20px 24px}
+  .h h1{margin:0;font-size:18px}.h p{margin:2px 0 0;font-size:12px;opacity:.85}
+  .b{padding:24px}
+  .lbl{color:#6b7280;font-size:11px;letter-spacing:.5px;text-transform:uppercase;margin-top:16px}
+  .val{font-size:14px;font-weight:600;margin-top:2px}
+  .sub{font-size:12px;color:#6b7280;margin-top:2px}
+  .row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eef0f3;font-size:14px}
+  .badge{display:inline-block;background:#ecfdf5;color:#047857;font-weight:700;font-size:12px;padding:3px 10px;border-radius:20px}
+  .total{display:flex;justify-content:space-between;font-size:16px;font-weight:800;margin-top:14px;padding-top:14px;border-top:2px solid #1a1a1a}
+  .foot{color:#9ca3af;font-size:11px;text-align:center;margin-top:20px}
+</style></head>
+<body><div class="r">
+  <div class="h"><h1>PrimeFit Fitness Gym</h1><p>Official Payment Receipt</p></div>
+  <div class="b">
+    <div class="lbl">Member</div>
+    <div class="val">${esc(session.fullName)}</div>
+    <div class="sub">${esc(session.memberId)} &middot; ${esc(session.email)}</div>
+    <div class="lbl">Transaction Date</div>
+    <div class="val">${esc(date)}</div>
+    <div style="margin-top:18px">
+      <div class="row"><span>${esc(plan)} Membership</span><span>${esc(amount)}</span></div>
+      <div class="row"><span>Payment method</span><span>${esc(method)}</span></div>
+      <div class="row"><span>Status</span><span class="badge">${esc(status)}</span></div>
+    </div>
+    <div class="total"><span>Total Paid</span><span>${esc(amount)}</span></div>
+  </div>
+</div>
+<div class="foot">Generated from your PrimeFit payment history.</div>
+</body></html>''';
+
+    final blob = html.Blob(<String>[receiptHtml], 'text/html');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    html.AnchorElement(href: url)
+      ..setAttribute('download', 'PrimeFit-Receipt-${slug(plan)}-${slug(date)}.html')
+      ..style.display = 'none'
+      ..click();
+    html.Url.revokeObjectUrl(url);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Receipt downloaded.')));
+    }
   }
 
   Widget _headerCell(String text) => Padding(
@@ -985,14 +1071,15 @@ class _MembershipPageState extends State<MembershipPage> {
     ),
   );
 
-  Widget _card({required Widget child}) {
+  Widget _card({required Widget child, Color? accent}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: _Colors.cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _Colors.cardBorder),
+        color: _Colors.cardBgFor(accent),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _Colors.cardBorderFor(accent)),
+        boxShadow: _Colors.cardShadow,
       ),
       child: child,
     );
@@ -1018,18 +1105,4 @@ class _MembershipPageState extends State<MembershipPage> {
       child: Text(text, style: TextStyle(fontSize: 12, color: color.shade700)),
     );
   }
-}
-
-class _Plan {
-  final int planId;
-  final String duration;
-  final int price;
-  final List<String> features;
-
-  const _Plan({
-    required this.planId,
-    required this.duration,
-    required this.price,
-    required this.features,
-  });
 }

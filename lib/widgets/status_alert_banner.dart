@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/user_session.dart';
+import '../theme/app_theme.dart';
 
 /// Shows contextual alert banners for membership expiry and low session
 /// credits. Renders nothing if neither condition applies. [onManageTap]
@@ -131,8 +132,9 @@ class _Banner extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: border),
+        boxShadow: AppColors.softCardShadow,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

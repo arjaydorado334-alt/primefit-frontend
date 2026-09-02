@@ -13,6 +13,13 @@ class _Colors {
   static Color get textMuted => _dark ? AppColors.textMutedOnDark : Colors.grey.shade500;
   static Color get mutedSurface => _dark ? AppColors.darkBorder : const Color(0xFFF1F2F4);
   static Color get progressTrackBg => _dark ? AppColors.darkBorder : const Color(0xFFEDEEF0);
+  static List<BoxShadow> get cardShadow =>
+      _dark ? const [] : AppColors.softCardShadow;
+
+  static Color cardBgFor(Color? accent) =>
+      (accent == null || _dark) ? cardBg : AppColors.cardTint(accent);
+  static Color cardBorderFor(Color? accent) =>
+      (accent == null || _dark) ? cardBorder : AppColors.cardTintBorder(accent);
 }
 
 class DashboardView extends StatelessWidget {
@@ -59,7 +66,7 @@ class DashboardView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Welcome back, $memberFirstName', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+          Text('Welcome back, $memberFirstName', style: AppText.pageTitle(size: 26)),
           const SizedBox(height: 4),
           Text("Here's a quick look at your activity.", style: TextStyle(color: _Colors.textSecondary)),
           const SizedBox(height: 20),
@@ -69,13 +76,14 @@ class DashboardView extends StatelessWidget {
             spacing: 16,
             runSpacing: 16,
             children: [
-              _StatCard(icon: Icons.calendar_today_outlined, iconBg: const Color(0xFFDCF3FF), value: '$visitsThisWeek', label: 'Visits this week'),
-              _StatCard(icon: Icons.local_fire_department, iconBg: const Color(0xFFFFF3D6), value: '$dayStreak', label: 'Day streak'),
-              _StatCard(icon: Icons.adjust, iconBg: const Color(0xFFF0E6FF), value: '$monthlyGoalPercent%', label: 'Monthly goal'),
+              _StatCard(icon: Icons.calendar_today_outlined, iconBg: AppColors.cyanTint, iconColor: const Color(0xFF0E7490), accent: AppColors.accentCyan, value: '$visitsThisWeek', label: 'Visits this week'),
+              _StatCard(icon: Icons.local_fire_department, iconBg: AppColors.goldTint, iconColor: const Color(0xFFB4770E), accent: AppColors.accentGold, value: '$dayStreak', label: 'Day streak'),
+              _StatCard(icon: Icons.adjust, iconBg: const Color(0xFFF0E6FF), iconColor: const Color(0xFF7C3AED), accent: AppColors.accentViolet, value: '$monthlyGoalPercent%', label: 'Monthly goal'),
             ],
           ),
           const SizedBox(height: 20),
           _Card(
+            accent: AppColors.accentCyan,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -129,7 +137,7 @@ class DashboardView extends StatelessWidget {
             spacing: 16,
             runSpacing: 16,
             children: [
-              _QuickAction(icon: Icons.qr_code_2, label: 'Check-In', bg: const Color(0xFFDCF3FF), onTap: onGoToCheckIn),
+              _QuickAction(icon: Icons.qr_code_2, label: 'Check-In', bg: AppColors.cyanTint, iconColor: const Color(0xFF0E7490), onTap: onGoToCheckIn),
             ],
           ),
         ],
@@ -140,6 +148,7 @@ class DashboardView extends StatelessWidget {
   Widget _sessionCreditsCard() {
     final progress = sessionCreditsTotal == 0 ? 0.0 : (sessionCreditsTotal - sessionCreditsLeft) / sessionCreditsTotal;
     return _Card(
+      accent: AppColors.accentCyan,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -195,7 +204,12 @@ class DashboardView extends StatelessWidget {
   }
 
   Widget _membershipCard() {
+    final session = UserSession.instance;
+    // Style-only: an expiring/expired membership leans amber, otherwise green.
+    final needsAttention =
+        session.isMembershipExpired || session.isMembershipExpiringSoon;
     return _Card(
+      accent: needsAttention ? AppColors.accentAmber : AppColors.accentGreen,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -227,7 +241,8 @@ class DashboardView extends StatelessWidget {
 
 class _Card extends StatelessWidget {
   final Widget child;
-  const _Card({required this.child});
+  final Color? accent;
+  const _Card({required this.child, this.accent});
 
   @override
   Widget build(BuildContext context) {
@@ -236,9 +251,10 @@ class _Card extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _Colors.cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _Colors.cardBorder),
+        color: _Colors.cardBgFor(accent),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _Colors.cardBorderFor(accent)),
+        boxShadow: _Colors.cardShadow,
       ),
       child: child,
     );
@@ -248,10 +264,19 @@ class _Card extends StatelessWidget {
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color iconBg;
+  final Color iconColor;
+  final Color? accent;
   final String value;
   final String label;
 
-  const _StatCard({required this.icon, required this.iconBg, required this.value, required this.label});
+  const _StatCard({
+    required this.icon,
+    required this.iconBg,
+    this.iconColor = Colors.black87,
+    this.accent,
+    required this.value,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -260,9 +285,10 @@ class _StatCard extends StatelessWidget {
       width: 220,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _Colors.cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _Colors.cardBorder),
+        color: _Colors.cardBgFor(accent),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _Colors.cardBorderFor(accent)),
+        boxShadow: _Colors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,9 +296,9 @@ class _StatCard extends StatelessWidget {
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(12)),
             alignment: Alignment.center,
-            child: Icon(icon, size: 20, color: Colors.black87),
+            child: Icon(icon, size: 20, color: iconColor),
           ),
           const SizedBox(height: 14),
           Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
@@ -287,34 +313,42 @@ class _QuickAction extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color bg;
+  final Color iconColor;
   final VoidCallback onTap;
 
-  const _QuickAction({required this.icon, required this.label, required this.bg, required this.onTap});
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.bg,
+    this.iconColor = Colors.black87,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     _Colors.sync(context);
     return Material(
-      color: _Colors.cardBg,
-      borderRadius: BorderRadius.circular(14),
+      color: _Colors.cardBgFor(AppColors.accentCyan),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
           width: 200,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _Colors.cardBorder),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _Colors.cardBorderFor(AppColors.accentCyan)),
+            boxShadow: _Colors.cardShadow,
           ),
           child: Row(
             children: [
               Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
                 alignment: Alignment.center,
-                child: Icon(icon, size: 20, color: Colors.black87),
+                child: Icon(icon, size: 20, color: iconColor),
               ),
               const SizedBox(width: 12),
               Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
