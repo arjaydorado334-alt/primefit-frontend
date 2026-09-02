@@ -18,7 +18,7 @@ import 'package:http/http.dart' as http;
 
 class CompleteRegistrationService {
   static const String apiUrl =
-      "https://member-account-backend.onrender.com/complete_registration_api.php";
+    "http://127.0.0.1:8080/complete_registration_api.php";
 
   static Future<Map<String, dynamic>> register({
     required String firstName,

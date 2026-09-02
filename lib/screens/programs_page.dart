@@ -17,13 +17,15 @@ class _Colors {
   static bool _dark = false;
   static void sync(BuildContext c) => _dark = Theme.of(c).brightness == Brightness.dark;
 
-  static Color get bg => _dark ? AppColors.darkBg : Colors.white;
-  static Color get surface => _dark ? AppColors.darkCard : const Color(0xFFF8FAFC);
+  static Color get bg => _dark ? AppColors.darkBg : AppColors.portalPageBg;
+  static Color get surface => _dark ? AppColors.darkCard : Colors.white;
   static Color get surfaceAlt => _dark ? AppColors.darkCard : const Color(0xFFF1F5F9);
   static Color get border => _dark ? AppColors.darkBorder : const Color(0xFFE2E8F0);
   static Color get textPrimary => _dark ? Colors.white : Colors.black87;
   static Color get textSecondary => _dark ? AppColors.textMutedOnDark : Colors.grey.shade600;
   static Color get textMuted => _dark ? AppColors.textMutedOnDark : Colors.grey.shade400;
+  static List<BoxShadow> get cardShadow =>
+      _dark ? const [] : AppColors.softCardShadow;
 }
 
 // --- MAIN WORKOUT INTERFACE WITH PERSISTENT SIDEBAR ---
@@ -652,6 +654,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
         color: workout['cardBg'],
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: workout['borderColor'], width: 1.5),
+        boxShadow: _Colors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -810,6 +813,7 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
               color: data['cardBg'],
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: data['borderColor'], width: 1.5),
+              boxShadow: _Colors.cardShadow,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -817,7 +821,7 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(data['title'], style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
+                    Text(data['title'], style: AppText.pageTitle(size: 24, color: Colors.black87)),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(color: data['badgeBg'], borderRadius: BorderRadius.circular(12)),
@@ -873,9 +877,15 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: _Colors.surface,
+                color: _Colors._dark
+                    ? _Colors.surface
+                    : AppColors.cardTint(AppColors.accentCyan),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _Colors.border),
+                border: Border.all(
+                    color: _Colors._dark
+                        ? _Colors.border
+                        : AppColors.cardTintBorder(AppColors.accentCyan)),
+                boxShadow: _Colors.cardShadow,
               ),
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Column(

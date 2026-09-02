@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../theme/app_theme.dart';
 import '../screens/user_session.dart';
-// 👇 Connects this widget to your PHP check-in API (checkin_api.php).
-// Adjust the path if checkin_service.dart lives somewhere else.
-import '../services/checkin_service.dart';
 import '../services/profile_service.dart';
 import 'status_alert_banner.dart';
 import 'dart:async';
@@ -30,6 +27,14 @@ class _Colors {
 
   static Color get infoBoxBg => _dark ? const Color(0xFF0E3440) : const Color(0xFFEAFAFF);
   static Color get infoBoxBorder => _dark ? const Color(0xFF1B5468) : const Color(0xFFCDEFFB);
+
+  static List<BoxShadow> get cardShadow =>
+      _dark ? const [] : AppColors.softCardShadow;
+
+  static Color cardBgFor(Color? accent) =>
+      (accent == null || _dark) ? cardBg : AppColors.cardTint(accent);
+  static Color cardBorderFor(Color? accent) =>
+      (accent == null || _dark) ? cardBorder : AppColors.cardTintBorder(accent);
 }
 
 class QrCheckinView extends StatefulWidget {
@@ -76,9 +81,10 @@ class _QrCheckinViewState extends State<QrCheckinView> {
   late int _sessionsUsed;
   late int _creditsTotal;
   late String _qrCodeData;
-  String _lastCheckIn = '—';
-  String _lastCheckInTime = '—';
-  bool _checkingIn = false;
+  // Members no longer self-check-in (the front desk scans their QR code), so
+  // these stay at their placeholder — the "Last Check-In" card is kept as-is.
+  final String _lastCheckIn = '—';
+  final String _lastCheckInTime = '—';
 
   Timer? _pollTimer;
 
@@ -152,52 +158,6 @@ class _QrCheckinViewState extends State<QrCheckinView> {
 
   int get _creditsLeft => widget.creditsTotal - _sessionsUsed;
 
-  Future<void> _handleCheckIn() async {
-    if (_qrCodeData.isEmpty && widget.dbMemberId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Member session not found. Please log in again.')),
-      );
-      return;
-    }
-    if (_creditsLeft <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No session credits left this period.')),
-      );
-      return;
-    }
-
-    setState(() => _checkingIn = true);
-
-    // Prefer the secure, signed QR token -- falls back to a raw member_id
-    // only for older accounts created before this feature existed.
-    final result = _qrCodeData.isNotEmpty
-        ? await CheckinService.checkInWithQr(qrData: _qrCodeData)
-        : await CheckinService.checkIn(memberId: widget.dbMemberId!);
-
-    if (!mounted) return;
-
-    setState(() => _checkingIn = false);
-
-    if (result['success'] == true) {
-      final newSessionsUsed = int.tryParse('${result['sessions_used']}') ?? (_sessionsUsed + 1);
-      setState(() {
-        _sessionsUsed = newSessionsUsed;
-        UserSession.instance.sessionsUsed = newSessionsUsed;
-        UserSession.instance.visitsThisWeek = int.tryParse('${result['visits_this_week']}') ?? (UserSession.instance.visitsThisWeek + 1);
-        UserSession.instance.visitDates.add(DateTime.now());
-        _lastCheckIn = result['check_in_date']?.toString() ?? _lastCheckIn;
-        _lastCheckInTime = result['check_in_time']?.toString() ?? _lastCheckInTime;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Checked in! 1 session credit deducted.')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message']?.toString() ?? 'Check-in failed. Please try again.')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     _Colors.sync(context);
@@ -207,6 +167,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
 
     final qrCard = _Card(
       padding: EdgeInsets.zero,
+      accent: AppColors.accentCyan,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -281,7 +242,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                               ),
                               const SizedBox(height: 12),
                               OutlinedButton.icon(
-                                onPressed: _checkingIn ? null : _refreshQrCode,
+                                onPressed: _refreshQrCode,
                                 icon: const Icon(Icons.refresh, size: 16),
                                 label: const Text('Refresh QR Code'),
                                 style: OutlinedButton.styleFrom(
@@ -317,19 +278,30 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                   style: TextStyle(color: _Colors.textMuted, fontSize: 11.5),
                 ),
                 const SizedBox(height: 16),
-                SizedBox(
+                // Members no longer check themselves in — the front desk
+                // scans this QR code to log the session. This status note
+                // replaces the old "Check In Now" button.
+                Container(
                   width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: _checkingIn ? null : _handleCheckIn,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      side: BorderSide(color: _Colors.cardBorder),
-                    ),
-                    child: Text(
-                      _checkingIn ? 'Checking in…' : 'Check In Now',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _Colors.infoBoxBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _Colors.infoBoxBorder),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.qr_code_scanner, color: AppColors.cyan, size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Your session is logged automatically when the front desk '
+                          'scans this QR code — no check-in needed here.',
+                          style: TextStyle(color: _Colors.textSecondary, fontSize: 12.5, height: 1.4),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -343,6 +315,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _Card(
+          accent: AppColors.accentCyan,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -366,6 +339,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                 children: [
                   Expanded(
                     child: _creditStatCard(
+                      icon: Icons.event_available_outlined,
                       label: 'Remaining',
                       value: '$_creditsLeft',
                       color: const Color(0xFF059669),
@@ -375,6 +349,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _creditStatCard(
+                      icon: Icons.history,
                       label: 'Used',
                       value: '$_sessionsUsed',
                       color: const Color(0xFFD97706),
@@ -384,6 +359,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _creditStatCard(
+                      icon: Icons.confirmation_number_outlined,
                       label: 'Total',
                       value: '$_creditsTotal',
                       color: AppColors.cyan,
@@ -425,11 +401,12 @@ class _QrCheckinViewState extends State<QrCheckinView> {
           children: [
             Expanded(
               child: _Card(
+                accent: AppColors.accentCyan,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.access_time, color: AppColors.cyan, size: 20),
-                    const SizedBox(height: 10),
+                    _iconBadge(Icons.access_time, AppColors.cyanTint, const Color(0xFF0E7490)),
+                    const SizedBox(height: 12),
                     Text('Last Check-In', style: TextStyle(color: _Colors.textMuted, fontSize: 12)),
                     Text(_lastCheckIn, style: TextStyle(fontWeight: FontWeight.w700, color: _Colors.textPrimary)),
                     Text(_lastCheckInTime, style: TextStyle(color: _Colors.textMuted, fontSize: 11.5)),
@@ -440,11 +417,12 @@ class _QrCheckinViewState extends State<QrCheckinView> {
             const SizedBox(width: 16),
             Expanded(
               child: _Card(
+                accent: AppColors.accentGold,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.calendar_today_outlined, color: AppColors.yellow, size: 20),
-                    const SizedBox(height: 10),
+                    _iconBadge(Icons.calendar_today_outlined, AppColors.goldTint, const Color(0xFFB4770E)),
+                    const SizedBox(height: 12),
                     Text('Sessions This Month', style: TextStyle(color: _Colors.textMuted, fontSize: 12)),
                     Text('$_sessionsUsed sessions', style: TextStyle(fontWeight: FontWeight.w700, color: _Colors.textPrimary)),
                   ],
@@ -492,7 +470,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('My QR Check-In Code', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: _Colors.textPrimary)),
+          Text('My QR Check-In Code', style: AppText.pageTitle(size: 24, color: _Colors.textPrimary)),
           const SizedBox(height: 4),
           Text('Show your QR code at the front desk — the staff scanner will log your session automatically.',
               style: TextStyle(color: _Colors.textSecondary)),
@@ -514,6 +492,16 @@ class _QrCheckinViewState extends State<QrCheckinView> {
     );
   }
 
+  /// Small pastel icon badge used on stat / info cards (matches the
+  /// Dashboard's `_StatCard` badge style).
+  static Widget _iconBadge(IconData icon, Color tint, Color color) => Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(color: tint, borderRadius: BorderRadius.circular(11)),
+        alignment: Alignment.center,
+        child: Icon(icon, size: 18, color: color),
+      );
+
   Widget _infoRow(IconData icon, String label, String value, {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -528,22 +516,30 @@ class _QrCheckinViewState extends State<QrCheckinView> {
     );
   }
 
-  Widget _creditStatCard({required String label, required String value, required Color color, required Color bg}) {
+  Widget _creditStatCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    required Color bg,
+  }) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(height: 8),
           Text(
             value,
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: color),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(fontSize: 11, color: _Colors.textSecondary, fontWeight: FontWeight.w500),
@@ -557,7 +553,12 @@ class _QrCheckinViewState extends State<QrCheckinView> {
 class _Card extends StatelessWidget {
   final Widget child;
   final EdgeInsets padding;
-  const _Card({required this.child, this.padding = const EdgeInsets.all(20)});
+  final Color? accent;
+  const _Card({
+    required this.child,
+    this.padding = const EdgeInsets.all(20),
+    this.accent,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -566,9 +567,10 @@ class _Card extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: _Colors.cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _Colors.cardBorder),
+        color: _Colors.cardBgFor(accent),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _Colors.cardBorderFor(accent)),
+        boxShadow: _Colors.cardShadow,
       ),
       child: child,
     );

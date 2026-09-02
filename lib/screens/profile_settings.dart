@@ -30,8 +30,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   bool _dark = false;
 
   Color get cyan => _dark ? const Color(0xFF4DD8EF) : const Color(0xFF22B8D8);
-  Color get bgGrey => _dark ? AppColors.darkBg : const Color(0xFFF7F8FA);
+  Color get bgGrey => _dark ? AppColors.darkBg : AppColors.portalPageBg;
   Color get cardBg => _dark ? AppColors.darkCard : Colors.white;
+  List<BoxShadow> get cardShadow => _dark ? const [] : AppColors.softCardShadow;
   Color get fieldFill => _dark ? AppColors.darkBg : Colors.white;
   Color get textDark => _dark ? Colors.white : const Color(0xFF1A1A1A);
   Color get textGrey => _dark ? AppColors.textMutedOnDark : const Color(0xFF6B7280);
@@ -282,7 +283,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Profile Settings', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: textDark)),
+                Text('Profile Settings', style: AppText.pageTitle(size: 30, color: textDark)),
                 const SizedBox(height: 6),
                 Text('Manage your personal information and preferences',
                     style: TextStyle(color: textGrey, fontSize: 15)),
@@ -290,17 +291,25 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final isWide = constraints.maxWidth > 760;
-                    final personalInfoCard = _card(child: _buildPersonalInformation());
+                    final personalInfoCard = _card(
+                        accent: AppColors.accentCyan,
+                        child: _buildPersonalInformation());
                     final sideColumn = Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _card(child: _buildProfilePicture()),
+                        _card(
+                            accent: AppColors.accentCyan,
+                            child: _buildProfilePicture()),
                         const SizedBox(height: 24),
-                        _card(child: _buildQuickStats()),
+                        _card(
+                            accent: AppColors.accentGold,
+                            child: _buildQuickStats()),
                         const SizedBox(height: 24),
                         _card(child: _buildSecurity()),
                         const SizedBox(height: 24),
-                        _card(child: _buildPreferences()),
+                        _card(
+                            accent: AppColors.accentViolet,
+                            child: _buildPreferences()),
                       ],
                     );
 
@@ -331,14 +340,17 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     );
   }
 
-  Widget _card({required Widget child}) {
+  Widget _card({required Widget child, Color? accent}) {
+    final tinted = accent != null && !_dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderGrey),
+        color: tinted ? AppColors.cardTint(accent) : cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: tinted ? AppColors.cardTintBorder(accent) : borderGrey),
+        boxShadow: cardShadow,
       ),
       child: child,
     );
@@ -521,7 +533,18 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: cyan),
+        Container(
+          width: 36,
+          height: 36,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: _dark
+                ? cyan.withValues(alpha: 0.16)
+                : AppColors.cyanTint,
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Icon(icon, size: 17, color: const Color(0xFF0E7490)),
+        ),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -624,7 +647,12 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             ],
           ),
         ),
-        Switch(value: value, activeThumbColor: cyan, onChanged: onChanged),
+        Switch(
+          value: value,
+          activeThumbColor: Colors.white,
+          activeTrackColor: cyan,
+          onChanged: onChanged,
+        ),
       ],
     );
   }

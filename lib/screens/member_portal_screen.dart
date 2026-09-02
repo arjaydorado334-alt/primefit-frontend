@@ -154,7 +154,7 @@ class _MemberPortalScreenState extends State<MemberPortalScreen> {
 );
 
     return Scaffold(
-      backgroundColor: context.isDarkMode ? AppColors.darkBg : AppColors.lightGray,
+      backgroundColor: context.isDarkMode ? AppColors.darkBg : AppColors.portalPageBg,
       drawer: isWide
           ? null
           : Drawer(
