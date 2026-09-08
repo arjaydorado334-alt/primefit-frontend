@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 // Adjust the path if programs_service.dart lives somewhere else.
 import '../services/programs_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/portal_hero.dart';
 import 'user_session.dart';
 
 /// Dark-mode-aware color tokens for this screen's chrome (page/dialog
@@ -26,6 +27,10 @@ class _Colors {
   static Color get textMuted => _dark ? AppColors.textMutedOnDark : Colors.grey.shade400;
   static List<BoxShadow> get cardShadow =>
       _dark ? const [] : AppColors.softCardShadow;
+
+  /// Plum section/dialog-title accent (lighter on dark), admin parity.
+  static Color get sectionTitle =>
+      _dark ? const Color(0xFFB39DDB) : AppColors.plum;
 }
 
 // --- MAIN WORKOUT INTERFACE WITH PERSISTENT SIDEBAR ---
@@ -289,7 +294,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Create Program', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                          Text('Create Program', style: AppText.sectionTitle(size: 22, color: _Colors.sectionTitle)),
                           InkWell(
                             onTap: () => Navigator.of(ctx).pop(),
                             child: Icon(Icons.close, color: _Colors.textMuted, size: 22),
@@ -490,10 +495,12 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00B4D8)),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.gold,
+                                  foregroundColor: AppColors.onGold),
                               onPressed: saving ? null : handleSave,
                               child: Text(saving ? 'Saving…' : 'Save Program',
-                                  style: const TextStyle(color: Colors.white)),
+                                  style: const TextStyle(color: AppColors.onGold)),
                             ),
                           ),
                         ],
@@ -556,6 +563,13 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const PortalHero(
+            eyebrow: 'Programs',
+            icon: Icons.show_chart,
+            title: 'Workout Programs',
+            subtitle: 'Browse training plans and build your own routine',
+          ),
+          const SizedBox(height: 24),
           Row(
             children: [
               _buildFilterButton('All'),
@@ -566,13 +580,14 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
               ElevatedButton.icon(
                 onPressed: _openCreateProgramDialog,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00B4D8),
+                  backgroundColor: AppColors.gold,
+                  foregroundColor: AppColors.onGold,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                label: const Text('Create Program', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                icon: const Icon(Icons.add, size: 18, color: AppColors.onGold),
+                label: const Text('Create Program', style: TextStyle(color: AppColors.onGold, fontWeight: FontWeight.w600)),
               ),
             ],
           ),

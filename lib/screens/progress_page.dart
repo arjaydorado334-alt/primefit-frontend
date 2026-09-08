@@ -13,6 +13,7 @@ import '../services/food_logs_service.dart';
 import '../services/food_search_service.dart';
 import '../services/user_targets_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/portal_hero.dart';
 import 'user_session.dart';
 
 // ---------------------------------------------------------------------------
@@ -56,6 +57,10 @@ class _Colors {
   static const pink = Color(0xFFEC4899); // pink-500
   static const emerald = Color(0xFF059669); // emerald-600
   static const red = Color(0xFFEF4444);
+
+  /// Plum section-title accent (lighter on dark), shared with the admin app.
+  static Color get sectionTitle =>
+      _dark ? const Color(0xFFB39DDB) : AppColors.plum;
 }
 
 // ---------------------------------------------------------------------------
@@ -425,8 +430,8 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Text('Log Personal Record',
                                 style: TextStyle(
                                     fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: _Colors.textPrimary)),
+                                    fontWeight: FontWeight.w800,
+                                    color: _Colors.sectionTitle)),
                             InkWell(
                               onTap: () => Navigator.of(ctx).pop(),
                               borderRadius: BorderRadius.circular(20),
@@ -527,7 +532,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Expanded(
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: _Colors.cyan,
+                                  backgroundColor: AppColors.gold,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 15),
                                   shape: RoundedRectangleBorder(
@@ -537,7 +542,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                                 onPressed: saving ? null : handleSave,
                                 child: Text(saving ? 'Saving…' : 'Save PR',
                                     style: const TextStyle(
-                                        color: Colors.white,
+                                        color: AppColors.onGold,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 15)),
                               ),
@@ -878,8 +883,8 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Text('Log Body Metrics',
                                 style: TextStyle(
                                     fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: _Colors.textPrimary)),
+                                    fontWeight: FontWeight.w800,
+                                    color: _Colors.sectionTitle)),
                             InkWell(
                               onTap: () => Navigator.of(ctx).pop(),
                               borderRadius: BorderRadius.circular(20),
@@ -951,7 +956,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Expanded(
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: _Colors.cyan,
+                                  backgroundColor: AppColors.gold,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 15),
                                   shape: RoundedRectangleBorder(
@@ -961,7 +966,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                                 onPressed: saving ? null : handleSave,
                                 child: Text(saving ? 'Saving…' : 'Save Entry',
                                     style: const TextStyle(
-                                        color: Colors.white,
+                                        color: AppColors.onGold,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 15)),
                               ),
@@ -1261,8 +1266,8 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Text('Log Food Entry',
                                 style: TextStyle(
                                     fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: _Colors.textPrimary)),
+                                    fontWeight: FontWeight.w800,
+                                    color: _Colors.sectionTitle)),
                             InkWell(
                               onTap: closeDialog,
                               borderRadius: BorderRadius.circular(20),
@@ -1451,7 +1456,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Expanded(
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: _Colors.cyan,
+                                  backgroundColor: AppColors.gold,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 15),
                                   shape: RoundedRectangleBorder(
@@ -1461,7 +1466,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                                 onPressed: saving ? null : handleSave,
                                 child: Text(saving ? 'Saving…' : 'Save Food',
                                     style: const TextStyle(
-                                        color: Colors.white,
+                                        color: AppColors.onGold,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 15)),
                               ),
@@ -1666,8 +1671,8 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Text('Set Daily Targets',
                                 style: TextStyle(
                                     fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: _Colors.textPrimary)),
+                                    fontWeight: FontWeight.w800,
+                                    color: _Colors.sectionTitle)),
                             InkWell(
                               onTap: () => Navigator.of(ctx).pop(),
                               borderRadius: BorderRadius.circular(20),
@@ -1765,7 +1770,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Expanded(
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: _Colors.cyan,
+                                  backgroundColor: AppColors.gold,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 15),
                                   shape: RoundedRectangleBorder(
@@ -1775,7 +1780,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                                 onPressed: saving ? null : handleSave,
                                 child: Text(saving ? 'Saving…' : 'Save Targets',
                                     style: const TextStyle(
-                                        color: Colors.white,
+                                        color: AppColors.onGold,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 15)),
                               ),
@@ -1805,22 +1810,14 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Progress Tracker',
-                    style: AppText.pageTitle(size: 26, color: _Colors.textPrimary),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: PortalHero(
+                eyebrow: 'Progress',
+                icon: Icons.fitness_center,
+                title: 'Progress Tracker',
+                subtitle:
                     'Monitor your body, records, and personalized programs',
-                    style:
-                        TextStyle(fontSize: 14, color: _Colors.textSecondary),
-                  ),
-                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -2175,7 +2172,7 @@ class _OverviewTab extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
-                            color: _Colors.textPrimary)),
+                            color: _Colors.sectionTitle)),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -2460,21 +2457,21 @@ class _PrRecordsTab extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: _Colors.textPrimary)),
+                      color: _Colors.sectionTitle)),
               ElevatedButton.icon(
                 onPressed: onAdd,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _Colors.cyan,
+                  backgroundColor: AppColors.gold,
                   elevation: 0,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
-                icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                icon: const Icon(Icons.add, size: 18, color: AppColors.onGold),
                 label: const Text('Log PR',
                     style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                        color: AppColors.onGold, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -2686,17 +2683,17 @@ class _BodyPhotosTab extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onUpload,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _Colors.cyan,
+                  backgroundColor: AppColors.gold,
                   elevation: 0,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
-                icon: const Icon(Icons.upload, size: 18, color: Colors.white),
+                icon: const Icon(Icons.upload, size: 18, color: AppColors.onGold),
                 label: const Text('Upload Photo',
                     style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                        color: AppColors.onGold, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -2930,21 +2927,21 @@ class _BodyMetricsTab extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: _Colors.textPrimary)),
+                      color: _Colors.sectionTitle)),
               ElevatedButton.icon(
                 onPressed: onAdd,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _Colors.cyan,
+                  backgroundColor: AppColors.gold,
                   elevation: 0,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
-                icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                icon: const Icon(Icons.add, size: 18, color: AppColors.onGold),
                 label: const Text('Add Entry',
                     style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                        color: AppColors.onGold, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -3029,7 +3026,7 @@ class _BodyMetricsTab extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
-                          color: _Colors.textPrimary)),
+                          color: _Colors.sectionTitle)),
                   const SizedBox(height: 16),
                   if (targets.targetWeight == null ||
                       targets.targetWeight! <= 0)
@@ -3068,7 +3065,7 @@ class _BodyMetricsTab extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
-                          color: _Colors.textPrimary)),
+                          color: _Colors.sectionTitle)),
                   const SizedBox(height: 3),
                   Text('Relative trend across your recorded entries',
                       style: TextStyle(
@@ -3416,14 +3413,14 @@ class _FoodLogTab extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: _Colors.textPrimary)),
+                      color: _Colors.sectionTitle)),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ElevatedButton.icon(
                     onPressed: onSetTargets,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _Colors.cyan,
+                      backgroundColor: AppColors.gold,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
@@ -3431,26 +3428,26 @@ class _FoodLogTab extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10)),
                     ),
                     icon: const Icon(Icons.track_changes,
-                        size: 18, color: Colors.white),
+                        size: 18, color: AppColors.onGold),
                     label: const Text('Set Targets',
                         style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w600)),
+                            color: AppColors.onGold, fontWeight: FontWeight.w600)),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
                     onPressed: isToday ? onAdd : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _Colors.cyan,
+                      backgroundColor: AppColors.gold,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                     ),
-                    icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                    icon: const Icon(Icons.add, size: 18, color: AppColors.onGold),
                     label: const Text('Add Food',
                         style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w600)),
+                            color: AppColors.onGold, fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),

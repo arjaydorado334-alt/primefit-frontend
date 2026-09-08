@@ -10,6 +10,7 @@ import '../services/profile_picture_service.dart';
 import '../services/notification_prefs_service.dart';
 import '../theme/theme_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/portal_hero.dart';
 
 /// Profile Settings screen.
 ///
@@ -33,11 +34,12 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   Color get bgGrey => _dark ? AppColors.darkBg : AppColors.portalPageBg;
   Color get cardBg => _dark ? AppColors.darkCard : Colors.white;
   List<BoxShadow> get cardShadow => _dark ? const [] : AppColors.softCardShadow;
-  Color get fieldFill => _dark ? AppColors.darkBg : Colors.white;
+  Color get fieldFill => _dark ? AppColors.darkBg : AppColors.fieldFill;
   Color get textDark => _dark ? Colors.white : const Color(0xFF1A1A1A);
   Color get textGrey => _dark ? AppColors.textMutedOnDark : const Color(0xFF6B7280);
   Color get borderGrey => _dark ? AppColors.darkBorder : const Color(0xFFE1E4E8);
   Color get hintColor => _dark ? AppColors.textMutedOnDark : const Color(0xFFB0B4BA);
+  Color get plumTitle => _dark ? const Color(0xFFB39DDB) : AppColors.plum;
 
   late final TextEditingController _firstNameCtrl;
   late final TextEditingController _lastNameCtrl;
@@ -283,10 +285,12 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Profile Settings', style: AppText.pageTitle(size: 30, color: textDark)),
-                const SizedBox(height: 6),
-                Text('Manage your personal information and preferences',
-                    style: TextStyle(color: textGrey, fontSize: 15)),
+                const PortalHero(
+                  eyebrow: 'Profile',
+                  icon: Icons.person_outline,
+                  title: 'Profile Settings',
+                  subtitle: 'Manage your personal information and preferences',
+                ),
                 const SizedBox(height: 28),
                 LayoutBuilder(
                   builder: (context, constraints) {
@@ -361,7 +365,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       children: [
         Icon(icon, color: cyan, size: 20),
         const SizedBox(width: 10),
-        Text(text, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: textDark)),
+        Text(text, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: plumTitle)),
       ],
     );
   }
@@ -405,8 +409,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           child: ElevatedButton(
             onPressed: _saving ? null : _handleSaveChanges,
             style: ElevatedButton.styleFrom(
-              backgroundColor: cyan,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.gold,
+              foregroundColor: AppColors.onGold,
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -467,7 +471,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Profile Picture', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: textDark)),
+        Text('Profile Picture', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: plumTitle)),
         const SizedBox(height: 20),
         Center(
           child: Column(
@@ -518,7 +522,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Quick Stats', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: textDark)),
+        Text('Quick Stats', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: plumTitle)),
         const SizedBox(height: 18),
         _statRow(Icons.calendar_today_outlined, 'Member Since', session.memberSinceLabel),
         const SizedBox(height: 16),

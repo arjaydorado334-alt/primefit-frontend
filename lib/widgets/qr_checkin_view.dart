@@ -3,6 +3,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../theme/app_theme.dart';
 import '../screens/user_session.dart';
 import '../services/profile_service.dart';
+import 'portal_hero.dart';
 import 'status_alert_banner.dart';
 import 'dart:async';
 import '../services/session_status_service.dart';
@@ -35,6 +36,10 @@ class _Colors {
       (accent == null || _dark) ? cardBg : AppColors.cardTint(accent);
   static Color cardBorderFor(Color? accent) =>
       (accent == null || _dark) ? cardBorder : AppColors.cardTintBorder(accent);
+
+  /// Plum section-title accent (lighter on dark), shared with the admin app.
+  static Color get sectionTitle =>
+      _dark ? const Color(0xFFB39DDB) : AppColors.plum;
 }
 
 class QrCheckinView extends StatefulWidget {
@@ -174,7 +179,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: const BoxDecoration(
-              color: AppColors.cyan,
+              color: AppColors.brandTeal,
               borderRadius: BorderRadius.only(topLeft: Radius.circular(14), topRight: Radius.circular(14)),
             ),
             child: Row(
@@ -322,16 +327,17 @@ class _QrCheckinViewState extends State<QrCheckinView> {
               Row(
                 children: [
                   Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppColors.cyan.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                    width: 34,
+                    height: 34,
+                    decoration: const BoxDecoration(
+                      color: AppColors.cyanTint,
+                      shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.confirmation_number_outlined, color: AppColors.cyan, size: 18),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.confirmation_number_outlined, color: Color(0xFF0E7490), size: 18),
                   ),
                   const SizedBox(width: 10),
-                  Text('Session Credits', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: _Colors.textPrimary)),
+                  Text('Session Credits', style: AppText.sectionTitle(color: _Colors.sectionTitle)),
                 ],
               ),
               const SizedBox(height: 20),
@@ -448,7 +454,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('How it works', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: _Colors.textPrimary)),
+                    Text('How it works', style: AppText.sectionTitle(size: 13.5, color: _Colors.sectionTitle)),
                     const SizedBox(height: 6),
                     Text(
                       'Each time you visit PrimeFit, present your QR code to the front desk. '
@@ -470,10 +476,13 @@ class _QrCheckinViewState extends State<QrCheckinView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('My QR Check-In Code', style: AppText.pageTitle(size: 24, color: _Colors.textPrimary)),
-          const SizedBox(height: 4),
-          Text('Show your QR code at the front desk — the staff scanner will log your session automatically.',
-              style: TextStyle(color: _Colors.textSecondary)),
+          const PortalHero(
+            eyebrow: 'Check-In',
+            icon: Icons.qr_code_2,
+            title: 'My QR Check-In Code',
+            subtitle:
+                'Show your QR code at the front desk — the staff scanner will log your session automatically.',
+          ),
           const SizedBox(height: 20),
           StatusAlertBanner(session: UserSession.instance),
           const SizedBox(height: 4),
@@ -497,7 +506,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
   static Widget _iconBadge(IconData icon, Color tint, Color color) => Container(
         width: 36,
         height: 36,
-        decoration: BoxDecoration(color: tint, borderRadius: BorderRadius.circular(11)),
+        decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
         alignment: Alignment.center,
         child: Icon(icon, size: 18, color: color),
       );

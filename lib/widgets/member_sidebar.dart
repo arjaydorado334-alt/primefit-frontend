@@ -2,37 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
-/// PrimeFit member-portal sidebar. Dark (near-black) surface keeping the
-/// brand cyan/gold accents. The active nav item is a soft cyan-tinted pill
-/// with a short left accent bar; inactive items are plain and lighten on
-/// hover. Menu items, their icons, and their navigation targets are
-/// unchanged from before.
+/// PrimeFit member-portal sidebar. A single flat cyan fill (no gradient),
+/// mirroring the PrimeFit Admin app:
+///  * brand lock-up sits on a white chip so the two-tone "PrimeFit"
+///    wordmark ("Prime" dark, "Fit" gold) stays legible;
+///  * nav icons are gold on every state;
+///  * the active item is a solid white rounded pill with dark text and a
+///    trailing chevron; inactive items are high-contrast white text on the
+///    cyan, lifting to a faint white overlay on hover;
+///  * the footer user card sits on a deeper-teal panel with a "Sign Out"
+///    row below it.
+/// Menu items, their icons, and their navigation targets are unchanged.
 class _SidebarColors {
-  // Near-black surface (matches the app's canonical dark background).
-  static const Color background = AppColors.darkBg;
+  static const Color background = AppColors.sidebarFill;
+  static const Color footerPanel = AppColors.sidebarFooter;
 
-  // Gold — brand accent, used for the membership tier badge and the
-  // "Fit" half of the PrimeFit wordmark.
-  static const Color gold = AppColors.yellow;
-  static const Color goldText = Color(0xFF3A2B00); // readable on a gold chip
+  static const Color gold = AppColors.yellow; // wordmark "Fit"
+  static const Color goldText = Color(0xFF3A2B00);
 
-  // Cyan — brand accent, used for the menu icons and the "Prime" half
-  // of the PrimeFit wordmark.
-  static const Color cyan = AppColors.cyan;
+  static const Color navIcon = AppColors.goldOnCyan; // gold on cyan (inactive)
+  static const Color navIconActive = AppColors.goldDark; // gold on white pill
 
-  // Red — used for the Logout row's hover/pressed state.
+  static const Color activeText = Color(0xFF1A1A1A);
+
   static const Color red = Color(0xFFEF4444);
   static Color redOverlay(double opacity) => red.withValues(alpha: opacity);
 
   static const Color textPrimary = Colors.white;
-  static const Color textSecondary = Color(0xFFB6BAC2);
-  static const Color textMuted = Color(0xFF7A7F8A);
-  static const Color iconInactive = Color(0xFF9CA3AF);
+  static const Color textInactive = Color(0xFFEAF7FB); // hi-contrast on cyan
+  static const Color textMuted = Color(0xFFC7E7F0); // subtitle / section label
 
-  static const Color divider = Color(0x14FFFFFF);
-
-  // Soft cyan wash behind the active item; white wash for hover.
-  static Color activeWash(double alpha) => cyan.withValues(alpha: alpha);
   static Color hoverWash(double alpha) => Colors.white.withValues(alpha: alpha);
 }
 
@@ -76,56 +75,61 @@ class MemberSidebar extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ---------------- Branding ----------------
+            // ---------------- Branding (white chip) ----------------
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
-              child: Row(
-                children: [
-                  ClipOval(
-                    child: Image.asset(
-                      'assets/images/primefit_logo.jpg',
-                      width: 38,
-                      height: 38,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text.rich(
-                        TextSpan(
-                          // Same face as the Login page's PrimeFit wordmark.
-                          style: GoogleFonts.archivoBlack(
-                            fontSize: 16,
-                            letterSpacing: -0.3,
-                          ),
-                          children: const [
-                            TextSpan(text: 'Prime', style: TextStyle(color: _SidebarColors.cyan)),
-                            TextSpan(text: 'Fit', style: TextStyle(color: _SidebarColors.gold)),
-                          ],
-                        ),
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: AppColors.softCardShadow,
+                ),
+                child: Row(
+                  children: [
+                    ClipOval(
+                      child: Image.asset(
+                        'assets/images/primefit_logo.jpg',
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.cover,
                       ),
-                      const SizedBox(height: 2),
-                      const Text('Member Portal',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: _SidebarColors.textMuted,
-                            letterSpacing: 0.2,
-                          )),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: 11),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text.rich(
+                          TextSpan(
+                            style: GoogleFonts.archivoBlack(
+                              fontSize: 16,
+                              letterSpacing: -0.3,
+                            ),
+                            children: const [
+                              TextSpan(text: 'Prime', style: TextStyle(color: Color(0xFF374151))),
+                              TextSpan(text: 'Fit', style: TextStyle(color: _SidebarColors.gold)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text('Member Portal',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: Color(0xFF6B7280),
+                              letterSpacing: 0.2,
+                            )),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-            const Divider(height: 1, color: _SidebarColors.divider),
-            const SizedBox(height: 18),
 
             // ---------------- Navigation ----------------
             const Padding(
-              padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+              padding: EdgeInsets.fromLTRB(24, 6, 20, 10),
               child: Text(
-                'MENU',
+                'MY PORTAL',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -149,49 +153,60 @@ class MemberSidebar extends StatelessWidget {
             ),
             const Spacer(),
 
-            // ---------------- Member profile + Logout ----------------
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: _SidebarColors.divider)),
-              ),
+            // ---------------- Member profile + Sign Out ----------------
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _SidebarColors.hoverWash(0.08),
-                          border: Border.all(color: _SidebarColors.hoverWash(0.12)),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _SidebarColors.footerPanel,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: _SidebarColors.hoverWash(0.08)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _SidebarColors.hoverWash(0.16),
+                            border: Border.all(color: _SidebarColors.hoverWash(0.20)),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            _initials(memberName),
+                            style: const TextStyle(
+                              color: _SidebarColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
                         ),
-                        alignment: Alignment.center,
-                        child: const Icon(Icons.person_outline,
-                            color: _SidebarColors.textPrimary, size: 18),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(memberName,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13.5,
-                                  color: _SidebarColors.textPrimary,
-                                )),
-                            const SizedBox(height: 4),
-                            _TierBadge(tier: memberTier),
-                          ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(memberName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13.5,
+                                    color: _SidebarColors.textPrimary,
+                                  )),
+                              const SizedBox(height: 4),
+                              _TierBadge(tier: memberTier),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 6),
                   _LogoutTile(onTap: onLogout),
                 ],
               ),
@@ -200,6 +215,15 @@ class MemberSidebar extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static String _initials(String name) {
+    final parts =
+        name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.characters.first.toUpperCase();
+    return (parts.first.characters.first + parts.last.characters.first)
+        .toUpperCase();
   }
 }
 
@@ -230,14 +254,16 @@ class _TierBadge extends StatelessWidget {
   }
 }
 
-/// A single sidebar nav row. Active = soft cyan pill + short left accent
-/// bar + cyan icon; inactive = plain, lightening a touch on hover.
+/// A single sidebar nav row. Active = solid white pill + dark text + a
+/// trailing chevron + dark-gold icon; inactive = gold icon + high-contrast
+/// white label on the cyan, lifting to a faint white overlay on hover.
 class _SidebarTile extends StatefulWidget {
   final SidebarItemData data;
   final bool selected;
   final VoidCallback onTap;
 
-  const _SidebarTile({required this.data, required this.selected, required this.onTap});
+  const _SidebarTile(
+      {required this.data, required this.selected, required this.onTap});
 
   @override
   State<_SidebarTile> createState() => _SidebarTileState();
@@ -251,16 +277,15 @@ class _SidebarTileState extends State<_SidebarTile> {
     final selected = widget.selected;
 
     final Color rowBg = selected
-        ? _SidebarColors.activeWash(0.14)
-        : (_hovered ? _SidebarColors.hoverWash(0.06) : Colors.transparent);
+        ? Colors.white
+        : (_hovered ? _SidebarColors.hoverWash(0.12) : Colors.transparent);
     final Color iconColor =
-        selected ? _SidebarColors.cyan : _SidebarColors.iconInactive;
-    final Color labelColor = selected
-        ? _SidebarColors.textPrimary
-        : (_hovered ? _SidebarColors.textPrimary : _SidebarColors.textSecondary);
+        selected ? _SidebarColors.navIconActive : _SidebarColors.navIcon;
+    final Color labelColor =
+        selected ? _SidebarColors.activeText : _SidebarColors.textInactive;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 8),
       child: MouseRegion(
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
@@ -269,40 +294,36 @@ class _SidebarTileState extends State<_SidebarTile> {
           decoration: BoxDecoration(
             color: rowBg,
             borderRadius: BorderRadius.circular(12),
+            boxShadow: selected ? AppColors.softCardShadow : const [],
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
               onTap: widget.onTap,
-              splashColor: _SidebarColors.activeWash(0.10),
-              highlightColor: _SidebarColors.activeWash(0.08),
+              splashColor: _SidebarColors.hoverWash(0.12),
+              highlightColor: _SidebarColors.hoverWash(0.08),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 child: Row(
                   children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      width: 3,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: selected ? _SidebarColors.cyan : Colors.transparent,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                    const SizedBox(width: 11),
                     Icon(widget.data.icon, size: 20, color: iconColor),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 13),
                     Expanded(
                       child: Text(
                         widget.data.label,
                         style: TextStyle(
                           color: labelColor,
-                          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight:
+                              selected ? FontWeight.w700 : FontWeight.w600,
                           fontSize: 14,
                         ),
                       ),
                     ),
+                    if (selected)
+                      const Icon(Icons.chevron_right,
+                          size: 18, color: _SidebarColors.activeText),
                   ],
                 ),
               ),
@@ -314,7 +335,7 @@ class _SidebarTileState extends State<_SidebarTile> {
   }
 }
 
-/// Logout row — turns red on hover, and a deeper red while pressed.
+/// Sign Out row — turns red on hover, and a deeper red while pressed.
 class _LogoutTile extends StatefulWidget {
   final VoidCallback onTap;
   const _LogoutTile({required this.onTap});
@@ -331,10 +352,10 @@ class _LogoutTileState extends State<_LogoutTile> {
   Widget build(BuildContext context) {
     final bool active = _hovered || _pressed;
     final Color rowBg = active
-        ? _SidebarColors.redOverlay(_pressed ? 0.24 : 0.13)
+        ? _SidebarColors.redOverlay(_pressed ? 0.26 : 0.15)
         : Colors.transparent;
     final Color fgColor =
-        active ? _SidebarColors.red : _SidebarColors.textSecondary;
+        active ? Colors.white : _SidebarColors.textInactive;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -354,13 +375,13 @@ class _LogoutTileState extends State<_LogoutTile> {
             splashColor: _SidebarColors.redOverlay(0.22),
             highlightColor: _SidebarColors.redOverlay(0.16),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
               child: Row(
                 children: [
-                  const SizedBox(width: 14),
                   Icon(Icons.logout, size: 20, color: fgColor),
-                  const SizedBox(width: 12),
-                  Text('Logout',
+                  const SizedBox(width: 13),
+                  Text('Sign Out',
                       style: TextStyle(
                         color: fgColor,
                         fontWeight: FontWeight.w600,

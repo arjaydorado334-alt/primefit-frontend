@@ -271,8 +271,8 @@ class _SubmitReceiptPageState extends State<SubmitReceiptPage> {
           child: ElevatedButton(
             onPressed: _canSubmit ? _submit : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _Colors.cyan,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.gold,
+              foregroundColor: AppColors.onGold,
               disabledBackgroundColor: _Colors.borderMuted,
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -297,10 +297,9 @@ class _SubmitReceiptPageState extends State<SubmitReceiptPage> {
 
   Widget _sectionTitle(String text) => Text(
         text,
-        style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            color: _Colors.textPrimary),
+        style: AppText.sectionTitle(
+            size: 15,
+            color: _Colors._dark ? const Color(0xFFB39DDB) : AppColors.plum),
       );
 
   Widget _planTile(int index) {
@@ -600,8 +599,8 @@ class _SubmitReceiptPageState extends State<SubmitReceiptPage> {
             child: ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _Colors.cyan,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.gold,
+                foregroundColor: AppColors.onGold,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),

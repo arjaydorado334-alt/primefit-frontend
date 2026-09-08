@@ -11,6 +11,7 @@ import '../screens/user_session.dart';
 import '../services/membership_service.dart';
 import '../services/payment_history_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/portal_hero.dart';
 import '../widgets/status_alert_banner.dart';
 import 'submit_receipt_page.dart';
 
@@ -39,6 +40,10 @@ class _Colors {
   static Color get textBody => _dark ? AppColors.textMutedOnDark : Colors.grey.shade800;
   static Color get iconMuted => _dark ? AppColors.textMutedOnDark : Colors.grey.shade700;
   static Color get planHighlightBg => _dark ? const Color(0xFF0E3A42) : Colors.cyan.shade50;
+
+  /// Plum section-title accent (lighter on dark), shared with the admin app.
+  static Color get sectionTitle =>
+      _dark ? const Color(0xFFB39DDB) : AppColors.plum;
 }
 
 class MembershipPage extends StatefulWidget {
@@ -131,7 +136,7 @@ class _MembershipPageState extends State<MembershipPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancel membership?'),
+        title: Text('Cancel membership?', style: AppText.sectionTitle(size: 20, color: _Colors.sectionTitle)),
         content: const Text(
           'Are you sure you want to cancel your membership? This action cannot be undone and no refund will be issued for the remaining period.',
         ),
@@ -165,7 +170,7 @@ class _MembershipPageState extends State<MembershipPage> {
       builder: (context) {
         _Colors.sync(context);
         return AlertDialog(
-        title: const Text('Select payment method'),
+        title: Text('Select payment method', style: AppText.sectionTitle(size: 20, color: _Colors.sectionTitle)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,7 +240,7 @@ class _MembershipPageState extends State<MembershipPage> {
       builder: (context) {
         _Colors.sync(context);
         return AlertDialog(
-        title: Text('Pay via $method'),
+        title: Text('Pay via $method', style: AppText.sectionTitle(size: 20, color: _Colors.sectionTitle)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -280,8 +285,8 @@ class _MembershipPageState extends State<MembershipPage> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.cyan.shade500,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.gold,
+              foregroundColor: AppColors.onGold,
             ),
             onPressed: () {
               Navigator.pop(context);
@@ -435,14 +440,11 @@ class _MembershipPageState extends State<MembershipPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Membership & Payments',
-              style: AppText.pageTitle(size: 28),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Manage your subscription and billing information',
-              style: TextStyle(fontSize: 14, color: _Colors.textSecondary),
+            const PortalHero(
+              eyebrow: 'Membership',
+              icon: Icons.credit_card,
+              title: 'Membership & Payments',
+              subtitle: 'Manage your subscription and billing information',
             ),
             const SizedBox(height: 20),
             StatusAlertBanner(session: session),
@@ -503,10 +505,7 @@ class _MembershipPageState extends State<MembershipPage> {
                     Flexible(
                       child: Text(
                         '${plan.duration} Membership',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppText.sectionTitle(size: 18, color: _Colors.sectionTitle),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -579,9 +578,9 @@ class _MembershipPageState extends State<MembershipPage> {
             );
           }),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Included Features',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            style: AppText.sectionTitle(color: _Colors.sectionTitle),
           ),
           const SizedBox(height: 12),
           Row(
@@ -650,9 +649,9 @@ class _MembershipPageState extends State<MembershipPage> {
               color: _Colors._dark
                   ? AppColors.cyan.withValues(alpha: 0.16)
                   : AppColors.cyanTint,
-              borderRadius: BorderRadius.circular(10),
+              shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 16, color: const Color(0xFF0E7490)),
+            child: Icon(icon, size: 16, color: AppColors.brandTeal),
           ),
           const SizedBox(height: 10),
           Text(
@@ -694,9 +693,9 @@ class _MembershipPageState extends State<MembershipPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Available Plans',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: AppText.sectionTitle(size: 18, color: _Colors.sectionTitle),
               ),
               if (_isProcessingPurchase)
                 const SizedBox(
@@ -866,8 +865,8 @@ class _MembershipPageState extends State<MembershipPage> {
                 : ElevatedButton(
                     onPressed: _isProcessingPurchase ? null : () => _startPurchaseFlow(planIndex),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.cyan.shade500,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.gold,
+                      foregroundColor: AppColors.onGold,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -887,9 +886,9 @@ class _MembershipPageState extends State<MembershipPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Payment History',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: AppText.sectionTitle(size: 18, color: _Colors.sectionTitle),
           ),
           const SizedBox(height: 16),
           _buildPaymentHistoryTableBody(context),

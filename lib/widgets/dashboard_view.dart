@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../screens/user_session.dart';
+import 'portal_hero.dart';
 import 'status_alert_banner.dart';
 
 class _Colors {
@@ -20,6 +21,10 @@ class _Colors {
       (accent == null || _dark) ? cardBg : AppColors.cardTint(accent);
   static Color cardBorderFor(Color? accent) =>
       (accent == null || _dark) ? cardBorder : AppColors.cardTintBorder(accent);
+
+  /// Plum section-title accent (lighter on dark), shared with the admin app.
+  static Color get sectionTitle =>
+      _dark ? const Color(0xFFB39DDB) : AppColors.plum;
 }
 
 class DashboardView extends StatelessWidget {
@@ -66,9 +71,12 @@ class DashboardView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Welcome back, $memberFirstName', style: AppText.pageTitle(size: 26)),
-          const SizedBox(height: 4),
-          Text("Here's a quick look at your activity.", style: TextStyle(color: _Colors.textSecondary)),
+          PortalHero(
+            eyebrow: 'Dashboard',
+            icon: Icons.grid_view_rounded,
+            title: 'Welcome back, $memberFirstName',
+            subtitle: "Here's a quick look at your activity.",
+          ),
           const SizedBox(height: 20),
           StatusAlertBanner(session: UserSession.instance, onManageTap: onGoToMembership),
           const SizedBox(height: 4),
@@ -87,7 +95,7 @@ class DashboardView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('This Week', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                Text('This Week', style: AppText.sectionTitle(color: _Colors.sectionTitle)),
                 const SizedBox(height: 16),
                 Row(
                   children: List.generate(_days.length, (i) {
@@ -155,7 +163,7 @@ class DashboardView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Session Credits', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+              Text('Session Credits', style: AppText.sectionTitle(color: _Colors.sectionTitle)),
               TextButton.icon(
                 onPressed: onGoToCheckIn,
                 icon: const Icon(Icons.qr_code_2, size: 16, color: AppColors.cyan),
@@ -216,11 +224,11 @@ class DashboardView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Membership', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+              Text('Membership', style: AppText.sectionTitle(color: _Colors.sectionTitle)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: const Color(0xFFE7F9EE), borderRadius: BorderRadius.circular(20)),
-                child: const Text('Active', style: TextStyle(color: Color(0xFF16A34A), fontSize: 12, fontWeight: FontWeight.w600)),
+                decoration: BoxDecoration(color: AppColors.successBg, borderRadius: BorderRadius.circular(20)),
+                child: const Text('Active', style: TextStyle(color: AppColors.success, fontSize: 12, fontWeight: FontWeight.w700)),
               ),
             ],
           ),
@@ -296,7 +304,7 @@ class _StatCard extends StatelessWidget {
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
             alignment: Alignment.center,
             child: Icon(icon, size: 20, color: iconColor),
           ),
@@ -346,7 +354,7 @@ class _QuickAction extends StatelessWidget {
               Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
                 alignment: Alignment.center,
                 child: Icon(icon, size: 20, color: iconColor),
               ),
