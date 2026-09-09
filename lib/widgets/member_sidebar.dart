@@ -313,12 +313,7 @@ class _SidebarTileState extends State<_SidebarTile> {
                     Expanded(
                       child: Text(
                         widget.data.label,
-                        style: TextStyle(
-                          color: labelColor,
-                          fontWeight:
-                              selected ? FontWeight.w700 : FontWeight.w600,
-                          fontSize: 14,
-                        ),
+                        style: AppText.navItem(active: selected, color: labelColor),
                       ),
                     ),
                     if (selected)
@@ -381,12 +376,7 @@ class _LogoutTileState extends State<_LogoutTile> {
                 children: [
                   Icon(Icons.logout, size: 20, color: fgColor),
                   const SizedBox(width: 13),
-                  Text('Sign Out',
-                      style: TextStyle(
-                        color: fgColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      )),
+                  Text('Sign Out', style: AppText.navItem(color: fgColor)),
                 ],
               ),
             ),

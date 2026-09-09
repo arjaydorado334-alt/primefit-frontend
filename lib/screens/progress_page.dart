@@ -430,7 +430,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Text('Log Personal Record',
                                 style: TextStyle(
                                     fontSize: 22,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     color: _Colors.sectionTitle)),
                             InkWell(
                               onTap: () => Navigator.of(ctx).pop(),
@@ -883,7 +883,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Text('Log Body Metrics',
                                 style: TextStyle(
                                     fontSize: 22,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     color: _Colors.sectionTitle)),
                             InkWell(
                               onTap: () => Navigator.of(ctx).pop(),
@@ -1266,7 +1266,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Text('Log Food Entry',
                                 style: TextStyle(
                                     fontSize: 22,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     color: _Colors.sectionTitle)),
                             InkWell(
                               onTap: closeDialog,
@@ -1671,7 +1671,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                             Text('Set Daily Targets',
                                 style: TextStyle(
                                     fontSize: 22,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     color: _Colors.sectionTitle)),
                             InkWell(
                               onTap: () => Navigator.of(ctx).pop(),
@@ -2145,8 +2145,8 @@ class _OverviewTab extends StatelessWidget {
                 Text('Monthly Attendance',
                     style: TextStyle(
                         fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: _Colors.textPrimary)),
+                        fontWeight: FontWeight.w700,
+                        color: _Colors.sectionTitle)),
                 const SizedBox(height: 3),
                 Text('Gym sessions logged per month',
                     style: TextStyle(
@@ -3064,7 +3064,7 @@ class _BodyMetricsTab extends StatelessWidget {
                   Text('BMI Over Time',
                       style: TextStyle(
                           fontSize: 17,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: _Colors.sectionTitle)),
                   const SizedBox(height: 3),
                   Text('Relative trend across your recorded entries',

@@ -190,7 +190,7 @@ class DashboardView extends StatelessWidget {
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('$sessionCreditsLeft', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                        Text('$sessionCreditsLeft', style: AppText.statNumber(size: 16)),
                       ],
                     ),
                   ],
@@ -200,7 +200,7 @@ class DashboardView extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('$sessionCreditsLeft/$sessionCreditsTotal', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                  Text('$sessionCreditsLeft/$sessionCreditsTotal', style: AppText.statNumber(size: 18)),
                   Text('$sessionsUsed sessions used', style: TextStyle(color: _Colors.textSecondary, fontSize: 12.5)),
                 ],
               ),
@@ -228,7 +228,7 @@ class DashboardView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: AppColors.successBg, borderRadius: BorderRadius.circular(20)),
-                child: const Text('Active', style: TextStyle(color: AppColors.success, fontSize: 12, fontWeight: FontWeight.w700)),
+                child: Text('Active', style: AppText.badgeLabel(color: AppColors.success)),
               ),
             ],
           ),
@@ -309,7 +309,7 @@ class _StatCard extends StatelessWidget {
             child: Icon(icon, size: 20, color: iconColor),
           ),
           const SizedBox(height: 14),
-          Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+          Text(value, style: AppText.statNumber(size: 26)),
           Text(label, style: TextStyle(color: _Colors.textSecondary, fontSize: 13)),
         ],
       ),

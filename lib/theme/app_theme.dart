@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Shared typography anchored to the Login / Create Account screens, so the
-/// whole app (public auth flow + member portal) reads as one system:
-///   * page titles  -> Archivo Black   (matches `_AuthFonts.heading`)
-///   * everything else -> Inter        (set as the base font in [AppTheme])
+/// Shared typography for the whole app so every screen — and, by matching
+/// these definitions, the sibling PrimeFit Admin app — reads as one system.
+///
+/// Font families (see [AppTheme]):
+///   * page-title headings  -> Archivo Black  (via google_fonts)
+///   * everything else       -> Inter          (base `fontFamily`)
+///
+/// Weight rules (keep in sync with the admin app):
+///   * card / section titles      -> w700, plum accent   ([sectionTitle])
+///   * page / banner titles       -> Archivo Black (w900) ([pageTitle])
+///   * large stat numbers         -> w700 / bold          ([statNumber])
+///   * table column headers       -> w600                 ([tableHeader])
+///   * sidebar nav item text      -> w600 (w700 active)   ([navItem])
+///   * status badges / key labels -> w600                 ([badgeLabel])
+///   * long body / paragraph text -> w400 (never bulk-bold) ([bodyText])
 class AppText {
   AppText._();
 
-  /// The big page title at the top of a screen. Same face / metrics as the
-  /// Login page's "Welcome Back" heading.
+  /// The big page title at the top of a screen (Archivo Black).
   static TextStyle pageTitle({double size = 26, Color? color}) =>
       GoogleFonts.archivoBlack(
         fontSize: size,
@@ -18,15 +28,52 @@ class AppText {
         letterSpacing: -0.3,
       );
 
-  /// Section / card title inside the white content area — the muted plum
-  /// accent shared with the admin app. NOT for the white heading inside a
-  /// cyan banner (that stays white, use [pageTitle]). Pass a lighter
-  /// [color] (e.g. `Color(0xFFB39DDB)`) on dark surfaces.
+  /// Section / card title inside the white content area — muted plum accent,
+  /// w700. NOT for the white heading inside a cyan banner (use [pageTitle]).
+  /// Pass a lighter [color] (e.g. `Color(0xFFB39DDB)`) on dark surfaces.
   static TextStyle sectionTitle({double size = 15, Color? color}) => TextStyle(
         fontWeight: FontWeight.w700,
         fontSize: size,
         color: color ?? AppColors.plum,
         letterSpacing: 0.1,
+      );
+
+  /// A large numeric display (stat cards, counters) — bold (w700).
+  static TextStyle statNumber({double size = 26, Color? color}) => TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: size,
+        color: color,
+      );
+
+  /// A data-table / list column header — w600, muted.
+  static TextStyle tableHeader({double size = 12, Color? color}) => TextStyle(
+        fontWeight: FontWeight.w600,
+        fontSize: size,
+        color: color ?? AppColors.textMutedOnLight,
+      );
+
+  /// A sidebar nav item label — w600, or w700 when [active].
+  static TextStyle navItem({bool active = false, double size = 14, Color? color}) =>
+      TextStyle(
+        fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+        fontSize: size,
+        color: color,
+      );
+
+  /// A status badge / important inline label — w600.
+  static TextStyle badgeLabel({double size = 12, Color? color}) => TextStyle(
+        fontWeight: FontWeight.w600,
+        fontSize: size,
+        color: color,
+      );
+
+  /// Long body / paragraph text — normal weight. Do not bulk-bold.
+  static TextStyle bodyText({double size = 13.5, Color? color, double? height}) =>
+      TextStyle(
+        fontWeight: FontWeight.w400,
+        fontSize: size,
+        color: color,
+        height: height,
       );
 }
 

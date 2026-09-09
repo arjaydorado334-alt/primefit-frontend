@@ -1054,7 +1054,7 @@ class _MembershipPageState extends State<MembershipPage> {
     padding: const EdgeInsets.symmetric(vertical: 8),
     child: Text(
       text,
-      style: TextStyle(fontSize: 12, color: _Colors.textMuted),
+      style: AppText.tableHeader(color: _Colors.textMuted),
     ),
   );
 
@@ -1101,7 +1101,7 @@ class _MembershipPageState extends State<MembershipPage> {
         color: color.shade50,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(text, style: TextStyle(fontSize: 12, color: color.shade700)),
+      child: Text(text, style: AppText.badgeLabel(color: color.shade700)),
     );
   }
 }

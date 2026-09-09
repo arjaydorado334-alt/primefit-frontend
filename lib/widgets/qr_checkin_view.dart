@@ -546,7 +546,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
           const SizedBox(height: 8),
           Text(
             value,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: color),
+            style: AppText.statNumber(size: 24, color: color),
           ),
           const SizedBox(height: 2),
           Text(
