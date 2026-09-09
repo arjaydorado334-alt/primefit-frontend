@@ -17,13 +17,13 @@ class _SidebarColors {
   static const Color background = AppColors.sidebarFill;
   static const Color footerPanel = AppColors.sidebarFooter;
 
-  static const Color gold = AppColors.yellow; // wordmark "Fit"
-  static const Color goldText = Color(0xFF3A2B00);
+  static const Color gold = AppColors.gold; // wordmark "Fit"
+  static const Color goldText = AppColors.dark;
 
   static const Color navIcon = AppColors.goldOnCyan; // gold on cyan (inactive)
-  static const Color navIconActive = AppColors.goldDark; // gold on white pill
+  static const Color navIconActive = AppColors.goldPillIcon; // gold on white pill
 
-  static const Color activeText = Color(0xFF1A1A1A);
+  static const Color activeText = AppColors.dark;
 
   static const Color red = Color(0xFFEF4444);
   static Color redOverlay(double opacity) => red.withValues(alpha: opacity);
@@ -106,7 +106,7 @@ class MemberSidebar extends StatelessWidget {
                               letterSpacing: -0.3,
                             ),
                             children: const [
-                              TextSpan(text: 'Prime', style: TextStyle(color: Color(0xFF374151))),
+                              TextSpan(text: 'Prime', style: TextStyle(color: AppColors.darkGray)),
                               TextSpan(text: 'Fit', style: TextStyle(color: _SidebarColors.gold)),
                             ],
                           ),

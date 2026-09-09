@@ -4,11 +4,11 @@ import '../theme/app_theme.dart';
 /// The solid flat-cyan header banner shown at the top of every member-portal
 /// screen — same single colour as the sidebar (explicitly no gradient),
 /// rounded corners, soft shadow. Mirrors the PrimeFit Admin app's header
-/// treatment: a gold uppercase eyebrow, a gold leading icon (no emoji), a
+/// treatment: a plum uppercase eyebrow, a gold leading icon (no emoji), a
 /// bold white title, and an optional muted-white subtitle. Purely
 /// presentational — it renders whatever each screen passes in.
 class PortalHero extends StatelessWidget {
-  /// Gold uppercase eyebrow label (e.g. "DASHBOARD").
+  /// Uppercase eyebrow label (e.g. "DASHBOARD"). Rendered in the plum accent.
   final String eyebrow;
 
   /// Gold icon shown immediately before the white title. No emojis.
@@ -39,15 +39,7 @@ class PortalHero extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          eyebrow.toUpperCase(),
-          style: const TextStyle(
-            color: AppColors.goldOnCyanText,
-            fontSize: 11.5,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.6,
-          ),
-        ),
+        Text(eyebrow.toUpperCase(), style: AppText.eyebrow()),
         const SizedBox(height: 10),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -57,21 +49,14 @@ class PortalHero extends StatelessWidget {
             Flexible(
               child: Text(
                 title,
-                style: AppText.pageTitle(size: titleSize, color: Colors.white),
+                style: AppText.bannerTitle(size: titleSize),
               ),
             ),
           ],
         ),
         if (subtitle != null) ...[
           const SizedBox(height: 8),
-          Text(
-            subtitle!,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.88),
-              fontSize: 13.5,
-              height: 1.4,
-            ),
-          ),
+          Text(subtitle!, style: AppText.bannerSubtitle()),
         ],
       ],
     );

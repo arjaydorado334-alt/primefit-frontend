@@ -252,12 +252,12 @@ class _SubmitReceiptPageState extends State<SubmitReceiptPage> {
             child: Row(
               children: [
                 const Icon(Icons.error_outline,
-                    color: Color(0xFFDC2626), size: 18),
+                    color: AppColors.danger, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(_errorMessage!,
                       style: const TextStyle(
-                          color: Color(0xFFB91C1C), fontSize: 13)),
+                          color: AppColors.danger, fontSize: 13)),
                 ),
               ],
             ),

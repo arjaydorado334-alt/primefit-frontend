@@ -53,7 +53,7 @@ class _Colors {
   static const cyanText = Color(0xFF0E7490); // cyan-700
 
   static const amber = Color(0xFFFBBF24); // amber-400
-  static const purple = Color(0xFF8B5CF6); // purple-500
+  static const purple = AppColors.plum; // #7E57C2 — shared plum accent
   static const pink = Color(0xFFEC4899); // pink-500
   static const emerald = Color(0xFF059669); // emerald-600
   static const red = Color(0xFFEF4444);
