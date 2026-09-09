@@ -39,28 +39,25 @@ class AppColors {
   static const Color yellow = Color(0xFFFBBF24);
   static const Color green = Color(0xFFA3E635);
 
-  /// Deep brand teal — the darkest shade of the brand cyan, already used
-  /// across the app as the `cyan-700` icon colour on pastel badges. Now
-  /// also the single flat fill for the member-portal sidebar and for the
-  /// solid hero banner at the top of every portal screen (no gradient).
-  static const Color brandTeal = Color(0xFF0E7490);
+  // ---- Admin-portal parity tokens -------------------------------------
+  // Mirrors the PrimeFit Admin app's palette (lib/theme/app_theme.dart in
+  // primefit_admin) so the two portals render an identical brand cyan.
+  // Admin: cyan #17C3D6 / cyanDark #0E8FA0 / gold #F2B705.
+  static const Color adminCyan = Color(0xFF17C3D6);
+  static const Color adminCyanDark = Color(0xFF0E8FA0);
 
-  /// Alias kept for readability at call sites.
+  /// The single flat brand-cyan fill for the member-portal sidebar and for
+  /// every screen's solid header banner (no gradient). Identical to the
+  /// admin app's [adminCyan] (#17C3D6) — change it there and here together.
+  static const Color brandTeal = adminCyan;
+
+  /// Aliases kept for readability at call sites.
   static const Color sidebarFill = brandTeal;
   static const Color heroFill = brandTeal;
 
   /// Legible tones for content sitting on [brandTeal].
   static const Color onTealMuted = Color(0xFFB9E6F1); // eyebrow / secondary
   static const Color onTealSubtle = Color(0xFFCDEEF5); // inactive nav label
-
-  // ---- Admin-portal parity tokens -------------------------------------
-  // Mirrors the PrimeFit Admin app's palette so the two portals read as
-  // one product. Admin uses cyan #17C3D6 / cyanDark #0E8FA0 / gold
-  // #F2B705; [brandTeal] above (#0E7490) is the deep member of that same
-  // cyan family, chosen so white text + subtitles clear WCAG AA on the
-  // flat sidebar / banner fill.
-  static const Color adminCyan = Color(0xFF17C3D6);
-  static const Color adminCyanDark = Color(0xFF0E8FA0);
 
   /// Gold accent — nav icons, header-banner eyebrow + leading icon, and
   /// primary buttons. Matches the admin app's gold exactly.
@@ -69,12 +66,10 @@ class AppColors {
   /// Near-black text/icon that sits on a [gold] surface (≈9:1 on gold).
   static const Color onGold = Color(0xFF1A1A1A);
 
-  /// Brighter gold for a gold *icon* on the cyan fill — clears the 3:1
-  /// non-text contrast bar on [brandTeal] while still reading as gold.
+  /// Brighter gold for a gold *icon* on the cyan fill, still reading as gold.
   static const Color goldOnCyan = Color(0xFFFFD24D);
 
-  /// Pale gold for gold *text* (the header eyebrow) on the cyan fill —
-  /// ≈4.6:1 on [brandTeal], so it clears AA for small text too.
+  /// Pale gold for gold *text* (the header eyebrow) on the cyan fill.
   static const Color goldOnCyanText = Color(0xFFFFECB3);
 
   /// Dark gold for an icon on the white active nav pill (≈4.9:1 on white).
@@ -214,7 +209,7 @@ class AppTheme {
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: AppColors.adminCyanDark, width: 1.5),
+      borderSide: const BorderSide(color: AppColors.adminCyan, width: 1.5),
     ),
   );
 

@@ -651,7 +651,7 @@ class _MembershipPageState extends State<MembershipPage> {
                   : AppColors.cyanTint,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 16, color: AppColors.brandTeal),
+            child: Icon(icon, size: 16, color: const Color(0xFF0E7490)),
           ),
           const SizedBox(height: 10),
           Text(
