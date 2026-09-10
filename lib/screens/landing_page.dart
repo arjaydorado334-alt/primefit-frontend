@@ -743,13 +743,9 @@ class _Fonts {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // `contain` so the whole gym photo is visible within the hero
-              // rather than cropped to fill; the near-black hero ground
-              // fills any letterbox area behind it.
               Image.asset(
                 'assets/images/hero_bg.jpg',
-                fit: BoxFit.contain,
-                alignment: Alignment.center,
+                fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) =>
                     const ColoredBox(color: _scrimDark),
               ),
