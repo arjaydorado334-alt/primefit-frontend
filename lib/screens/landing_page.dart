@@ -248,9 +248,15 @@ class _Fonts {
                       _PricingSection(
                           key: _pricingKey,
                           onGetStarted: () => _goToCreateAccount(context)),
-                      const _LocationSection(),
+                      const _ResultsSection(),
+                      const _GallerySection(),
                       _MerchSection(key: _merchKey),
+                      const _LocationSection(),
                       _ContactSection(key: _contactKey),
+                      _CtaBand(
+                        onJoin: () => _goToCreateAccount(context),
+                        onViewPlans: () => _scrollToMembership(context),
+                      ),
                       _Footer(
                         onAbout: () => _scrollToAbout(context),
                         onMission: () => _scrollToMission(context),
@@ -1034,18 +1040,13 @@ class _Fonts {
                   color: _Palette.bgCard,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: _Palette.cardBorder),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.4),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6))
-                  ],
+                  boxShadow: AppColors.softCardShadow,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('1+ YEARS',
-                        style: _Fonts.display(size: 20, color: _Palette.yellow)),
+                        style: _Fonts.display(size: 20, color: AppColors.plum)),
                     Text('SERVING TAGUIG CITY',
                         style: _Fonts.sectionLabel(color: _Palette.mutedGray)
                             .copyWith(fontSize: 11)),
@@ -1059,7 +1060,7 @@ class _Fonts {
         final right = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('ABOUT US', style: _Fonts.sectionLabel()),
+            Text('ABOUT US', style: _Fonts.sectionLabel(color: AppColors.plum)),
             const SizedBox(height: 14),
             RichText(
               text: TextSpan(
@@ -1193,7 +1194,8 @@ class _Fonts {
           padding: _sectionPadding(context),
           child: Column(
             children: [
-              Text('WHO WE ARE', style: _Fonts.sectionLabel()),
+              Text('WHO WE ARE',
+                  style: _Fonts.sectionLabel(color: AppColors.plum)),
               const SizedBox(height: 14),
               Text('MISSION & VISION', style: _Fonts.display(size: 34)),
               const SizedBox(height: 44),
@@ -1226,8 +1228,9 @@ class _Fonts {
                                   vertical: 20, horizontal: 18),
                               decoration: BoxDecoration(
                                 color: _Palette.bgCard,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(14),
                                 border: Border.all(color: _Palette.cardBorder),
+                                boxShadow: AppColors.softCardShadow,
                               ),
                               child: Column(
                                 children: [
@@ -1274,6 +1277,7 @@ class _Fonts {
               color: _Palette.bgCard,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: accent.withValues(alpha: 0.35), width: 1.4),
+              boxShadow: AppColors.softCardShadow,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1283,7 +1287,7 @@ class _Fonts {
                   height: 46,
                   decoration: BoxDecoration(
                       color: accent.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(12)),
+                      shape: BoxShape.circle),
                   alignment: Alignment.center,
                   child: Icon(icon, color: accent, size: 23),
                 ),
@@ -1335,57 +1339,40 @@ class _Fonts {
         final bp = _breakpointOf(context);
         final sectionPadding = _sectionPadding(context);
 
+        const commonFeatures = [
+          'Unlimited time',
+          'Free Coach',
+          'Free Drinking Water',
+          'Clean Facility & Toilets',
+        ];
         final plans = [
           _PlanCard(
             name: '4 Months',
             price: '₱2,400',
             badge: null,
-            accent: _Palette.mutedGray,
-            features: const [
-              'Unlimited time',
-              'Free Coach',
-              'Free Drinking Water',
-              'Clean Facility & Toilets'
-            ],
+            features: commonFeatures,
             onGetStarted: widget.onGetStarted,
           ),
           _PlanCard(
             name: '5 Months',
             price: '₱2,800',
             badge: null,
-            accent: _Palette.mutedGray,
-            features: const [
-              'Unlimited time',
-              'Free Coach',
-              'Free Drinking Water',
-              'Clean Facility & Toilets'
-            ],
+            features: commonFeatures,
             onGetStarted: widget.onGetStarted,
           ),
           _PlanCard(
             name: '7 Months',
             price: '₱3,500',
             badge: 'MOST POPULAR',
-            accent: _Palette.cyan,
-            features: const [
-              'Unlimited time',
-              'Free Coach',
-              'Free Drinking Water',
-              'Clean Facility & Toilets'
-            ],
+            recommended: true,
+            features: commonFeatures,
             onGetStarted: widget.onGetStarted,
           ),
           _PlanCard(
             name: '1 Year',
             price: '₱4,800',
             badge: 'BEST VALUE',
-            accent: _Palette.yellow,
-            features: const [
-              'Unlimited time',
-              'Free Coach',
-              'Free Drinking Water',
-              'Clean Facility & Toilets'
-            ],
+            features: commonFeatures,
             onGetStarted: widget.onGetStarted,
           ),
         ];
@@ -1422,20 +1409,22 @@ class _Fonts {
 
         return Container(
           width: double.infinity,
-          color: _Palette.bgNearBlack,
+          color: AppColors.bg,
           padding: sectionPadding,
           child: Column(
             children: [
-              Text('PLANS & PRICING', style: _Fonts.sectionLabel()),
+              Text('PLANS & PRICING',
+                  style: _Fonts.sectionLabel(color: AppColors.plum)),
               const SizedBox(height: 10),
-              Text('MEMBERSHIP SUBSCRIPTIONS',
-                  style: _Fonts.display(size: 30), textAlign: TextAlign.center),
-              const SizedBox(height: 10),
+              Text('Membership subscriptions',
+                  style: AppText.pageTitle(size: 34), textAlign: TextAlign.center),
+              const SizedBox(height: 12),
               Text(
                   'Choose the plan that fits your goals. All plans include full gym access — upgrade any time.',
-                  style: _Fonts.body(size: 13.5, color: _Palette.mutedGray),
+                  style: AppText.bodyText(
+                      size: 14, color: AppColors.textMuted, height: 1.6),
                   textAlign: TextAlign.center),
-              const SizedBox(height: 36),
+              const SizedBox(height: 44),
               plansLayout,
               const SizedBox(height: 22),
               RichText(
@@ -1464,17 +1453,20 @@ class _Fonts {
       final String name;
       final String price;
       final String? badge;
-      final Color accent;
       final List<String> features;
       final VoidCallback onGetStarted;
+
+      /// The one visually-highlighted plan: gold border + a floating
+      /// "Recommended" pill + a solid gold CTA.
+      final bool recommended;
 
       const _PlanCard({
         required this.name,
         required this.price,
         required this.badge,
-        required this.accent,
         required this.features,
         required this.onGetStarted,
+        this.recommended = false,
       });
 
       @override
@@ -1486,118 +1478,138 @@ class _Fonts {
 
       @override
       Widget build(BuildContext context) {
-        // ignore: unused_local_variable
-        final isSpotlighted = widget.badge != null || _hovered;
-        // Every card carries a cyan highlight by default; hovering swaps it
-        // to a yellow highlight instead of each plan's own accent color.
-        final borderColor = _hovered ? _Palette.yellow : _Palette.cyan;
-        final glowColor = _hovered ? _Palette.yellow : _Palette.cyan;
+        final rec = widget.recommended;
+        final borderColor = rec
+            ? AppColors.gold
+            : (_hovered ? AppColors.cyan : AppColors.cardBorder);
 
         return MouseRegion(
           onEnter: (_) => setState(() => _hovered = true),
           onExit: (_) => setState(() => _hovered = false),
           child: GestureDetector(
-            // Opens the plan-details popup. The "GET STARTED" button below
-            // has its own onPressed and consumes its own tap, so tapping it
-            // does not also trigger this.
+            // Tapping the card opens the plan-details popup; the CTA button
+            // below consumes its own tap.
             onTap: () => showDialog(
               context: context,
               builder: (_) => _PlanDetailsDialog(
                 name: widget.name,
                 price: widget.price,
                 badge: widget.badge,
-                accent: widget.accent,
                 features: widget.features,
               ),
             ),
             child: AnimatedScale(
-            scale: _hovered ? 1.02 : 1.0,
-            duration: const Duration(milliseconds: 200),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                color: _Palette.bgCard,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: borderColor, width: _hovered ? 1.8 : 1.4),
-                boxShadow: [
-                  BoxShadow(
-                    color: glowColor.withValues(alpha: _hovered ? 0.22 : 0.14),
-                    blurRadius: _hovered ? 22 : 14,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 10),
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(widget.name.toUpperCase(),
-                            style: _Fonts.heading(size: 16)),
-                        const SizedBox(height: 10),
-                        Text(widget.price, style: _Fonts.display(size: 28)),
-                        const SizedBox(height: 16),
-                        ...widget.features.map((f) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Icon(Icons.check_circle,
-                                      color: widget.accent, size: 15),
-                                  const SizedBox(width: 7),
-                                  Expanded(
-                                      child:
-                                          Text(f, style: _Fonts.body(size: 12.5))),
-                                ],
+              scale: _hovered ? 1.02 : 1.0,
+              duration: const Duration(milliseconds: 180),
+              child: Container(
+                margin: EdgeInsets.only(top: rec ? 14 : 0),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                            color: borderColor, width: rec ? 1.6 : 1.2),
+                        boxShadow: AppColors.softCardShadow,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(widget.name,
+                                    style: AppText.sectionTitle(
+                                        size: 15.5, color: AppColors.dark)),
                               ),
-                            )),
-                        const SizedBox(height: 18),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: widget.onGetStarted,
-                            style: ElevatedButton.styleFrom(
-                              // Cyan by default on every plan; turns yellow
-                              // only while the card is being hovered.
-                              backgroundColor:
-                                  _hovered ? _Palette.yellow : _Palette.cyan,
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                            ),
-                            child: Text('GET STARTED', style: _Fonts.button()),
+                              if (widget.badge != null && !rec)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 9, vertical: 3),
+                                  decoration: BoxDecoration(
+                                      color: AppColors.cyanTint,
+                                      borderRadius: BorderRadius.circular(999)),
+                                  child: Text(widget.badge!,
+                                      style: AppText.badgeLabel(
+                                          size: 9.5,
+                                          color: const Color(0xFF0E7490))),
+                                ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (widget.badge != null)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                              color: widget.accent,
-                              borderRadius: BorderRadius.circular(20)),
-                          child: Text(widget.badge!,
-                              style: _Fonts.sectionLabel(color: Colors.black)
-                                  .copyWith(fontSize: 10, letterSpacing: 1)),
-                        ),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(widget.price,
+                                  style: AppText.pageTitle(size: 30)),
+                              const SizedBox(width: 6),
+                              Text('/ ${widget.name.toLowerCase()}',
+                                  style: AppText.bodySmall(
+                                      color: AppColors.textMuted)),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          ...widget.features.map((f) => Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 5),
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.check_circle,
+                                        color: AppColors.gold, size: 16),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                        child: Text(f,
+                                            style: AppText.bodyText(
+                                                size: 13,
+                                                color: AppColors.textMuted))),
+                                  ],
+                                ),
+                              )),
+                          const SizedBox(height: 20),
+                          PillButton(
+                            'Get Started',
+                            expand: true,
+                            variant: rec
+                                ? PillVariant.primary
+                                : PillVariant.outline,
+                            onPressed: widget.onGetStarted,
+                          ),
+                        ],
                       ),
                     ),
-                ],
+                    if (rec)
+                      Positioned(
+                        top: -14,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 6),
+                            decoration: const BoxDecoration(
+                              color: AppColors.gold,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(999)),
+                            ),
+                            child: Text('RECOMMENDED',
+                                style: AppText.badgeLabel(
+                                    size: 10,
+                                    color: AppColors.onGold,
+                                    weight: FontWeight.w800)),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
             ),
           ),
         );
@@ -1626,14 +1638,14 @@ class _Fonts {
       final String name;
       final String price;
       final String? badge;
-      final Color accent;
       final List<String> features;
+
+      static const _accent = AppColors.gold;
 
       const _PlanDetailsDialog({
         required this.name,
         required this.price,
         required this.badge,
-        required this.accent,
         required this.features,
       });
 
@@ -1646,9 +1658,10 @@ class _Fonts {
             constraints: const BoxConstraints(maxWidth: 420),
             child: Container(
               decoration: BoxDecoration(
-                color: _Palette.bgCard,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: _Palette.cardBorder),
+                boxShadow: AppColors.softCardShadow,
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
@@ -1664,11 +1677,13 @@ class _Fonts {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                    color: accent,
-                                    borderRadius: BorderRadius.circular(20)),
+                                    color: _accent,
+                                    borderRadius: BorderRadius.circular(999)),
                                 child: Text(badge!,
-                                    style: _Fonts.sectionLabel(color: Colors.black)
-                                        .copyWith(fontSize: 10, letterSpacing: 1)),
+                                    style: AppText.badgeLabel(
+                                        size: 10,
+                                        color: AppColors.onGold,
+                                        weight: FontWeight.w800)),
                               )
                             : const SizedBox.shrink(),
                         InkWell(
@@ -1683,25 +1698,29 @@ class _Fonts {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text(name.toUpperCase(), style: _Fonts.heading(size: 18)),
+                    Text(name, style: AppText.sectionTitle(size: 18, color: AppColors.dark)),
                     const SizedBox(height: 6),
-                    Text(price, style: _Fonts.display(size: 32)),
+                    Text(price, style: AppText.pageTitle(size: 32)),
                     const SizedBox(height: 18),
                     ...features.map((f) => Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.check_circle, color: accent, size: 16),
+                              const Icon(Icons.check_circle,
+                                  color: AppColors.gold, size: 16),
                               const SizedBox(width: 8),
                               Expanded(
-                                  child:
-                                      Text(f, style: _Fonts.body(size: 13.5))),
+                                  child: Text(f,
+                                      style: AppText.bodyText(
+                                          size: 13.5,
+                                          color: AppColors.textMuted))),
                             ],
                           ),
                         )),
                     const SizedBox(height: 24),
-                    Text('PAYMENT METHOD', style: _Fonts.sectionLabel()),
+                    Text('PAYMENT METHOD',
+                        style: _Fonts.sectionLabel(color: AppColors.plum)),
                     const SizedBox(height: 4),
                     Text('Choose how you\'ll pay once you sign up.',
                         style: _Fonts.body(size: 12, color: _Palette.mutedGray)),
@@ -1721,7 +1740,7 @@ class _Fonts {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: _Palette.bgDarkSection,
+            color: AppColors.bg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: _Palette.cardBorder),
           ),
@@ -1730,12 +1749,13 @@ class _Fonts {
               Container(
                 width: 38,
                 height: 38,
-                decoration: BoxDecoration(
-                  color: _Palette.cyan.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                decoration: const BoxDecoration(
+                  color: AppColors.cyanTint,
+                  shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: Icon(option.icon, color: _Palette.cyan, size: 20),
+                child: Icon(option.icon,
+                    color: const Color(0xFF0E7490), size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -2095,10 +2115,11 @@ class _Fonts {
           child: Column(
             children: [
               Text('PRIMEFIT STORE',
-                  style: _Fonts.sectionLabel(color: _Palette.yellow)),
+                  style: _Fonts.sectionLabel(color: AppColors.plum)),
               const SizedBox(height: 10),
-              Text('MERCH & APPAREL',
-                  style: _Fonts.display(size: 30), textAlign: TextAlign.center),
+              Text('Merch & apparel',
+                  style: AppText.pageTitle(size: 34),
+                  textAlign: TextAlign.center),
               const SizedBox(height: 10),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
@@ -2163,8 +2184,9 @@ class _Fonts {
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: _Palette.bgCard,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: _Palette.cardBorder),
+              boxShadow: AppColors.softCardShadow,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2212,7 +2234,7 @@ class _Fonts {
                     style: _Fonts.body(size: 12, color: _Palette.mutedGray)),
                 const SizedBox(height: 14),
                 Text(item.price,
-                    style: _Fonts.display(size: 24, color: _Palette.yellow)),
+                    style: AppText.pageTitle(size: 22, color: AppColors.plum)),
               ],
             ),
           ),
@@ -2238,9 +2260,10 @@ class _Fonts {
             constraints: const BoxConstraints(maxWidth: 380),
             child: Container(
               decoration: BoxDecoration(
-                color: _Palette.bgCard,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: _Palette.cardBorder),
+                boxShadow: AppColors.softCardShadow,
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -2329,6 +2352,255 @@ class _Fonts {
                     ),
                   ],
                 ),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    /// ---------------------------------------------------------------------
+    /// RESULTS / MEMBER TRANSFORMATIONS   (new section)
+    /// ---------------------------------------------------------------------
+    /// Placeholder content — swap the quotes/names and add real member
+    /// photos (see `_photo`) once available.
+    class _ResultsSection extends StatelessWidget {
+      const _ResultsSection();
+
+      static const _results = [
+        (
+          'Jamie R.',
+          'Down 12 kg and finally training pain-free. The coaches actually check in on you.',
+          ['-12 kg', '6 months', '★ 4.9'],
+          AppColors.cyan,
+        ),
+        (
+          'Marco D.',
+          'Went from never lifting to a 100 kg deadlift. Best decision I made this year.',
+          ['+18 kg lift', '4 months', '★ 5.0'],
+          AppColors.gold,
+        ),
+        (
+          'Alyssa T.',
+          'The community keeps me coming back. I look forward to my sessions now.',
+          ['-8 kg', '3 months', '★ 4.8'],
+          AppColors.plum,
+        ),
+      ];
+
+      @override
+      Widget build(BuildContext context) {
+        final w = MediaQuery.of(context).size.width;
+        final cols = w < 720 ? 1 : 3;
+        return LandingSection(
+          eyebrow: 'Real results',
+          title: 'Members who put in the work',
+          subtitle:
+              'A few of the people training with us right now. Your story could '
+              'be next.',
+          eyebrowColor: AppColors.plum,
+          background: Colors.white,
+          child: GridView.count(
+            crossAxisCount: cols,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 20,
+            mainAxisSpacing: 20,
+            childAspectRatio: cols == 1 ? 1.7 : 0.82,
+            children: [
+              for (final r in _results)
+                _HoverScale(
+                  endScale: 1.02,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppColors.cardBorder),
+                      boxShadow: AppColors.softCardShadow,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Member photo placeholder — a tinted band with an
+                        // avatar. Replace with a real portrait Image.asset.
+                        Container(
+                          height: 150,
+                          width: double.infinity,
+                          color: (r.$4).withValues(alpha: 0.12),
+                          alignment: Alignment.center,
+                          child: CircleAvatar(
+                            radius: 34,
+                            backgroundColor: r.$4,
+                            child: Text(r.$1.characters.first,
+                                style: AppText.statNumber(
+                                    size: 22, color: Colors.white)),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  for (final b in r.$3)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 9, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.bg,
+                                        borderRadius:
+                                            BorderRadius.circular(999),
+                                        border: Border.all(
+                                            color: AppColors.cardBorder),
+                                      ),
+                                      child: Text(b,
+                                          style: AppText.badgeLabel(
+                                              size: 11,
+                                              color: AppColors.dark)),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Text('"${r.$2}"',
+                                  style: AppText.bodyText(
+                                      size: 13.5,
+                                      height: 1.5,
+                                      color: AppColors.textMuted)),
+                              const SizedBox(height: 10),
+                              Text(r.$1,
+                                  style: AppText.sectionTitle(
+                                      size: 14, color: AppColors.dark)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      }
+    }
+
+    /// ---------------------------------------------------------------------
+    /// GALLERY — "Step inside the gym"   (new section)
+    /// ---------------------------------------------------------------------
+    /// Uses the few available assets; add more `assets/images/gym/*` and
+    /// extend `_shots` for a fuller grid.
+    class _GallerySection extends StatelessWidget {
+      const _GallerySection();
+
+      static const _shots = [
+        'assets/images/hero_bg.jpg',
+        'assets/images/about_gym.jpg',
+        'assets/images/auth_bg.jpg',
+        'assets/images/about_gym.jpg',
+        'assets/images/hero_bg.jpg',
+        'assets/images/auth_bg.jpg',
+      ];
+
+      @override
+      Widget build(BuildContext context) {
+        final w = MediaQuery.of(context).size.width;
+        final cols = w < 640 ? 2 : (w < 1024 ? 3 : 3);
+        return LandingSection(
+          eyebrow: 'Step inside the gym',
+          title: 'Where it all happens',
+          eyebrowColor: AppColors.cyan,
+          background: AppColors.bg,
+          child: GridView.count(
+            crossAxisCount: cols,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+            childAspectRatio: 1.35,
+            children: [
+              for (int i = 0; i < _shots.length; i++)
+                _HoverScale(
+                  endScale: 1.03,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.cardBorder),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.asset(
+                        _shots[i],
+                        fit: BoxFit.cover,
+                        alignment: i.isEven
+                            ? Alignment.center
+                            : Alignment.topCenter,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: AppColors.cyanTint,
+                          alignment: Alignment.center,
+                          child: const Icon(Icons.photo_outlined,
+                              color: Color(0xFF0E7490), size: 32),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      }
+    }
+
+    /// ---------------------------------------------------------------------
+    /// FINAL CTA BAND   (new)
+    /// ---------------------------------------------------------------------
+    class _CtaBand extends StatelessWidget {
+      final VoidCallback onJoin;
+      final VoidCallback onViewPlans;
+      const _CtaBand({required this.onJoin, required this.onViewPlans});
+
+      @override
+      Widget build(BuildContext context) {
+        final w = MediaQuery.of(context).size.width;
+        return Container(
+          width: double.infinity,
+          color: AppColors.gold,
+          padding: EdgeInsets.symmetric(
+              horizontal: w < 600 ? 20 : 48, vertical: w < 600 ? 48 : 72),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 820),
+              child: Column(
+                children: [
+                  Text('Ready to start training?',
+                      textAlign: TextAlign.center,
+                      style: AppText.pageTitle(
+                          size: w < 600 ? 26 : 36, color: AppColors.dark)),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Join PrimeFit today — no joining fee, cancel anytime.',
+                    textAlign: TextAlign.center,
+                    style: AppText.bodyText(
+                        size: 15,
+                        color: AppColors.dark.withValues(alpha: 0.8)),
+                  ),
+                  const SizedBox(height: 26),
+                  Wrap(
+                    spacing: 14,
+                    runSpacing: 12,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      PillButton('JOIN NOW',
+                          onPressed: onJoin, variant: PillVariant.dark),
+                      PillButton('VIEW PLANS',
+                          onPressed: onViewPlans,
+                          variant: PillVariant.darkOutline),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
