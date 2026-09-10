@@ -134,14 +134,16 @@ class AppButtons {
         shape: const StadiumBorder(),
       );
 
-  /// Transparent with a hairline border — the secondary CTA.
-  static ButtonStyle pillOutline({Color color = AppColors.dark}) =>
+  /// Transparent with a hairline border — the secondary CTA. Light by
+  /// default (the landing page runs on a dark theme); pass a darker
+  /// [color] when placing it on a light surface.
+  static ButtonStyle pillOutline({Color color = const Color(0xFFE9EAEE)}) =>
       OutlinedButton.styleFrom(
         foregroundColor: color,
         backgroundColor: Colors.transparent,
-        side: BorderSide(color: color.withValues(alpha: 0.4), width: 1.5),
+        side: BorderSide(color: color.withValues(alpha: 0.55), width: 1.5),
         padding: _pad,
-        textStyle: AppText.button(),
+        textStyle: AppText.button(color: color),
         shape: const StadiumBorder(),
       );
 

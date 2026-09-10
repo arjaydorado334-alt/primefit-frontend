@@ -14,17 +14,18 @@ import '../widgets/reviews_section.dart';
 import 'login_page.dart';
 import 'create_account.dart';
 
-/// The landing page's colour tokens, remapped onto the app-wide light
-/// [AppColors] system so the public site matches the member portal. Member
-/// names are kept (e.g. `white` is now the near-black primary *text* colour
-/// on a light ground) so existing call sites cascade without a rewrite;
-/// each section is then restyled to the modern patterns on top of this.
+/// The landing page's colour tokens. The public site runs on a **dark**
+/// theme (near-black page, dark-charcoal cards) skinned with PrimeFit's own
+/// cyan / gold / plum accents — surface/text values reuse the app theme's
+/// existing dark-mode tokens ([AppColors.darkBg] etc). Member names are
+/// kept (e.g. `white` is the light primary *text* colour on the dark
+/// ground) so existing call sites cascade.
 class _Palette {
-  static const bgNearBlack = AppColors.bg; // page ground  #F6F7F9
-  static const bgDeepBlack = Colors.white; // navbar / footer surface
-  static const bgDarkSection = Colors.white; // section surface
-  static const bgDarkGraySection = AppColors.bg; // alternating section
-  static const bgCard = Colors.white; // card surface
+  static const bgNearBlack = AppColors.darkBg; // page ground  #0A0A0B
+  static const bgDeepBlack = Color(0xFF060608); // navbar / footer (deeper)
+  static const bgDarkSection = AppColors.darkBg; // section surface
+  static const bgDarkGraySection = Color(0xFF121316); // alternating section
+  static const bgCard = AppColors.darkCard; // card surface  #15161A
 
   static const yellow = AppColors.gold; // #F2B705
   // ignore: unused_field
@@ -34,12 +35,12 @@ class _Palette {
   // ignore: unused_field
   static const cyanBright = AppColors.cyan;
 
-  static const white = AppColors.dark; // primary text on light  #0B0B0D
-  static const offWhite = Color(0xFF1F2937); // strong secondary text
-  static const lightGray = AppColors.textMuted; // muted text  #6B7280
-  static const mutedGray = Color(0xFF9AA1AC); // very muted text
+  static const white = Color(0xFFE9EAEE); // primary text on dark
+  static const offWhite = Color(0xFFF4F5F7); // headings / strong text
+  static const lightGray = AppColors.textMutedOnDark; // muted  #9CA3AF
+  static const mutedGray = Color(0xFF868D99); // very muted (still AA on dark)
 
-  static const cardBorder = AppColors.cardBorder; // #E7E9EE
+  static const cardBorder = AppColors.darkBorder; // #262832
 }
 
 /// Centralized typography — Archivo Black for big display headings,
@@ -213,7 +214,13 @@ class _Fonts {
         // NavBar is kept OUTSIDE the scroll view (fixed at the top, always
         // visible) while everything else scrolls beneath it in the Expanded
         // SingleChildScrollView below -- this is what makes the nav "sticky."
-        return Scaffold(
+        //
+        // The public landing page always renders on the app's dark theme
+        // (independent of the member portal's light/dark toggle), so text
+        // that inherits its colour from the theme reads light-on-dark.
+        return Theme(
+          data: AppTheme.darkThemeData,
+          child: Scaffold(
           backgroundColor: _Palette.bgNearBlack,
           endDrawer: _MobileNavDrawer(
             onSignIn: () => _goToLogin(context),
@@ -272,6 +279,7 @@ class _Fonts {
               ),
             ],
           ),
+        ),
         );
       }
     }
@@ -869,7 +877,7 @@ class _Fonts {
         ];
         return Container(
           width: double.infinity,
-          color: Colors.white,
+          color: _Palette.bgDeepBlack,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
           child: Wrap(
             alignment: WrapAlignment.spaceEvenly,
@@ -884,7 +892,7 @@ class _Fonts {
                           const SizedBox(height: 2),
                           Text(s[1],
                               style: AppText.statCaption(
-                                  color: AppColors.textMuted)),
+                                  color: _Palette.lightGray)),
                         ],
                       ),
                     ))
@@ -942,7 +950,7 @@ class _Fonts {
               'A complete gym built around real results — the equipment, the '
               'people, and the plans to get you there.',
           eyebrowColor: AppColors.plum,
-          background: AppColors.bg,
+          background: _Palette.bgNearBlack,
           child: GridView.count(
             crossAxisCount: cols,
             shrinkWrap: true,
@@ -957,9 +965,9 @@ class _Fonts {
                   child: Container(
                     padding: const EdgeInsets.all(22),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: _Palette.bgCard,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.cardBorder),
+                      border: Border.all(color: _Palette.cardBorder),
                       boxShadow: AppColors.softCardShadow,
                     ),
                     child: Column(
@@ -980,7 +988,7 @@ class _Fonts {
                             style: AppText.bodyText(
                                 size: 13,
                                 height: 1.5,
-                                color: AppColors.textMuted)),
+                                color: _Palette.lightGray)),
                       ],
                     ),
                   ),
@@ -1411,7 +1419,7 @@ class _Fonts {
 
         return Container(
           width: double.infinity,
-          color: AppColors.bg,
+          color: _Palette.bgNearBlack,
           padding: sectionPadding,
           child: Column(
             children: [
@@ -1424,7 +1432,7 @@ class _Fonts {
               Text(
                   'Choose the plan that fits your goals. All plans include full gym access — upgrade any time.',
                   style: AppText.bodyText(
-                      size: 14, color: AppColors.textMuted, height: 1.6),
+                      size: 14, color: _Palette.lightGray, height: 1.6),
                   textAlign: TextAlign.center),
               const SizedBox(height: 44),
               plansLayout,
@@ -1483,7 +1491,7 @@ class _Fonts {
         final rec = widget.recommended;
         final borderColor = rec
             ? AppColors.gold
-            : (_hovered ? AppColors.cyan : AppColors.cardBorder);
+            : (_hovered ? AppColors.cyan : _Palette.cardBorder);
 
         return MouseRegion(
           onEnter: (_) => setState(() => _hovered = true),
@@ -1512,7 +1520,7 @@ class _Fonts {
                       duration: const Duration(milliseconds: 180),
                       padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: _Palette.bgCard,
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
                             color: borderColor, width: rec ? 1.6 : 1.2),
@@ -1527,7 +1535,7 @@ class _Fonts {
                               Expanded(
                                 child: Text(widget.name,
                                     style: AppText.sectionTitle(
-                                        size: 15.5, color: AppColors.dark)),
+                                        size: 15.5, color: _Palette.white)),
                               ),
                               if (widget.badge != null && !rec)
                                 Container(
@@ -1553,7 +1561,7 @@ class _Fonts {
                               const SizedBox(width: 6),
                               Text('/ ${widget.name.toLowerCase()}',
                                   style: AppText.bodySmall(
-                                      color: AppColors.textMuted)),
+                                      color: _Palette.lightGray)),
                             ],
                           ),
                           const SizedBox(height: 18),
@@ -1571,7 +1579,7 @@ class _Fonts {
                                         child: Text(f,
                                             style: AppText.bodyText(
                                                 size: 13,
-                                                color: AppColors.textMuted))),
+                                                color: _Palette.lightGray))),
                                   ],
                                 ),
                               )),
@@ -1660,7 +1668,7 @@ class _Fonts {
             constraints: const BoxConstraints(maxWidth: 420),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: _Palette.bgCard,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: _Palette.cardBorder),
                 boxShadow: AppColors.softCardShadow,
@@ -1700,7 +1708,7 @@ class _Fonts {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text(name, style: AppText.sectionTitle(size: 18, color: AppColors.dark)),
+                    Text(name, style: AppText.sectionTitle(size: 18, color: _Palette.white)),
                     const SizedBox(height: 6),
                     Text(price, style: AppText.pageTitle(size: 32)),
                     const SizedBox(height: 18),
@@ -1716,7 +1724,7 @@ class _Fonts {
                                   child: Text(f,
                                       style: AppText.bodyText(
                                           size: 13.5,
-                                          color: AppColors.textMuted))),
+                                          color: _Palette.lightGray))),
                             ],
                           ),
                         )),
@@ -1742,7 +1750,7 @@ class _Fonts {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.bg,
+            color: _Palette.bgDarkGraySection,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: _Palette.cardBorder),
           ),
@@ -1912,7 +1920,7 @@ class _Fonts {
         final infoCard = Container(
           padding: const EdgeInsets.all(26),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: _Palette.bgCard,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: _Palette.cardBorder),
             boxShadow: AppColors.softCardShadow,
@@ -1952,7 +1960,7 @@ class _Fonts {
 
         return Container(
           width: double.infinity,
-          color: Colors.white,
+          color: _Palette.bgDarkSection,
           padding: _sectionPadding(context),
           child: Column(
             children: [
@@ -1964,7 +1972,7 @@ class _Fonts {
               const SizedBox(height: 12),
               Text("Come visit us at our Taguig City gym — we're open every day.",
                   style: AppText.bodyText(
-                      size: 14, color: AppColors.textMuted, height: 1.6),
+                      size: 14, color: _Palette.lightGray, height: 1.6),
                   textAlign: TextAlign.center),
               const SizedBox(height: 44),
               isWide
@@ -2272,7 +2280,7 @@ class _Fonts {
             constraints: const BoxConstraints(maxWidth: 380),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: _Palette.bgCard,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: _Palette.cardBorder),
                 boxShadow: AppColors.softCardShadow,
@@ -2411,7 +2419,7 @@ class _Fonts {
               'A few of the people training with us right now. Your story could '
               'be next.',
           eyebrowColor: AppColors.plum,
-          background: Colors.white,
+          background: _Palette.bgDarkSection,
           child: GridView.count(
             crossAxisCount: cols,
             shrinkWrap: true,
@@ -2425,9 +2433,9 @@ class _Fonts {
                   endScale: 1.02,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: _Palette.bgCard,
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: AppColors.cardBorder),
+                      border: Border.all(color: _Palette.cardBorder),
                       boxShadow: AppColors.softCardShadow,
                     ),
                     clipBehavior: Clip.antiAlias,
@@ -2463,16 +2471,16 @@ class _Fonts {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 9, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: AppColors.bg,
+                                        color: _Palette.bgDarkGraySection,
                                         borderRadius:
                                             BorderRadius.circular(999),
                                         border: Border.all(
-                                            color: AppColors.cardBorder),
+                                            color: _Palette.cardBorder),
                                       ),
                                       child: Text(b,
                                           style: AppText.badgeLabel(
                                               size: 11,
-                                              color: AppColors.dark)),
+                                              color: _Palette.white)),
                                     ),
                                 ],
                               ),
@@ -2481,11 +2489,11 @@ class _Fonts {
                                   style: AppText.bodyText(
                                       size: 13.5,
                                       height: 1.5,
-                                      color: AppColors.textMuted)),
+                                      color: _Palette.lightGray)),
                               const SizedBox(height: 10),
                               Text(r.$1,
                                   style: AppText.sectionTitle(
-                                      size: 14, color: AppColors.dark)),
+                                      size: 14, color: _Palette.white)),
                             ],
                           ),
                         ),
@@ -2524,7 +2532,7 @@ class _Fonts {
           eyebrow: 'Step inside the gym',
           title: 'Where it all happens',
           eyebrowColor: AppColors.cyan,
-          background: AppColors.bg,
+          background: _Palette.bgNearBlack,
           child: GridView.count(
             crossAxisCount: cols,
             shrinkWrap: true,
@@ -2540,7 +2548,7 @@ class _Fonts {
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.cardBorder),
+                        border: Border.all(color: _Palette.cardBorder),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       clipBehavior: Clip.antiAlias,
@@ -2693,7 +2701,7 @@ class _Fonts {
 
         return Container(
           width: double.infinity,
-          color: AppColors.bg,
+          color: _Palette.bgNearBlack,
           padding: _sectionPadding(context),
           child: Column(
             children: [
@@ -2731,7 +2739,7 @@ class _Fonts {
           height: 232,
           padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: _Palette.bgCard,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: _Palette.cardBorder),
             boxShadow: AppColors.softCardShadow,
@@ -2799,7 +2807,7 @@ class _Fonts {
             constraints: const BoxConstraints(maxWidth: 420),
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 28),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _Palette.bgCard,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: _Palette.yellow.withValues(alpha: 0.4)),
               boxShadow: AppColors.softCardShadow,
@@ -2868,7 +2876,7 @@ class _Fonts {
             ),
             Container(
               width: double.infinity,
-              color: Colors.white,
+              color: _Palette.bgDeepBlack,
               padding: EdgeInsets.symmetric(
                   horizontal: isWide ? 72 : 24, vertical: isWide ? 56 : 40),
               child: isWide
@@ -2913,7 +2921,7 @@ class _Fonts {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 18),
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: _Palette.bgDeepBlack,
                 border:
                     Border(top: BorderSide(color: _Palette.cardBorder, width: 1)),
               ),

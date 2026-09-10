@@ -74,7 +74,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
     final submitted = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.darkCard,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -93,7 +93,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
       eyebrow: 'Member ratings & reviews',
       title: 'What our members say',
       eyebrowColor: AppColors.plum,
-      background: Colors.white,
+      background: AppColors.darkBg,
       child: Column(
         children: [
           // Aggregate
@@ -107,7 +107,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
               _Stars(rating: _average.round(), size: 22),
               Text(
                 'based on $_count review${_count == 1 ? '' : 's'}',
-                style: AppText.bodyText(color: AppColors.textMuted),
+                style: AppText.bodyText(color: AppColors.textMutedOnDark),
               ),
             ],
           ),
@@ -135,7 +135,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
             )
           else if (_reviews.isEmpty)
             Text('No reviews yet — be the first.',
-                style: AppText.bodyText(color: AppColors.textMuted))
+                style: AppText.bodyText(color: AppColors.textMutedOnDark))
           else ...[
             GridView.count(
               crossAxisCount: cols,
@@ -175,9 +175,9 @@ class _ReviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.darkCard,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: AppColors.darkBorder),
         boxShadow: AppColors.softCardShadow,
       ),
       child: Column(
@@ -188,7 +188,7 @@ class _ReviewCard extends StatelessWidget {
           Expanded(
             child: Text('"$comment"',
                 style: AppText.bodyText(
-                    size: 13.5, height: 1.55, color: AppColors.textMuted),
+                    size: 13.5, height: 1.55, color: AppColors.textMutedOnDark),
                 overflow: TextOverflow.fade),
           ),
           const SizedBox(height: 12),
@@ -204,10 +204,10 @@ class _ReviewCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(name,
-                    style: AppText.sectionTitle(size: 13.5, color: AppColors.dark)),
+                    style: AppText.sectionTitle(size: 13.5, color: const Color(0xFFE9EAEE))),
               ),
               if (date.isNotEmpty)
-                Text(date, style: AppText.bodySmall(color: AppColors.textMuted)),
+                Text(date, style: AppText.bodySmall(color: AppColors.textMutedOnDark)),
             ],
           ),
         ],
@@ -312,17 +312,17 @@ class _SubmitReviewSheetState extends State<_SubmitReviewSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.cardBorder,
+                color: AppColors.darkBorder,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const SizedBox(height: 18),
           Text('Write a review',
-              style: AppText.sectionTitle(size: 18, color: AppColors.dark)),
+              style: AppText.sectionTitle(size: 18, color: const Color(0xFFE9EAEE))),
           const SizedBox(height: 4),
           Text('Posting as $name',
-              style: AppText.bodySmall(color: AppColors.textMuted)),
+              style: AppText.bodySmall(color: AppColors.textMutedOnDark)),
           const SizedBox(height: 16),
           Row(
             children: List.generate(
@@ -344,8 +344,21 @@ class _SubmitReviewSheetState extends State<_SubmitReviewSheet> {
             controller: _controller,
             maxLines: 4,
             maxLength: 600,
-            decoration: const InputDecoration(
+            style: const TextStyle(color: Color(0xFFE9EAEE)),
+            decoration: InputDecoration(
               hintText: 'Tell other members about your experience…',
+              hintStyle: const TextStyle(color: AppColors.textMutedOnDark),
+              filled: true,
+              fillColor: AppColors.darkBg,
+              counterStyle: const TextStyle(color: AppColors.textMutedOnDark),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.darkBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.cyan, width: 1.5),
+              ),
             ),
           ),
           const SizedBox(height: 12),

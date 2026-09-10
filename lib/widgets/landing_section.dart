@@ -3,8 +3,9 @@ import '../theme/app_theme.dart';
 
 /// Shared scaffold for a public landing-page section: a centered uppercase
 /// eyebrow label, a bold heading, an optional subtitle, then the section's
-/// content — all inside a max-width column with consistent vertical padding
-/// and a light background. Keeps every section on the page visually aligned.
+/// content — inside a max-width column with consistent vertical padding.
+/// The landing page runs on a dark theme, so the heading/subtitle colours
+/// here are light-on-dark; the accent eyebrow keeps the brand colour.
 class LandingSection extends StatelessWidget {
   final String eyebrow;
   final String title;
@@ -15,8 +16,8 @@ class LandingSection extends StatelessWidget {
   /// portal's section-title colour.
   final Color eyebrowColor;
 
-  /// Section background — white or the off-white page ground, alternated
-  /// by the caller so adjacent sections separate cleanly.
+  /// Section background — near-black page ground or the slightly lighter
+  /// alternating tone, set by the caller so adjacent sections separate.
   final Color background;
 
   /// Centre the header block (default) or left-align it.
@@ -31,7 +32,7 @@ class LandingSection extends StatelessWidget {
     required this.child,
     this.subtitle,
     this.eyebrowColor = AppColors.cyan,
-    this.background = Colors.white,
+    this.background = AppColors.darkBg,
     this.centerHeader = true,
     this.maxWidth = 1140,
   });
@@ -63,7 +64,8 @@ class LandingSection extends StatelessWidget {
               Text(
                 title,
                 textAlign: textAlign,
-                style: AppText.pageTitle(size: w < 600 ? 26 : 34),
+                style: AppText.pageTitle(
+                    size: w < 600 ? 26 : 34, color: const Color(0xFFF4F5F7)),
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 12),
@@ -73,7 +75,7 @@ class LandingSection extends StatelessWidget {
                     subtitle!,
                     textAlign: textAlign,
                     style: AppText.bodyText(
-                        color: AppColors.textMuted, height: 1.6),
+                        color: AppColors.textMutedOnDark, height: 1.6),
                   ),
                 ),
               ],
