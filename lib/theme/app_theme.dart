@@ -110,6 +110,72 @@ class AppText {
       _i(size, weight, color);
 }
 
+/// Fully-rounded ("pill") button styles used across the public landing page
+/// and any other marketing-style surface. Built on the same gold accent as
+/// the app-wide `ElevatedButtonThemeData`, just with a [StadiumBorder] and a
+/// touch more horizontal padding. Prefer the [PillButton] widget
+/// (`lib/widgets/pill_button.dart`) over calling these directly.
+enum PillVariant { primary, outline, ghost, dark, darkOutline }
+
+class AppButtons {
+  AppButtons._();
+
+  static const EdgeInsets _pad =
+      EdgeInsets.symmetric(horizontal: 26, vertical: 15);
+
+  /// Solid gold, near-black label — the main call to action.
+  static ButtonStyle pillPrimary() => ElevatedButton.styleFrom(
+        backgroundColor: AppColors.gold,
+        foregroundColor: AppColors.onGold,
+        disabledBackgroundColor: const Color(0xFFEAD9A0),
+        elevation: 0,
+        padding: _pad,
+        textStyle: AppText.button(),
+        shape: const StadiumBorder(),
+      );
+
+  /// Transparent with a hairline border — the secondary CTA.
+  static ButtonStyle pillOutline({Color color = AppColors.dark}) =>
+      OutlinedButton.styleFrom(
+        foregroundColor: color,
+        backgroundColor: Colors.transparent,
+        side: BorderSide(color: color.withValues(alpha: 0.4), width: 1.5),
+        padding: _pad,
+        textStyle: AppText.button(),
+        shape: const StadiumBorder(),
+      );
+
+  /// Ghost — white label + border, for use on a dark photo (hero overlay).
+  static ButtonStyle pillGhost() => OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.white.withValues(alpha: 0.08),
+        side: const BorderSide(color: Colors.white70, width: 1.5),
+        padding: _pad,
+        textStyle: AppText.button(color: Colors.white),
+        shape: const StadiumBorder(),
+      );
+
+  /// Solid near-black, for use on a gold band (final CTA).
+  static ButtonStyle pillDark() => ElevatedButton.styleFrom(
+        backgroundColor: AppColors.dark,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: _pad,
+        textStyle: AppText.button(color: Colors.white),
+        shape: const StadiumBorder(),
+      );
+
+  /// Dark outline, for use on a gold band beside [pillDark].
+  static ButtonStyle pillDarkOutline() => OutlinedButton.styleFrom(
+        foregroundColor: AppColors.dark,
+        backgroundColor: Colors.transparent,
+        side: const BorderSide(color: AppColors.dark, width: 1.5),
+        padding: _pad,
+        textStyle: AppText.button(),
+        shape: const StadiumBorder(),
+      );
+}
+
 /// Central place for every color / gradient used across the app so all
 /// screens stay visually consistent with the Figma design.
 class AppColors {

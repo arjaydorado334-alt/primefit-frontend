@@ -5,39 +5,40 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
-// ignore: unused_import
 import '../theme/app_theme.dart';
+import '../widgets/glass_stat_card.dart';
+import '../widgets/landing_section.dart';
+import '../widgets/pill_button.dart';
 import '../widgets/prime_fit_logo.dart';
 import 'login_page.dart';
 import 'create_account.dart';
 
+/// The landing page's colour tokens, remapped onto the app-wide light
+/// [AppColors] system so the public site matches the member portal. Member
+/// names are kept (e.g. `white` is now the near-black primary *text* colour
+/// on a light ground) so existing call sites cascade without a rewrite;
+/// each section is then restyled to the modern patterns on top of this.
 class _Palette {
-  static const bgNearBlack = Color(0xFF050505);
-  static const bgDeepBlack = Color(0xFF080808);
-  static const bgDarkSection = Color(0xFF111111);
-  static const bgDarkGraySection = Color(0xFF17171B);
-  static const bgCard = Color(0xFF18181B);
+  static const bgNearBlack = AppColors.bg; // page ground  #F6F7F9
+  static const bgDeepBlack = Colors.white; // navbar / footer surface
+  static const bgDarkSection = Colors.white; // section surface
+  static const bgDarkGraySection = AppColors.bg; // alternating section
+  static const bgCard = Colors.white; // card surface
 
-  static const yellow = Color(0xFFFFC400);
+  static const yellow = AppColors.gold; // #F2B705
   // ignore: unused_field
-  static const yellowBright = Color(0xFFFFD000);
+  static const yellowBright = AppColors.goldDark; // hover / pressed
 
-  static const cyan = Color(0xFF00B8D9);
+  static const cyan = AppColors.cyan; // #17C3D6
   // ignore: unused_field
-  static const cyanBright = Color(0xFF00C6E8);
+  static const cyanBright = AppColors.cyan;
 
-  static const white = Color(0xFFFFFFFF);
-  static const offWhite = Color(0xFFF5F5F5);
-  static const lightGray = Color(0xFFA7A7A7);
-  static const mutedGray = Color(0xFF737373);
+  static const white = AppColors.dark; // primary text on light  #0B0B0D
+  static const offWhite = Color(0xFF1F2937); // strong secondary text
+  static const lightGray = AppColors.textMuted; // muted text  #6B7280
+  static const mutedGray = Color(0xFF9AA1AC); // very muted text
 
-  static const cardBorder = Color(0xFF262629);
-
-  static const yellowCyanGradient = LinearGradient(
-    colors: [cyan, yellow],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
+  static const cardBorder = AppColors.cardBorder; // #E7E9EE
 }
 
 /// Centralized typography — Archivo Black for big display headings,
@@ -421,11 +422,10 @@ class _Fonts {
                     onPressed: onJoin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _Palette.yellow,
-                      foregroundColor: Colors.black,
+                      foregroundColor: AppColors.onGold,
                       padding: EdgeInsets.symmetric(
-                          horizontal: isWide ? 20 : 14, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                          horizontal: isWide ? 22 : 16, vertical: 13),
+                      shape: const StadiumBorder(),
                       elevation: 0,
                     ),
                     child: Text('JOIN NOW', style: _Fonts.button(size: 14)),
@@ -435,7 +435,7 @@ class _Fonts {
                     Builder(
                       builder: (context) => IconButton(
                         onPressed: () => Scaffold.of(context).openEndDrawer(),
-                        icon: const Icon(Icons.menu, color: Colors.white),
+                        icon: const Icon(Icons.menu, color: _Palette.white),
                         tooltip: 'Menu',
                       ),
                     ),
@@ -477,7 +477,7 @@ class _Fonts {
         }
 
         Widget link(String label, VoidCallback onTap) => ListTile(
-              title: Text(label, style: _Fonts.nav(color: Colors.white)),
+              title: Text(label, style: _Fonts.nav(color: _Palette.white)),
               onTap: () => closeThen(onTap),
             );
 
@@ -533,10 +533,9 @@ class _Fonts {
                       onPressed: () => closeThen(onJoin),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _Palette.yellow,
-                        foregroundColor: Colors.black,
+                        foregroundColor: AppColors.onGold,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                        shape: const StadiumBorder(),
                         elevation: 0,
                       ),
                       child: Text('JOIN NOW', style: _Fonts.button(size: 14)),
@@ -595,148 +594,105 @@ class _Fonts {
       final VoidCallback onViewPlans;
       const _HeroSection({required this.onGetStarted, required this.onViewPlans});
 
+      // The hero is the ONE place a dark ground is allowed — a photo needs a
+      // scrim for text legibility. Explicit near-black (not `_Palette`, which
+      // is now light).
+      static const _scrimDark = Color(0xFF0A0A0B);
+
       @override
       Widget build(BuildContext context) {
         final bp = _breakpointOf(context);
-        // Big display text and padding scale down per breakpoint so "FIT FOR" /
-        // "ALL." don't force awkward wrapping or overflow on narrow screens.
         final displaySize = switch (bp) {
           _Breakpoint.mobile => 44.0,
           _Breakpoint.tablet => 64.0,
-          _Breakpoint.desktop => 90.0,
+          _Breakpoint.desktop => 88.0,
         };
         final subheadSize = switch (bp) {
-          _Breakpoint.mobile => 24.0,
-          _Breakpoint.tablet => 30.0,
-          _Breakpoint.desktop => 38.0,
+          _Breakpoint.mobile => 20.0,
+          _Breakpoint.tablet => 24.0,
+          _Breakpoint.desktop => 30.0,
         };
-        final bodySize = switch (bp) {
-          _Breakpoint.mobile => 15.0,
-          _Breakpoint.tablet => 17.0,
-          _Breakpoint.desktop => 20.0,
-        };
-        final buttonPadding = switch (bp) {
-          _Breakpoint.mobile => const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-          _Breakpoint.tablet ||
-          _Breakpoint.desktop =>
-            const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-        };
+        final bodySize = bp == _Breakpoint.mobile ? 15.0 : 17.0;
         final heroPadding = switch (bp) {
           _Breakpoint.mobile =>
-            const EdgeInsets.only(left: 20, right: 20, top: 32, bottom: 32),
+            const EdgeInsets.fromLTRB(20, 28, 20, 28),
           _Breakpoint.tablet =>
-            const EdgeInsets.only(left: 40, right: 24, top: 40, bottom: 40),
+            const EdgeInsets.fromLTRB(40, 36, 32, 36),
           _Breakpoint.desktop =>
-            const EdgeInsets.only(left: 72, right: 24, top: 40, bottom: 40),
+            const EdgeInsets.fromLTRB(72, 44, 48, 44),
         };
 
         final textColumn = Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Pill eyebrow badge
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: _Palette.cyan.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _Palette.cyan.withValues(alpha: 0.4)),
+                color: _Palette.cyan.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: _Palette.cyan.withValues(alpha: 0.55)),
               ),
               child: Text('TAGUIG CITY, PHILIPPINES',
-                  style: _Fonts.sectionLabel().copyWith(fontSize: 14)),
-            ).animate().fade(delay: 200.ms).slideX(begin: -0.5),
+                  style: AppText.eyebrow(color: Colors.white)),
+            ).animate().fade(delay: 200.ms).slideX(begin: -0.4),
             const SizedBox(height: 22),
-            // "FIT FOR" / "ALL." now render with the cyan→yellow gradient
-            // instead of flat white.
-            ShaderMask(
-              shaderCallback: (bounds) =>
-                  _Palette.yellowCyanGradient.createShader(bounds),
-              blendMode: BlendMode.srcIn,
-              child: Text('FIT FOR', style: _Fonts.display(size: displaySize)),
-            ).animate().fade(delay: 300.ms).slideX(begin: -0.5),
-            ShaderMask(
-              shaderCallback: (bounds) =>
-                  _Palette.yellowCyanGradient.createShader(bounds),
-              blendMode: BlendMode.srcIn,
-              child: Text('ALL.', style: _Fonts.display(size: displaySize)),
-            ).animate().fade(delay: 350.ms).slideX(begin: -0.5),
-            const SizedBox(height: 6),
-            Text('WHERE YOUR FITNESS',
-                    style: _Fonts.display(
-                        size: subheadSize, color: _Palette.cyan, height: 1.15))
+            // Two-line headline, second line in the gold accent.
+            Text('FIT FOR',
+                    style: AppText.pageTitle(size: displaySize, color: Colors.white)
+                        .copyWith(height: 1.02))
                 .animate()
-                .fade(delay: 420.ms)
+                .fade(delay: 300.ms)
                 .slideX(begin: -0.4),
-            Text('JOURNEY BEGINS.',
-                    style: _Fonts.display(
-                        size: subheadSize, color: _Palette.yellow, height: 1.15))
+            Text('ALL.',
+                    style: AppText.pageTitle(
+                            size: displaySize, color: _Palette.yellow)
+                        .copyWith(height: 1.02))
                 .animate()
-                .fade(delay: 480.ms)
+                .fade(delay: 360.ms)
                 .slideX(begin: -0.4),
-            const SizedBox(height: 22),
+            const SizedBox(height: 10),
+            Text('Where your fitness journey begins.',
+                    style: AppText.pageTitle(
+                        size: subheadSize, color: _Palette.cyan))
+                .animate()
+                .fade(delay: 440.ms)
+                .slideX(begin: -0.35),
+            const SizedBox(height: 20),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
+              constraints: const BoxConstraints(maxWidth: 540),
               child: Text(
                 'PrimeFit Fitness Gym is your complete training destination — '
                 'equipped, supportive, and built for every level of athlete.',
-                style: _Fonts.body(size: bodySize, height: 1.6),
+                style: AppText.bodyText(
+                    size: bodySize,
+                    color: Colors.white.withValues(alpha: 0.82),
+                    height: 1.6),
               ),
-            ).animate().fade(delay: 540.ms).slideX(begin: -0.3),
+            ).animate().fade(delay: 520.ms).slideX(begin: -0.3),
             const SizedBox(height: 28),
             Wrap(
-              spacing: 12,
+              spacing: 14,
               runSpacing: 12,
               children: [
-                _HoverScale(
-                  endScale: 1.03,
-                  child: Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(10),
-                    child: InkWell(
-                      onTap: onGetStarted,
-                      borderRadius: BorderRadius.circular(10),
-                      child: Ink(
-                        decoration: BoxDecoration(
-                          color: _Palette.yellow,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                                color: _Palette.yellow.withValues(alpha: 0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8)),
-                          ],
-                        ),
-                        child: Container(
-                          padding: buttonPadding,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('GET STARTED', style: _Fonts.button(size: 16)),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.arrow_forward,
-                                  size: 20, color: Colors.black),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                _HoverScale(
-                  endScale: 1.03,
-                  child: OutlinedButton(
-                    onPressed: onViewPlans,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Color(0xFF3A3A3D)),
-                      padding: buttonPadding,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: Text('VIEW PLANS',
-                        style: _Fonts.button(size: 16, color: Colors.white)),
-                  ),
-                ),
+                PillButton('GET STARTED',
+                    onPressed: onGetStarted, icon: Icons.arrow_forward),
+                PillButton('VIEW PLANS',
+                    onPressed: onViewPlans, variant: PillVariant.ghost),
               ],
-            ).animate().fade(delay: 600.ms).slideY(begin: 0.4),
+            ).animate().fade(delay: 600.ms).slideY(begin: 0.3),
+            const SizedBox(height: 24),
+            const _HeroTrustRow(scrimDark: _scrimDark)
+                .animate()
+                .fade(delay: 680.ms),
+            if (bp != _Breakpoint.desktop) ...[
+              const SizedBox(height: 28),
+              const _HeroGlassCards(vertical: false)
+                  .animate()
+                  .fade(delay: 760.ms)
+                  .slideY(begin: 0.3),
+            ],
           ],
         );
 
@@ -744,63 +700,35 @@ class _Fonts {
 
         return Container(
           width: double.infinity,
-          // Fixed height (not just a min) — a Stack with StackFit.expand
-          // needs a bounded height from its parent, and this Container sits
-          // inside a scroll view where height would otherwise be unbounded.
-          // That mismatch was what caused the blank screen / "render box
-          // has never been laid out" crash. The extra "+140" that used to be
-          // here made the section taller than the actual viewport, which is
-          // why the text looked pushed toward the bottom on first load. A
-          // floor is applied on mobile/tablet so short landscape/small
-          // viewports still have room for the (smaller, but still multi-line)
-          // hero text without clipping.
+          // Fixed height keeps the Stack bounded inside the outer scroll view
+          // (an unbounded Stack with fill children crashes). Floor keeps the
+          // multi-line content from clipping on short viewports.
           height: (screenHeight - _kNavBarHeight)
-              .clamp(bp == _Breakpoint.desktop ? 0 : 560, double.infinity),
+              .clamp(bp == _Breakpoint.desktop ? 640 : 720, double.infinity),
           clipBehavior: Clip.hardEdge,
-          decoration: const BoxDecoration(color: _Palette.bgNearBlack),
+          decoration: const BoxDecoration(color: _scrimDark),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Background gym photo. If this ever fails to load (e.g. the
-              // asset isn't declared in pubspec.yaml yet), fall back to a
-              // plain dark background instead of crashing the page.
               Image.asset(
                 'assets/images/hero_bg.jpg',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) =>
-                    Container(color: _Palette.bgDarkSection),
+                    const ColoredBox(color: _scrimDark),
               ),
-              // Dark scrim: solid/near-black on the left (where the text
-              // sits) fading toward mostly-transparent on the right, so the
-              // photo shows through more on that side.
-              Container(
-                decoration: const BoxDecoration(
+              // Left-to-right dark scrim for text legibility.
+              DecoratedBox(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                     colors: [
-                      _Palette.bgNearBlack,
-                      Color(0xE6050505),
-                      Color(0x99050505),
-                      Color(0x33050505),
+                      _scrimDark,
+                      _scrimDark.withValues(alpha: 0.9),
+                      _scrimDark.withValues(alpha: 0.5),
+                      _scrimDark.withValues(alpha: 0.12),
                     ],
-                    stops: [0.0, 0.35, 0.65, 1.0],
-                  ),
-                ),
-              ),
-              // Subtle top/bottom darken too, so the text stays readable
-              // near the edges of the photo.
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0x66050505),
-                      Colors.transparent,
-                      Color(0x66050505)
-                    ],
-                    stops: [0.0, 0.4, 1.0],
+                    stops: const [0.0, 0.4, 0.72, 1.0],
                   ),
                 ),
               ),
@@ -808,15 +736,112 @@ class _Fonts {
                 padding: heroPadding,
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 700),
-                    child: textColumn,
+                  child: SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 720),
+                      child: textColumn,
+                    ),
                   ),
                 ),
               ),
+              // Floating glass stat cards, overlaid bottom-right on desktop.
+              if (bp == _Breakpoint.desktop)
+                Positioned(
+                  right: 56,
+                  bottom: 44,
+                  child: const _HeroGlassCards(vertical: true)
+                      .animate()
+                      .fade(delay: 780.ms)
+                      .slideY(begin: 0.3),
+                ),
             ],
           ),
         );
+      }
+    }
+
+    /// Avatar stack + star rating + caption shown under the hero CTAs.
+    class _HeroTrustRow extends StatelessWidget {
+      final Color scrimDark;
+      const _HeroTrustRow({required this.scrimDark});
+
+      @override
+      Widget build(BuildContext context) {
+        const avatarColors = [_Palette.cyan, _Palette.yellow, AppColors.plum];
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 78,
+              height: 34,
+              child: Stack(
+                children: [
+                  for (int i = 0; i < 3; i++)
+                    Positioned(
+                      left: i * 22.0,
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: avatarColors[i],
+                          border: Border.all(color: scrimDark, width: 2),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.person,
+                            size: 17, color: Colors.white),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                      5,
+                      (_) => const Icon(Icons.star_rounded,
+                          size: 16, color: AppColors.gold)),
+                ),
+                const SizedBox(height: 2),
+                Text('Loved by our members',
+                    style: AppText.bodySmall(
+                        color: Colors.white.withValues(alpha: 0.78))),
+              ],
+            ),
+          ],
+        );
+      }
+    }
+
+    /// The three frosted-glass stat cards overlaid on the hero photo.
+    class _HeroGlassCards extends StatelessWidget {
+      final bool vertical;
+      const _HeroGlassCards({required this.vertical});
+
+      @override
+      Widget build(BuildContext context) {
+        const cards = [
+          GlassStatCard(value: '50+', caption: 'Active members'),
+          GlassStatCard(value: '1+', caption: 'Years operating'),
+          GlassStatCard(value: '20+', caption: 'Equipment types'),
+        ];
+        if (vertical) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (int i = 0; i < cards.length; i++) ...[
+                if (i > 0) const SizedBox(height: 12),
+                SizedBox(width: 180, child: cards[i]),
+              ],
+            ],
+          );
+        }
+        return const Wrap(spacing: 12, runSpacing: 12, children: cards);
       }
     }
 
@@ -829,29 +854,29 @@ class _Fonts {
       @override
       Widget build(BuildContext context) {
         const stats = [
-          ['50+', 'ACTIVE MEMBERS'],
-          ['1+', 'YEARS OPERATING'],
-          ['20+', 'EQUIPMENT TYPES'],
-          ['7AM–10PM', 'DAILY HOURS'],
+          ['50+', 'Active members'],
+          ['1+', 'Years operating'],
+          ['20+', 'Equipment types'],
+          ['7AM–10PM', 'Daily hours'],
         ];
         return Container(
           width: double.infinity,
-          color: _Palette.bgDeepBlack,
-          padding: const EdgeInsets.symmetric(vertical: 30),
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
           child: Wrap(
             alignment: WrapAlignment.spaceEvenly,
             spacing: 24,
             runSpacing: 20,
             children: stats
                 .map((s) => SizedBox(
-                      width: 170,
+                      width: 168,
                       child: Column(
                         children: [
-                          Text(s[0], style: _Fonts.display(size: 28)),
-                          const SizedBox(height: 4),
+                          Text(s[0], style: AppText.statNumber(size: 26)),
+                          const SizedBox(height: 2),
                           Text(s[1],
-                              style: _Fonts.sectionLabel(color: _Palette.mutedGray)
-                                  .copyWith(fontSize: 11.5)),
+                              style: AppText.statCaption(
+                                  color: AppColors.textMuted)),
                         ],
                       ),
                     ))
@@ -862,94 +887,99 @@ class _Fonts {
     }
 
     /// ---------------------------------------------------------------------
-    /// FEATURES / WHY PRIMEFIT
+    /// FEATURES / WHY CHOOSE US
     /// ---------------------------------------------------------------------
     class _FeaturesStrip extends StatelessWidget {
       const _FeaturesStrip();
 
+      static const _features = [
+        (
+          Icons.fitness_center_outlined,
+          'Modern equipment',
+          'Full range of machines, free weights, and cardio equipment.',
+          AppColors.cyanTint,
+          Color(0xFF0E7490),
+        ),
+        (
+          Icons.badge_outlined,
+          'Expert staff',
+          'Certified and experienced trainers to guide members.',
+          AppColors.goldTint,
+          Color(0xFFB4770E),
+        ),
+        (
+          Icons.track_changes_outlined,
+          'Personalized plans',
+          'Workout programs and plans tailored to member goals.',
+          Color(0xFFF0E6FF),
+          AppColors.plum,
+        ),
+        (
+          Icons.groups_outlined,
+          'Supportive community',
+          'A positive, inclusive environment that keeps members motivated.',
+          AppColors.cyanTint,
+          Color(0xFF0E7490),
+        ),
+      ];
+
       @override
       Widget build(BuildContext context) {
-        const features = [
-          [
-            Icons.fitness_center_outlined,
-            'MODERN EQUIPMENT',
-            'Full range of machines, free weights, and cardio equipment.',
-            _Palette.cyan
-          ],
-          [
-            Icons.badge_outlined,
-            'EXPERT STAFF',
-            'Certified and experienced trainers to guide members.',
-            _Palette.yellow
-          ],
-          [
-            Icons.track_changes_outlined,
-            'PERSONALIZED PLANS',
-            'Workout programs and plans tailored to member goals.',
-            _Palette.cyan
-          ],
-          [
-            Icons.groups_outlined,
-            'SUPPORTIVE COMMUNITY',
-            'A positive and inclusive environment that keeps members motivated.',
-            _Palette.yellow
-          ],
-        ];
-
-        return Container(
-          width: double.infinity,
-          color: _Palette.bgNearBlack,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
-          child: Wrap(
-            spacing: 20,
-            runSpacing: 20,
-            alignment: WrapAlignment.center,
-            children: features.map((f) {
-              final icon = f[0] as IconData;
-              final title = f[1] as String;
-              final desc = f[2] as String;
-              final accent = f[3] as Color;
-              return _HoverScale(
-                endScale: 1.02,
-                child: Container(
-                  width: 250,
-                  // Fixed height (not just width) so all four cards line up
-                  // evenly — before this, "SUPPORTIVE COMMUNITY" wrapped to
-                  // 3 lines while the others only needed 1-2, making the
-                  // cards different heights.
-                  height: 210,
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    color: _Palette.bgCard,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _Palette.cardBorder),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: accent.withValues(alpha: 0.5)),
+        final w = MediaQuery.of(context).size.width;
+        final cols = w < 640 ? 1 : (w < 1024 ? 2 : 4);
+        return LandingSection(
+          eyebrow: 'Why choose us',
+          title: 'Everything you need to train',
+          subtitle:
+              'A complete gym built around real results — the equipment, the '
+              'people, and the plans to get you there.',
+          eyebrowColor: AppColors.plum,
+          background: AppColors.bg,
+          child: GridView.count(
+            crossAxisCount: cols,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 20,
+            mainAxisSpacing: 20,
+            childAspectRatio: cols == 1 ? 2.6 : (cols == 2 ? 1.5 : 0.92),
+            children: [
+              for (final f in _features)
+                _HoverScale(
+                  endScale: 1.02,
+                  child: Container(
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.cardBorder),
+                      boxShadow: AppColors.softCardShadow,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration:
+                              BoxDecoration(color: f.$4, shape: BoxShape.circle),
+                          alignment: Alignment.center,
+                          child: Icon(f.$1, color: f.$5, size: 22),
                         ),
-                        alignment: Alignment.center,
-                        child: Icon(icon, color: accent, size: 22),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(title, style: _Fonts.heading(size: 14.5)),
-                      const SizedBox(height: 8),
-                      Text(desc,
-                          style: _Fonts.body(
-                              size: 13, height: 1.45, color: _Palette.mutedGray)),
-                    ],
+                        const SizedBox(height: 16),
+                        Text(f.$2, style: AppText.sectionTitle(size: 15.5)),
+                        const SizedBox(height: 8),
+                        Text(f.$3,
+                            style: AppText.bodyText(
+                                size: 13,
+                                height: 1.5,
+                                color: AppColors.textMuted)),
+                      ],
+                    ),
                   ),
                 ),
-              );
-            }).toList(),
+            ],
           ),
-        ).animate().fade(duration: 500.ms).slideY(begin: 0.2);
+        ).animate().fade(duration: 500.ms).slideY(begin: 0.15);
       }
     }
 
