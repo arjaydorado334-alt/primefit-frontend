@@ -92,7 +92,7 @@ class _ReviewsSectionState extends State<ReviewsSection> {
     return LandingSection(
       eyebrow: 'Member ratings & reviews',
       title: 'What our members say',
-      eyebrowColor: AppColors.plum,
+      eyebrowColor: AppColors.cyan,
       background: AppColors.darkBg,
       child: Column(
         children: [

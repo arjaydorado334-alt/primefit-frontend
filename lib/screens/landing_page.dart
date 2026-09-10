@@ -1,5 +1,8 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
@@ -101,7 +104,7 @@ class _Fonts {
           fontSize: size, fontWeight: weight, color: color, letterSpacing: 0.4);
 }
 
-    const double _kNavBarHeight = 84;
+    const double _kNavBarHeight = 100;
 
     /// Responsive breakpoints used throughout the landing page:
     /// mobile < 600, tablet 600-1024, desktop >= 1024.
@@ -149,6 +152,23 @@ class _Fonts {
     final GlobalKey _merchKey = GlobalKey();
     final GlobalKey _contactKey = GlobalKey();
 
+    /// Drives the page scroll so "About / Mission / …" nav links can land a
+    /// section just *below* the overlaid glass nav bar instead of behind it.
+    final ScrollController _pageScroll = ScrollController();
+
+    void _scrollToKey(GlobalKey key) {
+      final ctx = key.currentContext;
+      if (ctx == null || !_pageScroll.hasClients) return;
+      final box = ctx.findRenderObject();
+      if (box is! RenderBox) return;
+      final reveal =
+          RenderAbstractViewport.of(box).getOffsetToReveal(box, 0.0).offset;
+      final target = (reveal - _kNavBarHeight - 12)
+          .clamp(0.0, _pageScroll.position.maxScrollExtent);
+      _pageScroll.animateTo(target,
+          duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
+    }
+
     Future<void> _launchUri(Uri uri) async {
       try {
         await launchUrl(uri);
@@ -170,45 +190,11 @@ class _Fonts {
         );
       }
 
-      void _scrollToAbout(BuildContext context) {
-        final ctx = _aboutKey.currentContext;
-        if (ctx != null) {
-          Scrollable.ensureVisible(ctx,
-              duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
-        }
-      }
-
-      void _scrollToMission(BuildContext context) {
-        final ctx = _missionKey.currentContext;
-        if (ctx != null) {
-          Scrollable.ensureVisible(ctx,
-              duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
-        }
-      }
-
-      void _scrollToMembership(BuildContext context) {
-        final ctx = _pricingKey.currentContext;
-        if (ctx != null) {
-          Scrollable.ensureVisible(ctx,
-              duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
-        }
-      }
-
-      void _scrollToMerch(BuildContext context) {
-        final ctx = _merchKey.currentContext;
-        if (ctx != null) {
-          Scrollable.ensureVisible(ctx,
-              duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
-        }
-      }
-
-      void _scrollToContact(BuildContext context) {
-        final ctx = _contactKey.currentContext;
-        if (ctx != null) {
-          Scrollable.ensureVisible(ctx,
-              duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
-        }
-      }
+      void _scrollToAbout(BuildContext context) => _scrollToKey(_aboutKey);
+      void _scrollToMission(BuildContext context) => _scrollToKey(_missionKey);
+      void _scrollToMembership(BuildContext context) => _scrollToKey(_pricingKey);
+      void _scrollToMerch(BuildContext context) => _scrollToKey(_merchKey);
+      void _scrollToContact(BuildContext context) => _scrollToKey(_contactKey);
 
       @override
       Widget build(BuildContext context) {
@@ -232,19 +218,13 @@ class _Fonts {
             onMerchandise: () => _scrollToMerch(context),
             onContact: () => _scrollToContact(context),
           ),
-          body: Column(
+          // The nav bar is overlaid on top of the scroll view (not stacked
+          // above it) so page content slides *under* its frosted glass.
+          body: Stack(
             children: [
-              _NavBar(
-                onSignIn: () => _goToLogin(context),
-                onJoin: () => _goToCreateAccount(context),
-                onAbout: () => _scrollToAbout(context),
-                onMission: () => _scrollToMission(context),
-                onMembership: () => _scrollToMembership(context),
-                onMerchandise: () => _scrollToMerch(context),
-                onContact: () => _scrollToContact(context),
-              ),
-              Expanded(
+              Positioned.fill(
                 child: SingleChildScrollView(
+                  controller: _pageScroll,
                   child: Column(
                     children: [
                       _HeroSection(
@@ -278,6 +258,20 @@ class _Fonts {
                       ),
                     ],
                   ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: _NavBar(
+                  onSignIn: () => _goToLogin(context),
+                  onJoin: () => _goToCreateAccount(context),
+                  onAbout: () => _scrollToAbout(context),
+                  onMission: () => _scrollToMission(context),
+                  onMembership: () => _scrollToMembership(context),
+                  onMerchandise: () => _scrollToMerch(context),
+                  onContact: () => _scrollToContact(context),
                 ),
               ),
             ],
@@ -362,15 +356,22 @@ class _Fonts {
           _Breakpoint.tablet => 32.0,
           _Breakpoint.desktop => 72.0,
         };
-        return Container(
+        // Frosted-glass nav: a backdrop blur + dark tint so page content
+        // scrolling underneath shows through as a blur, with a hairline
+        // light bottom edge. Sits in a Stack over the scroll view.
+        return ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+            child: Container(
           height: _kNavBarHeight,
           // Extra horizontal breathing room so the logo and the Sign In /
           // Join Now buttons aren't hugging the very edge of the screen.
           padding: EdgeInsets.only(left: horizontalPadding, right: horizontalPadding),
-          decoration: const BoxDecoration(
-            color: _Palette.bgDeepBlack,
-            border:
-                Border(bottom: BorderSide(color: _Palette.cardBorder, width: 1)),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.58),
+            border: Border(
+                bottom: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.12), width: 1)),
           ),
           child: Row(
             children: [
@@ -382,15 +383,15 @@ class _Fonts {
                     ClipOval(
                       child: Image.asset(
                         'assets/images/primefit_logo.jpg',
-                        width: 38,
-                        height: 38,
+                        width: 42,
+                        height: 42,
                         fit: BoxFit.cover,
                       ),
                     ),
-                    const SizedBox(width: 9),
+                    const SizedBox(width: 11),
                     RichText(
                       text: const TextSpan(
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                        style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
                         children: [
                           TextSpan(
                               text: 'Prime',
@@ -463,7 +464,9 @@ class _Fonts {
               ),
             ],
           ),
-        ).animate().fade(duration: 400.ms);
+        ).animate().fade(duration: 400.ms),
+          ),
+        );
       }
     }
 
@@ -632,60 +635,51 @@ class _Fonts {
           _Breakpoint.desktop => 30.0,
         };
         final bodySize = bp == _Breakpoint.mobile ? 15.0 : 17.0;
+        // Top padding clears the overlaid glass nav bar so the hero content
+        // is never hidden behind it.
         final heroPadding = switch (bp) {
           _Breakpoint.mobile =>
-            const EdgeInsets.fromLTRB(20, 36, 20, 40),
+            const EdgeInsets.fromLTRB(20, _kNavBarHeight + 24, 20, 40),
           _Breakpoint.tablet =>
-            const EdgeInsets.fromLTRB(40, 52, 32, 56),
+            const EdgeInsets.fromLTRB(40, _kNavBarHeight + 28, 32, 56),
           _Breakpoint.desktop =>
-            const EdgeInsets.fromLTRB(80, 72, 56, 72),
+            const EdgeInsets.fromLTRB(80, _kNavBarHeight + 28, 56, 72),
         };
         const headlineShadow = [
-          Shadow(color: Colors.black, blurRadius: 12, offset: Offset(0, 2)),
+          Shadow(color: Colors.black, blurRadius: 14, offset: Offset(0, 2)),
         ];
 
-        // Headline + subhead + subtext sit on a subtle dark-glass backing
-        // panel so they stay legible against the busy photo and share the
-        // hero's frosted-glass system.
-        final headlineBlock = GlassPanel(
-          radius: 24,
-          blur: 6,
-          tint: 0.22,
-          borderOpacity: 0.07,
-          padding: EdgeInsets.fromLTRB(
-              bp == _Breakpoint.mobile ? 18 : 26,
-              bp == _Breakpoint.mobile ? 18 : 24,
-              bp == _Breakpoint.mobile ? 18 : 26,
-              bp == _Breakpoint.mobile ? 20 : 26),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('FIT FOR',
-                  style: AppText.pageTitle(size: displaySize, color: Colors.white)
-                      .copyWith(height: 1.02, shadows: headlineShadow)),
-              Text('ALL.',
-                  style: AppText.pageTitle(
-                          size: displaySize, color: _Palette.yellow)
-                      .copyWith(height: 1.02, shadows: headlineShadow)),
-              const SizedBox(height: 10),
-              Text('Where your fitness journey begins.',
-                  style: AppText.pageTitle(size: subheadSize, color: _Palette.cyan)
-                      .copyWith(shadows: headlineShadow)),
-              const SizedBox(height: 18),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 540),
-                child: Text(
-                  'PrimeFit Fitness Gym is your complete training destination — '
-                  'equipped, supportive, and built for every level of athlete.',
-                  style: AppText.bodyText(
-                      size: bodySize,
-                      color: Colors.white.withValues(alpha: 0.88),
-                      height: 1.6),
-                ),
+        // Headline + subhead + subtext — plain over the scrim (the glass
+        // treatment now lives on the nav bar, not the hero content). A
+        // strong text shadow keeps them legible over the photo.
+        final headlineBlock = Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('FIT FOR',
+                style: AppText.pageTitle(size: displaySize, color: Colors.white)
+                    .copyWith(height: 1.02, shadows: headlineShadow)),
+            Text('ALL.',
+                style: AppText.pageTitle(
+                        size: displaySize, color: _Palette.yellow)
+                    .copyWith(height: 1.02, shadows: headlineShadow)),
+            const SizedBox(height: 10),
+            Text('Where your fitness journey begins.',
+                style: AppText.pageTitle(size: subheadSize, color: _Palette.cyan)
+                    .copyWith(shadows: headlineShadow)),
+            const SizedBox(height: 18),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 540),
+              child: Text(
+                'PrimeFit Fitness Gym is your complete training destination — '
+                'equipped, supportive, and built for every level of athlete.',
+                style: AppText.bodyText(
+                    size: bodySize,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    height: 1.6),
               ),
-            ],
-          ),
+            ),
+          ],
         );
 
         final textColumn = Column(
@@ -806,7 +800,7 @@ class _Fonts {
 
       @override
       Widget build(BuildContext context) {
-        const avatarColors = [_Palette.cyan, _Palette.yellow, AppColors.plum];
+        const avatarColors = [_Palette.cyan, _Palette.yellow, _Palette.cyan];
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -961,8 +955,8 @@ class _Fonts {
           Icons.track_changes_outlined,
           'Personalized plans',
           'Workout programs and plans tailored to member goals.',
-          Color(0xFFF0E6FF),
-          AppColors.plum,
+          AppColors.goldTint,
+          Color(0xFFB4770E),
         ),
         (
           Icons.groups_outlined,
@@ -983,7 +977,7 @@ class _Fonts {
           subtitle:
               'A complete gym built around real results — the equipment, the '
               'people, and the plans to get you there.',
-          eyebrowColor: AppColors.plum,
+          eyebrowColor: _Palette.cyan,
           background: _Palette.bgNearBlack,
           child: GridView.count(
             crossAxisCount: cols,
@@ -1061,7 +1055,7 @@ class _Fonts {
                   const SizedBox(height: 16),
                   Text(widget.title,
                       style: AppText.sectionTitle(
-                          size: 15.5, color: const Color(0xFFB39DDB))),
+                          size: 15.5, color: _Palette.white)),
                   const SizedBox(height: 8),
                   Text(widget.body,
                       style: AppText.bodyText(
@@ -1131,7 +1125,7 @@ class _Fonts {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('1+ YEARS',
-                        style: _Fonts.display(size: 20, color: AppColors.plum)),
+                        style: _Fonts.display(size: 20, color: _Palette.yellow)),
                     Text('SERVING TAGUIG CITY',
                         style: _Fonts.sectionLabel(color: _Palette.mutedGray)
                             .copyWith(fontSize: 11)),
@@ -1145,7 +1139,7 @@ class _Fonts {
         final right = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('ABOUT US', style: _Fonts.sectionLabel(color: AppColors.plum)),
+            Text('ABOUT US', style: _Fonts.sectionLabel(color: _Palette.cyan)),
             const SizedBox(height: 14),
             RichText(
               text: TextSpan(
@@ -1280,7 +1274,7 @@ class _Fonts {
           child: Column(
             children: [
               Text('WHO WE ARE',
-                  style: _Fonts.sectionLabel(color: AppColors.plum)),
+                  style: _Fonts.sectionLabel(color: _Palette.cyan)),
               const SizedBox(height: 14),
               Text('MISSION & VISION', style: _Fonts.display(size: 34)),
               const SizedBox(height: 44),
@@ -1499,7 +1493,7 @@ class _Fonts {
           child: Column(
             children: [
               Text('PLANS & PRICING',
-                  style: _Fonts.sectionLabel(color: AppColors.plum)),
+                  style: _Fonts.sectionLabel(color: _Palette.cyan)),
               const SizedBox(height: 10),
               Text('Membership subscriptions',
                   style: AppText.pageTitle(size: 34), textAlign: TextAlign.center),
@@ -1805,7 +1799,7 @@ class _Fonts {
                         )),
                     const SizedBox(height: 24),
                     Text('PAYMENT METHOD',
-                        style: _Fonts.sectionLabel(color: AppColors.plum)),
+                        style: _Fonts.sectionLabel(color: _Palette.cyan)),
                     const SizedBox(height: 4),
                     Text('Choose how you\'ll pay once you sign up.',
                         style: _Fonts.body(size: 12, color: _Palette.mutedGray)),
@@ -1886,7 +1880,7 @@ class _Fonts {
               height: 340,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: const Color(0xFFE9EDF1),
+                color: _Palette.bgCard,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: _Palette.cardBorder),
                 boxShadow: AppColors.softCardShadow,
@@ -2039,7 +2033,7 @@ class _Fonts {
           padding: _sectionPadding(context),
           child: Column(
             children: [
-              Text('FIND US', style: _Fonts.sectionLabel(color: AppColors.plum)),
+              Text('FIND US', style: _Fonts.sectionLabel(color: _Palette.cyan)),
               const SizedBox(height: 10),
               Text('PrimeFit location',
                   style: AppText.pageTitle(size: 34),
@@ -2210,7 +2204,7 @@ class _Fonts {
           child: Column(
             children: [
               Text('PRIMEFIT STORE',
-                  style: _Fonts.sectionLabel(color: AppColors.plum)),
+                  style: _Fonts.sectionLabel(color: _Palette.cyan)),
               const SizedBox(height: 10),
               Text('Merch & apparel',
                   style: AppText.pageTitle(size: 34),
@@ -2294,7 +2288,7 @@ class _Fonts {
                   child: Container(
                     height: 200,
                     width: double.infinity,
-                    color: const Color(0xFFF3F3F4),
+                    color: const Color(0xFF23262C),
                     padding: const EdgeInsets.all(12),
                     child: Image.asset(
                       item.imagePath,
@@ -2329,7 +2323,7 @@ class _Fonts {
                     style: _Fonts.body(size: 12, color: _Palette.mutedGray)),
                 const SizedBox(height: 14),
                 Text(item.price,
-                    style: AppText.pageTitle(size: 22, color: AppColors.plum)),
+                    style: AppText.pageTitle(size: 22, color: _Palette.yellow)),
               ],
             ),
           ),
@@ -2383,7 +2377,7 @@ class _Fonts {
                       child: Container(
                         height: 220,
                         width: double.infinity,
-                        color: const Color(0xFFF3F3F4),
+                        color: const Color(0xFF23262C),
                         padding: const EdgeInsets.all(16),
                         child: Image.asset(
                           item.imagePath,
@@ -2479,7 +2473,7 @@ class _Fonts {
           'Alyssa T.',
           'The community keeps me coming back. I look forward to my sessions now.',
           ['-8 kg', '3 months', '★ 4.8'],
-          AppColors.plum,
+          AppColors.cyan,
         ),
       ];
 
@@ -2493,7 +2487,7 @@ class _Fonts {
           subtitle:
               'A few of the people training with us right now. Your story could '
               'be next.',
-          eyebrowColor: AppColors.plum,
+          eyebrowColor: _Palette.cyan,
           background: _Palette.bgDarkSection,
           child: GridView.count(
             crossAxisCount: cols,
@@ -2781,7 +2775,7 @@ class _Fonts {
           child: Column(
             children: [
               Text('GET IN TOUCH',
-                  style: _Fonts.sectionLabel(color: AppColors.plum)),
+                  style: _Fonts.sectionLabel(color: _Palette.cyan)),
               const SizedBox(height: 12),
               Text('Contact PrimeFit', style: AppText.pageTitle(size: 34)),
               const SizedBox(height: 44),
@@ -3083,7 +3077,7 @@ class _Fonts {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('QUICK LINKS', style: _Fonts.sectionLabel(color: AppColors.plum)),
+            Text('QUICK LINKS', style: _Fonts.sectionLabel(color: _Palette.cyan)),
             const SizedBox(height: 18),
             _FooterLink('About', onAbout),
             _FooterLink('Mission', onMission),
@@ -3121,7 +3115,7 @@ class _Fonts {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('VISIT US', style: _Fonts.sectionLabel(color: AppColors.plum)),
+            Text('VISIT US', style: _Fonts.sectionLabel(color: _Palette.cyan)),
             const SizedBox(height: 18),
             SizedBox(
               width: 280,
@@ -3145,7 +3139,7 @@ class _Fonts {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('FOLLOW ALONG', style: _Fonts.sectionLabel(color: AppColors.plum)),
+            Text('FOLLOW ALONG', style: _Fonts.sectionLabel(color: _Palette.cyan)),
             const SizedBox(height: 18),
             _FooterSocialLink(
               icon: Icons.facebook_outlined,

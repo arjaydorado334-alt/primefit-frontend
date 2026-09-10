@@ -12,8 +12,8 @@ class LandingSection extends StatelessWidget {
   final String? subtitle;
   final Widget child;
 
-  /// Eyebrow accent — cyan by default; pass `AppColors.plum` to match the
-  /// portal's section-title colour.
+  /// Eyebrow accent — cyan by default (the landing page's accent system is
+  /// cyan + gold only).
   final Color eyebrowColor;
 
   /// Section background — near-black page ground or the slightly lighter
