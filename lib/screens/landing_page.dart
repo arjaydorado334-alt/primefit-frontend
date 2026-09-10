@@ -10,6 +10,7 @@ import '../widgets/glass_stat_card.dart';
 import '../widgets/landing_section.dart';
 import '../widgets/pill_button.dart';
 import '../widgets/prime_fit_logo.dart';
+import '../widgets/reviews_section.dart';
 import 'login_page.dart';
 import 'create_account.dart';
 
@@ -130,10 +131,10 @@ class _Fonts {
     const String _primeFitAddress =
         '31 Bernardo St, near Army Road, Central Signal, Taguig, Metro Manila, Philippines 1633';
 
-    // Approximate coordinates for Central Signal, Taguig (not precisely
-    // geocoded for 31 Bernardo St specifically) -- replace with the exact
-    // lat/lng if/when you have it geocoded.
-    const LatLng _primeFitLatLng = LatLng(14.5175, 121.0472);
+    // Geocoded to Bernardo Street, Central Signal Village, Taguig (OSM
+    // Nominatim). Confirm the exact building with the gym and adjust if
+    // needed -- "Get Directions" and the marker both use this.
+    const LatLng _primeFitLatLng = LatLng(14.5089, 121.0569);
 
     // Footer copyright year -- update this each January rather than computing
     // it from DateTime.now(), so the footer doesn't silently roll over mid-way
@@ -250,6 +251,7 @@ class _Fonts {
                           onGetStarted: () => _goToCreateAccount(context)),
                       const _ResultsSection(),
                       const _GallerySection(),
+                      ReviewsSection(onSignIn: () => _goToLogin(context)),
                       _MerchSection(key: _merchKey),
                       const _LocationSection(),
                       _ContactSection(key: _contactKey),
@@ -1788,19 +1790,23 @@ class _Fonts {
         void openInMaps() => _launchUri(Uri.parse(
               'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(_primeFitAddress)}',
             ));
+        void openDirections() => _launchUri(Uri.parse(
+              'https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(_primeFitAddress)}',
+            ));
 
-        final mapPlaceholder = _HoverScale(
+        final mapCard = _HoverScale(
           endScale: 1.01,
           child: Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(20),
             child: Container(
-              height: 320,
+              height: 340,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: const Color(0xFFE9EDF1),
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: _Palette.cardBorder),
+                boxShadow: AppColors.softCardShadow,
               ),
               child: Stack(
                 children: [
@@ -1906,9 +1912,10 @@ class _Fonts {
         final infoCard = Container(
           padding: const EdgeInsets.all(26),
           decoration: BoxDecoration(
-            color: _Palette.bgCard,
-            borderRadius: BorderRadius.circular(18),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: _Palette.cardBorder),
+            boxShadow: AppColors.softCardShadow,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1916,6 +1923,9 @@ class _Fonts {
               _locationRow(Icons.location_on_outlined, 'ADDRESS', _primeFitAddress,
                   _Palette.cyan,
                   onTap: openInMaps),
+              const SizedBox(height: 16),
+              PillButton('Get Directions',
+                  onPressed: openDirections, icon: Icons.directions),
               const Divider(color: _Palette.cardBorder, height: 30),
               _locationRow(
                 Icons.call_outlined,
@@ -1942,30 +1952,32 @@ class _Fonts {
 
         return Container(
           width: double.infinity,
-          color: _Palette.bgDarkSection,
+          color: Colors.white,
           padding: _sectionPadding(context),
           child: Column(
             children: [
-              Text('FIND US', style: _Fonts.sectionLabel()),
+              Text('FIND US', style: _Fonts.sectionLabel(color: AppColors.plum)),
               const SizedBox(height: 10),
-              Text('PRIMEFIT LOCATION',
-                  style: _Fonts.display(size: 30), textAlign: TextAlign.center),
-              const SizedBox(height: 10),
-              Text("Come visit us at our Taguig City gym — we're open every day.",
-                  style: _Fonts.body(size: 13.5, color: _Palette.mutedGray),
+              Text('PrimeFit location',
+                  style: AppText.pageTitle(size: 34),
                   textAlign: TextAlign.center),
-              const SizedBox(height: 40),
+              const SizedBox(height: 12),
+              Text("Come visit us at our Taguig City gym — we're open every day.",
+                  style: AppText.bodyText(
+                      size: 14, color: AppColors.textMuted, height: 1.6),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 44),
               isWide
                   ? Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(child: mapPlaceholder),
+                        Expanded(child: mapCard),
                         const SizedBox(width: 28),
                         Expanded(child: infoCard),
                       ],
                     )
                   : Column(children: [
-                      mapPlaceholder,
+                      mapCard,
                       const SizedBox(height: 24),
                       infoCard
                     ]),
@@ -2681,14 +2693,14 @@ class _Fonts {
 
         return Container(
           width: double.infinity,
-          color: _Palette.bgDarkGraySection,
+          color: AppColors.bg,
           padding: _sectionPadding(context),
           child: Column(
             children: [
               Text('GET IN TOUCH',
-                  style: _Fonts.sectionLabel(color: _Palette.yellow)),
+                  style: _Fonts.sectionLabel(color: AppColors.plum)),
               const SizedBox(height: 12),
-              Text('CONTACT PRIMEFIT', style: _Fonts.display(size: 34)),
+              Text('Contact PrimeFit', style: AppText.pageTitle(size: 34)),
               const SizedBox(height: 44),
               Wrap(
                 spacing: 24,
@@ -2719,9 +2731,10 @@ class _Fonts {
           height: 232,
           padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
           decoration: BoxDecoration(
-            color: _Palette.bgCard,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: _Palette.cardBorder),
+            boxShadow: AppColors.softCardShadow,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -2731,8 +2744,7 @@ class _Fonts {
                 height: 56,
                 decoration: BoxDecoration(
                   color: item.accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: item.accent.withValues(alpha: 0.4)),
+                  shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
                 child: Icon(item.icon, color: item.accent, size: 26),
@@ -2787,9 +2799,10 @@ class _Fonts {
             constraints: const BoxConstraints(maxWidth: 420),
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 28),
             decoration: BoxDecoration(
-              color: _Palette.bgCard,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: _Palette.yellow.withValues(alpha: 0.3)),
+              border: Border.all(color: _Palette.yellow.withValues(alpha: 0.4)),
+              boxShadow: AppColors.softCardShadow,
             ),
             child: Column(
               children: [
@@ -2845,16 +2858,17 @@ class _Fonts {
 
         return Column(
           children: [
-            // The section directly above the footer (_ContactSection) uses
-            // bgDarkGraySection, so the scallop's backdrop matches that
-            // exactly and the footer's bumps read as a clean transition.
+            // Subtle cyan→gold accent divider between the page and the footer.
             Container(
-              color: _Palette.bgDarkGraySection,
-              child: const _ScallopEdge(color: _Palette.bgDeepBlack, radius: 18),
+              height: 3,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                    colors: [AppColors.cyan, AppColors.gold]),
+              ),
             ),
             Container(
               width: double.infinity,
-              color: _Palette.bgDeepBlack,
+              color: Colors.white,
               padding: EdgeInsets.symmetric(
                   horizontal: isWide ? 72 : 24, vertical: isWide ? 56 : 40),
               child: isWide
@@ -2899,7 +2913,7 @@ class _Fonts {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 18),
               decoration: const BoxDecoration(
-                color: _Palette.bgDeepBlack,
+                color: Colors.white,
                 border:
                     Border(top: BorderSide(color: _Palette.cardBorder, width: 1)),
               ),
@@ -2913,58 +2927,6 @@ class _Fonts {
           ],
         );
       }
-    }
-
-    /// Repeating semicircle "scallop" band -- the widget's height equals the
-    /// bump radius, with the bumps' apex at y=0 (touching whatever sits
-    /// above) and the flat baseline at y=radius (matching [color] below).
-    class _ScallopEdge extends StatelessWidget {
-      final Color color;
-      final double radius;
-      const _ScallopEdge({required this.color, this.radius = 16});
-
-      @override
-      Widget build(BuildContext context) {
-        return SizedBox(
-          width: double.infinity,
-          height: radius,
-          child: CustomPaint(
-            size: Size.infinite,
-            painter: _ScallopPainter(color: color, radius: radius),
-          ),
-        );
-      }
-    }
-
-    class _ScallopPainter extends CustomPainter {
-      final Color color;
-      final double radius;
-      const _ScallopPainter({required this.color, required this.radius});
-
-      @override
-      void paint(Canvas canvas, Size size) {
-        final paint = Paint()..color = color;
-        final diameter = radius * 2;
-        final count = (size.width / diameter).ceil();
-
-        final path = Path()..moveTo(0, radius);
-        for (int i = 0; i < count; i++) {
-          final endX = (i + 1) * diameter;
-          // clockwise:true sweeps west -> north -> east, i.e. the bump
-          // bulges *up* (toward y=0) rather than dipping down.
-          path.arcToPoint(Offset(endX, radius),
-              radius: Radius.circular(radius), clockwise: true);
-        }
-        path.lineTo(size.width, size.height);
-        path.lineTo(0, size.height);
-        path.close();
-
-        canvas.drawPath(path, paint);
-      }
-
-      @override
-      bool shouldRepaint(covariant _ScallopPainter oldDelegate) =>
-          oldDelegate.color != color || oldDelegate.radius != radius;
     }
 
     class _FooterBrandColumn extends StatelessWidget {
@@ -3021,7 +2983,7 @@ class _Fonts {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('QUICK LINKS', style: _Fonts.sectionLabel()),
+            Text('QUICK LINKS', style: _Fonts.sectionLabel(color: AppColors.plum)),
             const SizedBox(height: 18),
             _FooterLink('About', onAbout),
             _FooterLink('Mission', onMission),
@@ -3059,7 +3021,7 @@ class _Fonts {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('VISIT US', style: _Fonts.sectionLabel()),
+            Text('VISIT US', style: _Fonts.sectionLabel(color: AppColors.plum)),
             const SizedBox(height: 18),
             SizedBox(
               width: 280,
@@ -3083,7 +3045,7 @@ class _Fonts {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('FOLLOW ALONG', style: _Fonts.sectionLabel()),
+            Text('FOLLOW ALONG', style: _Fonts.sectionLabel(color: AppColors.plum)),
             const SizedBox(height: 18),
             _FooterSocialLink(
               icon: Icons.facebook_outlined,
