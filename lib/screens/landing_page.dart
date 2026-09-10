@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_stat_card.dart';
+import '../widgets/gold_rule.dart';
 import '../widgets/landing_section.dart';
 import '../widgets/pill_button.dart';
 import '../widgets/prime_fit_logo.dart';
@@ -256,9 +257,11 @@ class _Fonts {
                       _PricingSection(
                           key: _pricingKey,
                           onGetStarted: () => _goToCreateAccount(context)),
+                      const GoldRule(verticalMargin: 4),
                       const _ResultsSection(),
                       const _GallerySection(),
                       ReviewsSection(onSignIn: () => _goToLogin(context)),
+                      const GoldRule(verticalMargin: 4),
                       _MerchSection(key: _merchKey),
                       const _LocationSection(),
                       _ContactSection(key: _contactKey),
@@ -631,62 +634,75 @@ class _Fonts {
         final bodySize = bp == _Breakpoint.mobile ? 15.0 : 17.0;
         final heroPadding = switch (bp) {
           _Breakpoint.mobile =>
-            const EdgeInsets.fromLTRB(20, 28, 20, 28),
+            const EdgeInsets.fromLTRB(20, 36, 20, 40),
           _Breakpoint.tablet =>
-            const EdgeInsets.fromLTRB(40, 36, 32, 36),
+            const EdgeInsets.fromLTRB(40, 52, 32, 56),
           _Breakpoint.desktop =>
-            const EdgeInsets.fromLTRB(72, 44, 48, 44),
+            const EdgeInsets.fromLTRB(80, 72, 56, 72),
         };
+        const headlineShadow = [
+          Shadow(color: Colors.black, blurRadius: 12, offset: Offset(0, 2)),
+        ];
+
+        // Headline + subhead + subtext sit on a subtle dark-glass backing
+        // panel so they stay legible against the busy photo and share the
+        // hero's frosted-glass system.
+        final headlineBlock = GlassPanel(
+          radius: 24,
+          blur: 6,
+          tint: 0.22,
+          borderOpacity: 0.07,
+          padding: EdgeInsets.fromLTRB(
+              bp == _Breakpoint.mobile ? 18 : 26,
+              bp == _Breakpoint.mobile ? 18 : 24,
+              bp == _Breakpoint.mobile ? 18 : 26,
+              bp == _Breakpoint.mobile ? 20 : 26),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('FIT FOR',
+                  style: AppText.pageTitle(size: displaySize, color: Colors.white)
+                      .copyWith(height: 1.02, shadows: headlineShadow)),
+              Text('ALL.',
+                  style: AppText.pageTitle(
+                          size: displaySize, color: _Palette.yellow)
+                      .copyWith(height: 1.02, shadows: headlineShadow)),
+              const SizedBox(height: 10),
+              Text('Where your fitness journey begins.',
+                  style: AppText.pageTitle(size: subheadSize, color: _Palette.cyan)
+                      .copyWith(shadows: headlineShadow)),
+              const SizedBox(height: 18),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 540),
+                child: Text(
+                  'PrimeFit Fitness Gym is your complete training destination — '
+                  'equipped, supportive, and built for every level of athlete.',
+                  style: AppText.bodyText(
+                      size: bodySize,
+                      color: Colors.white.withValues(alpha: 0.88),
+                      height: 1.6),
+                ),
+              ),
+            ],
+          ),
+        );
 
         final textColumn = Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Pill eyebrow badge
-            Container(
+            // Pill eyebrow badge — dark glass
+            GlassPanel(
+              radius: 999,
+              blur: 10,
+              tint: 0.4,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: _Palette.cyan.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: _Palette.cyan.withValues(alpha: 0.55)),
-              ),
               child: Text('TAGUIG CITY, PHILIPPINES',
                   style: AppText.eyebrow(color: Colors.white)),
             ).animate().fade(delay: 200.ms).slideX(begin: -0.4),
             const SizedBox(height: 22),
-            // Two-line headline, second line in the gold accent.
-            Text('FIT FOR',
-                    style: AppText.pageTitle(size: displaySize, color: Colors.white)
-                        .copyWith(height: 1.02))
-                .animate()
-                .fade(delay: 300.ms)
-                .slideX(begin: -0.4),
-            Text('ALL.',
-                    style: AppText.pageTitle(
-                            size: displaySize, color: _Palette.yellow)
-                        .copyWith(height: 1.02))
-                .animate()
-                .fade(delay: 360.ms)
-                .slideX(begin: -0.4),
-            const SizedBox(height: 10),
-            Text('Where your fitness journey begins.',
-                    style: AppText.pageTitle(
-                        size: subheadSize, color: _Palette.cyan))
-                .animate()
-                .fade(delay: 440.ms)
-                .slideX(begin: -0.35),
-            const SizedBox(height: 20),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 540),
-              child: Text(
-                'PrimeFit Fitness Gym is your complete training destination — '
-                'equipped, supportive, and built for every level of athlete.',
-                style: AppText.bodyText(
-                    size: bodySize,
-                    color: Colors.white.withValues(alpha: 0.82),
-                    height: 1.6),
-              ),
-            ).animate().fade(delay: 520.ms).slideX(begin: -0.3),
+            headlineBlock.animate().fade(delay: 320.ms).slideX(begin: -0.35),
             const SizedBox(height: 28),
             Wrap(
               spacing: 14,
@@ -717,10 +733,17 @@ class _Fonts {
         return Container(
           width: double.infinity,
           // Fixed height keeps the Stack bounded inside the outer scroll view
-          // (an unbounded Stack with fill children crashes). Floor keeps the
-          // multi-line content from clipping on short viewports.
-          height: (screenHeight - _kNavBarHeight)
-              .clamp(bp == _Breakpoint.desktop ? 640 : 720, double.infinity),
+          // (an unbounded Stack with fill children crashes). Sized to ~the
+          // full viewport so the hero dominates the first screen; the floor
+          // stops multi-line content clipping on short viewports.
+          height: switch (bp) {
+            _Breakpoint.desktop =>
+              screenHeight.clamp(760.0, double.infinity),
+            _Breakpoint.tablet =>
+              (screenHeight - _kNavBarHeight).clamp(760.0, double.infinity),
+            _Breakpoint.mobile =>
+              (screenHeight - _kNavBarHeight).clamp(720.0, double.infinity),
+          },
           clipBehavior: Clip.hardEdge,
           decoration: const BoxDecoration(color: _scrimDark),
           child: Stack(
@@ -843,7 +866,8 @@ class _Fonts {
       Widget build(BuildContext context) {
         const cards = [
           GlassStatCard(value: '50+', caption: 'Active members'),
-          GlassStatCard(value: '1+', caption: 'Years operating'),
+          GlassStatCard(
+              value: '1+', caption: 'Years operating', valueColor: AppColors.gold),
           GlassStatCard(value: '20+', caption: 'Equipment types'),
         ];
         if (vertical) {
@@ -877,8 +901,16 @@ class _Fonts {
         ];
         return Container(
           width: double.infinity,
-          color: _Palette.bgDeepBlack,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
+          decoration: BoxDecoration(
+            color: _Palette.bgDeepBlack,
+            // Slim gold hairlines top + bottom — a gold-accented stat strip
+            // that echoes the CTA band without a solid-gold fill.
+            border: Border.symmetric(
+              horizontal: BorderSide(
+                  color: AppColors.gold.withValues(alpha: 0.45), width: 1),
+            ),
+          ),
           child: Wrap(
             alignment: WrapAlignment.spaceEvenly,
             spacing: 24,
@@ -888,7 +920,9 @@ class _Fonts {
                       width: 168,
                       child: Column(
                         children: [
-                          Text(s[0], style: AppText.statNumber(size: 26)),
+                          Text(s[0],
+                              style: AppText.statNumber(
+                                  size: 26, color: _Palette.yellow)),
                           const SizedBox(height: 2),
                           Text(s[1],
                               style: AppText.statCaption(
@@ -960,42 +994,83 @@ class _Fonts {
             childAspectRatio: cols == 1 ? 2.6 : (cols == 2 ? 1.5 : 0.92),
             children: [
               for (final f in _features)
-                _HoverScale(
-                  endScale: 1.02,
-                  child: Container(
-                    padding: const EdgeInsets.all(22),
-                    decoration: BoxDecoration(
-                      color: _Palette.bgCard,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _Palette.cardBorder),
-                      boxShadow: AppColors.softCardShadow,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 46,
-                          height: 46,
-                          decoration:
-                              BoxDecoration(color: f.$4, shape: BoxShape.circle),
-                          alignment: Alignment.center,
-                          child: Icon(f.$1, color: f.$5, size: 22),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(f.$2, style: AppText.sectionTitle(size: 15.5)),
-                        const SizedBox(height: 8),
-                        Text(f.$3,
-                            style: AppText.bodyText(
-                                size: 13,
-                                height: 1.5,
-                                color: _Palette.lightGray)),
-                      ],
-                    ),
-                  ),
-                ),
+                _FeatureCard(
+                    icon: f.$1,
+                    title: f.$2,
+                    body: f.$3,
+                    badgeBg: f.$4,
+                    badgeIcon: f.$5),
             ],
           ),
         ).animate().fade(duration: 500.ms).slideY(begin: 0.15);
+      }
+    }
+
+    /// A dark "Why choose us" card whose border warms to gold on hover, so
+    /// the gold accent shows up here too — not just on the CTA band.
+    class _FeatureCard extends StatefulWidget {
+      final IconData icon;
+      final String title;
+      final String body;
+      final Color badgeBg;
+      final Color badgeIcon;
+      const _FeatureCard({
+        required this.icon,
+        required this.title,
+        required this.body,
+        required this.badgeBg,
+        required this.badgeIcon,
+      });
+
+      @override
+      State<_FeatureCard> createState() => _FeatureCardState();
+    }
+
+    class _FeatureCardState extends State<_FeatureCard> {
+      bool _hovered = false;
+
+      @override
+      Widget build(BuildContext context) {
+        return MouseRegion(
+          onEnter: (_) => setState(() => _hovered = true),
+          onExit: (_) => setState(() => _hovered = false),
+          child: AnimatedScale(
+            scale: _hovered ? 1.02 : 1.0,
+            duration: const Duration(milliseconds: 160),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: _Palette.bgCard,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                    color: _hovered ? AppColors.gold : _Palette.cardBorder,
+                    width: _hovered ? 1.4 : 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                        color: widget.badgeBg, shape: BoxShape.circle),
+                    alignment: Alignment.center,
+                    child: Icon(widget.icon, color: widget.badgeIcon, size: 22),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(widget.title,
+                      style: AppText.sectionTitle(
+                          size: 15.5, color: const Color(0xFFB39DDB))),
+                  const SizedBox(height: 8),
+                  Text(widget.body,
+                      style: AppText.bodyText(
+                          size: 13, height: 1.5, color: _Palette.lightGray)),
+                ],
+              ),
+            ),
+          ),
+        );
       }
     }
 
@@ -1491,7 +1566,7 @@ class _Fonts {
         final rec = widget.recommended;
         final borderColor = rec
             ? AppColors.gold
-            : (_hovered ? AppColors.cyan : _Palette.cardBorder);
+            : (_hovered ? AppColors.gold : _Palette.cardBorder);
 
         return MouseRegion(
           onEnter: (_) => setState(() => _hovered = true),
@@ -2805,20 +2880,37 @@ class _Fonts {
           endScale: 1.01,
           child: Container(
             constraints: const BoxConstraints(maxWidth: 420),
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 28),
+            padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
             decoration: BoxDecoration(
-              color: _Palette.bgCard,
+              // Gold-tinted charcoal + a thicker gold left accent bar, so
+              // this pull-strip carries the gold treatment.
+              color: Color.alphaBlend(
+                  AppColors.gold.withValues(alpha: 0.06), _Palette.bgCard),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: _Palette.yellow.withValues(alpha: 0.4)),
-              boxShadow: AppColors.softCardShadow,
+              border: const Border(
+                left: BorderSide(color: AppColors.gold, width: 3),
+                top: BorderSide(color: Color(0x33F2B705)),
+                right: BorderSide(color: Color(0x33F2B705)),
+                bottom: BorderSide(color: Color(0x33F2B705)),
+              ),
             ),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.schedule, color: _Palette.yellow, size: 22),
-                    const SizedBox(width: 8),
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: AppColors.gold.withValues(alpha: 0.16),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.schedule,
+                          color: _Palette.yellow, size: 18),
+                    ),
+                    const SizedBox(width: 10),
                     Text('Business Hours', style: _Fonts.heading(size: 16)),
                   ],
                 ),
