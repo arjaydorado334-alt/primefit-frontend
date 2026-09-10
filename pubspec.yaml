@@ -41,4 +41,9 @@ flutter:
     - assets/images/merch/sando_sleeveless.jpg
     - assets/images/merch/tshirt.jpg
     - assets/images/auth_bg.jpg
+    # Landing-page "Step inside the gym" gallery. Directory registration:
+    # every image dropped in here is bundled automatically and picked up by
+    # the gallery grid on the next `flutter pub get` + restart — no code
+    # change needed. See lib/data/gallery_images.dart.
+    - assets/images/gallery/
     

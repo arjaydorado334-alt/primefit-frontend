@@ -15,6 +15,7 @@ import '../widgets/landing_section.dart';
 import '../widgets/pill_button.dart';
 import '../widgets/prime_fit_logo.dart';
 import '../widgets/reviews_section.dart';
+import '../data/gallery_images.dart';
 import 'login_page.dart';
 import 'create_account.dart';
 
@@ -2579,19 +2580,11 @@ class _Fonts {
     /// ---------------------------------------------------------------------
     /// GALLERY — "Step inside the gym"   (new section)
     /// ---------------------------------------------------------------------
-    /// Uses the few available assets; add more `assets/images/gym/*` and
-    /// extend `_shots` for a fuller grid.
+    /// Images come from `assets/images/gallery/` via [GalleryImages] — see
+    /// that file to add photos. Layout/sizing/hover unchanged; only the
+    /// image source moved out of this widget.
     class _GallerySection extends StatelessWidget {
       const _GallerySection();
-
-      static const _shots = [
-        'assets/images/hero_bg.jpg',
-        'assets/images/about_gym.jpg',
-        'assets/images/auth_bg.jpg',
-        'assets/images/about_gym.jpg',
-        'assets/images/hero_bg.jpg',
-        'assets/images/auth_bg.jpg',
-      ];
 
       @override
       Widget build(BuildContext context) {
@@ -2602,42 +2595,49 @@ class _Fonts {
           title: 'Where it all happens',
           eyebrowColor: AppColors.cyan,
           background: _Palette.bgNearBlack,
-          child: GridView.count(
-            crossAxisCount: cols,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 14,
-            mainAxisSpacing: 14,
-            childAspectRatio: 1.35,
-            children: [
-              for (int i = 0; i < _shots.length; i++)
-                _HoverScale(
-                  endScale: 1.03,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: _Palette.cardBorder),
+          child: FutureBuilder<List<String>>(
+            future: GalleryImages.load(),
+            initialData: GalleryImages.fallback,
+            builder: (context, snapshot) {
+              final shots = snapshot.data ?? GalleryImages.fallback;
+              return GridView.count(
+                crossAxisCount: cols,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
+                childAspectRatio: 1.35,
+                children: [
+                  for (int i = 0; i < shots.length; i++)
+                    _HoverScale(
+                      endScale: 1.03,
+                      child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Image.asset(
-                        _shots[i],
-                        fit: BoxFit.cover,
-                        alignment: i.isEven
-                            ? Alignment.center
-                            : Alignment.topCenter,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: AppColors.cyanTint,
-                          alignment: Alignment.center,
-                          child: const Icon(Icons.photo_outlined,
-                              color: Color(0xFF0E7490), size: 32),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: _Palette.cardBorder),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Image.asset(
+                            shots[i],
+                            fit: BoxFit.cover,
+                            alignment: i.isEven
+                                ? Alignment.center
+                                : Alignment.topCenter,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: AppColors.cyanTint,
+                              alignment: Alignment.center,
+                              child: const Icon(Icons.photo_outlined,
+                                  color: Color(0xFF0E7490), size: 32),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-            ],
+                ],
+              );
+            },
           ),
         );
       }
