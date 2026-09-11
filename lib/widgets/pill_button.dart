@@ -13,6 +13,11 @@ class PillButton extends StatelessWidget {
   /// Stretch to the parent's width (pricing cards, mobile CTAs).
   final bool expand;
 
+  /// Override the accent color for [PillVariant.outline] (e.g. cyan or
+  /// gold instead of the variant's light-neutral default). Ignored by
+  /// every other variant, which already carries its own fixed palette.
+  final Color? color;
+
   const PillButton(
     this.label, {
     super.key,
@@ -20,6 +25,7 @@ class PillButton extends StatelessWidget {
     this.variant = PillVariant.primary,
     this.icon,
     this.expand = false,
+    this.color,
   });
 
   bool get _isElevated =>
@@ -30,7 +36,9 @@ class PillButton extends StatelessWidget {
       case PillVariant.primary:
         return AppButtons.pillPrimary();
       case PillVariant.outline:
-        return AppButtons.pillOutline();
+        return color == null
+            ? AppButtons.pillOutline()
+            : AppButtons.pillOutline(color: color!);
       case PillVariant.ghost:
         return AppButtons.pillGhost();
       case PillVariant.dark:

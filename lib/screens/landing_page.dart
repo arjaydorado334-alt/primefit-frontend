@@ -653,17 +653,36 @@ class _Fonts {
         // Headline + subhead + subtext — plain over the scrim (the glass
         // treatment now lives on the nav bar, not the hero content). A
         // strong text shadow keeps them legible over the photo.
+        // Gradient fill across the full "FIT FOR ALL." headline (cyan ->
+        // gold), same font/size/weight/layout as before -- only the fill
+        // treatment changes. ShaderMask + BlendMode.srcIn recolors the
+        // glyphs using the underlying white text as the alpha mask.
+        final gradientHeadline = ShaderMask(
+          blendMode: BlendMode.srcIn,
+          shaderCallback: (bounds) => const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [_Palette.cyan, _Palette.yellow],
+          ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('FIT FOR',
+                  style: AppText.pageTitle(size: displaySize, color: Colors.white)
+                      .copyWith(height: 1.02, shadows: headlineShadow)),
+              Text('ALL.',
+                  style: AppText.pageTitle(size: displaySize, color: Colors.white)
+                      .copyWith(height: 1.02, shadows: headlineShadow)),
+            ],
+          ),
+        );
+
         final headlineBlock = Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('FIT FOR',
-                style: AppText.pageTitle(size: displaySize, color: Colors.white)
-                    .copyWith(height: 1.02, shadows: headlineShadow)),
-            Text('ALL.',
-                style: AppText.pageTitle(
-                        size: displaySize, color: _Palette.yellow)
-                    .copyWith(height: 1.02, shadows: headlineShadow)),
+            gradientHeadline,
             const SizedBox(height: 10),
             Text('Where your fitness journey begins.',
                 style: AppText.pageTitle(size: subheadSize, color: _Palette.cyan)
@@ -1627,11 +1646,13 @@ class _Fonts {
                             textBaseline: TextBaseline.alphabetic,
                             children: [
                               Text(widget.price,
-                                  style: AppText.pageTitle(size: 30)),
+                                  style: AppText.pageTitle(
+                                      size: 30, color: _Palette.cyan)),
                               const SizedBox(width: 6),
                               Text('/ ${widget.name.toLowerCase()}',
                                   style: AppText.bodySmall(
-                                      color: _Palette.lightGray)),
+                                      color: _Palette.cyan
+                                          .withValues(alpha: 0.75))),
                             ],
                           ),
                           const SizedBox(height: 18),
@@ -1660,6 +1681,7 @@ class _Fonts {
                             variant: rec
                                 ? PillVariant.primary
                                 : PillVariant.outline,
+                            color: rec ? null : AppColors.cyan,
                             onPressed: widget.onGetStarted,
                           ),
                         ],
@@ -2639,20 +2661,32 @@ class _Fonts {
                                 runSpacing: 6,
                                 children: [
                                   for (final b in r.$3)
+                                    // The star-rating pill gets the gold
+                                    // treatment (a small highlighted cell,
+                                    // per the "spread gold intentionally"
+                                    // pass) -- the other stat pills stay
+                                    // neutral so it still reads as an accent.
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 9, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: _Palette.bgDarkGraySection,
+                                        color: b.startsWith('★')
+                                            ? AppColors.goldTint
+                                            : _Palette.bgDarkGraySection,
                                         borderRadius:
                                             BorderRadius.circular(999),
                                         border: Border.all(
-                                            color: _Palette.cardBorder),
+                                            color: b.startsWith('★')
+                                                ? AppColors.gold
+                                                    .withValues(alpha: 0.5)
+                                                : _Palette.cardBorder),
                                       ),
                                       child: Text(b,
                                           style: AppText.badgeLabel(
                                               size: 11,
-                                              color: _Palette.white)),
+                                              color: b.startsWith('★')
+                                                  ? const Color(0xFFB4770E)
+                                                  : _Palette.white)),
                                     ),
                                 ],
                               ),
@@ -2758,7 +2792,16 @@ class _Fonts {
         final w = MediaQuery.of(context).size.width;
         return Container(
           width: double.infinity,
-          color: AppColors.gold,
+          // Dark like the rest of the page (was a solid gold fill) --
+          // slim gold hairlines top + bottom keep the gold accent without
+          // a full-block background, echoing the stats strip above.
+          decoration: BoxDecoration(
+            color: _Palette.bgDeepBlack,
+            border: Border.symmetric(
+              horizontal: BorderSide(
+                  color: AppColors.gold.withValues(alpha: 0.45), width: 1),
+            ),
+          ),
           padding: EdgeInsets.symmetric(
               horizontal: w < 600 ? 20 : 48, vertical: w < 600 ? 48 : 72),
           child: Center(
@@ -2769,14 +2812,13 @@ class _Fonts {
                   Text('Ready to start training?',
                       textAlign: TextAlign.center,
                       style: AppText.pageTitle(
-                          size: w < 600 ? 26 : 36, color: AppColors.dark)),
+                          size: w < 600 ? 26 : 36, color: Colors.white)),
                   const SizedBox(height: 12),
                   Text(
                     'Join PrimeFit today — no joining fee, cancel anytime.',
                     textAlign: TextAlign.center,
                     style: AppText.bodyText(
-                        size: 15,
-                        color: AppColors.dark.withValues(alpha: 0.8)),
+                        size: 15, color: _Palette.lightGray),
                   ),
                   const SizedBox(height: 26),
                   Wrap(
@@ -2785,10 +2827,11 @@ class _Fonts {
                     alignment: WrapAlignment.center,
                     children: [
                       PillButton('JOIN NOW',
-                          onPressed: onJoin, variant: PillVariant.dark),
+                          onPressed: onJoin, variant: PillVariant.primary),
                       PillButton('VIEW PLANS',
                           onPressed: onViewPlans,
-                          variant: PillVariant.darkOutline),
+                          variant: PillVariant.outline,
+                          color: AppColors.gold),
                     ],
                   ),
                 ],
