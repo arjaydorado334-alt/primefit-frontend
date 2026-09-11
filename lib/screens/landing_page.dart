@@ -1863,7 +1863,11 @@ class _Fonts {
 
       @override
       Widget build(BuildContext context) {
-        final isWide = _breakpointOf(context) == _Breakpoint.desktop;
+        final bp = _breakpointOf(context);
+        // Tablet keeps the two-column structure (tighter spacing); only
+        // mobile stacks the image above the info panel.
+        final isRow = bp != _Breakpoint.mobile;
+        final isDesktop = bp == _Breakpoint.desktop;
 
         void openInMaps() => _launchUri(Uri.parse(
               'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(_primeFitAddress)}',
@@ -1872,160 +1876,244 @@ class _Fonts {
               'https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(_primeFitAddress)}',
             ));
 
-        final mapCard = _HoverScale(
-          endScale: 1.01,
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              height: 340,
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                color: _Palette.bgCard,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _Palette.cardBorder),
-                boxShadow: AppColors.softCardShadow,
-              ),
-              child: Stack(
-                children: [
-                  // Real map tiles via OpenStreetMap (flutter_map) -- no API
-                  // key needed. Pan/zoom is interactive; tapping the map
-                  // itself doesn't navigate away (that's what the chip/badge
-                  // below are for), so dragging to pan doesn't conflict with
-                  // "open in Google Maps".
-                  FlutterMap(
-                    options: const MapOptions(
-                      initialCenter: _primeFitLatLng,
-                      initialZoom: 16,
-                      interactionOptions: InteractionOptions(
-                        flags: InteractiveFlag.pinchZoom |
-                            InteractiveFlag.drag |
-                            InteractiveFlag.doubleTapZoom |
-                            InteractiveFlag.scrollWheelZoom,
-                      ),
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.primefit.app',
-                      ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: _primeFitLatLng,
-                            width: 120,
-                            height: 76,
-                            alignment: Alignment.topCenter,
-                            child: IgnorePointer(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.location_on,
-                                      color: _Palette.yellow, size: 40),
-                                  Container(
-                                    margin: const EdgeInsets.only(top: 4),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                        color: Colors.black.withValues(alpha: 0.75),
-                                        borderRadius: BorderRadius.circular(8)),
-                                    child: const Text('Taguig',
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700)),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    bottom: 14,
-                    left: 14,
-                    child: Material(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(8),
-                        onTap: openInMaps,
-                        child: const _MapChip(text: 'TAP TO OPEN IN GOOGLE MAPS'),
-                      ),
+        // ---- LEFT: dominant image + gradient + athletic statement -------
+        final imageColumn = ClipRRect(
+          borderRadius: isRow
+              ? const BorderRadius.horizontal(left: Radius.circular(24))
+              : const BorderRadius.vertical(top: Radius.circular(24)),
+          child: SizedBox(
+            height: isRow ? null : 220,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/images/about_gym.jpg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                      Container(color: _Palette.bgDeepBlack),
+                ),
+                // Subtle dark gradient so the statement stays legible.
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Color(0xCC000000)],
+                      stops: [0.4, 1.0],
                     ),
                   ),
-                  Positioned(
-                    top: 14,
-                    right: 14,
-                    child: Material(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(8),
-                        onTap: openInMaps,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8)),
-                          child: Text('Opens in a new tab',
-                              style: GoogleFonts.inter(
-                                  fontSize: 10.5,
-                                  color: _Palette.mutedGray,
-                                  fontWeight: FontWeight.w600)),
-                        ),
-                      ),
+                ),
+                Positioned(
+                  left: 22,
+                  right: 22,
+                  bottom: 22,
+                  child: RichText(
+                    text: TextSpan(
+                      style: GoogleFonts.archivoBlack(
+                          fontSize: isDesktop ? 24 : 20,
+                          height: 1.2,
+                          letterSpacing: -0.3),
+                      children: const [
+                        TextSpan(
+                            text: 'TRAIN HARD.\n', style: TextStyle(color: Colors.white)),
+                        TextSpan(
+                            text: 'LIVE STRONG.',
+                            style: TextStyle(color: _Palette.yellow)),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
 
-        final infoCard = Container(
-          padding: const EdgeInsets.all(26),
-          decoration: BoxDecoration(
-            color: _Palette.bgCard,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _Palette.cardBorder),
-            boxShadow: AppColors.softCardShadow,
-          ),
+        // ---- RIGHT: heading + 2x2 contact grid + divider + map + CTA ----
+        final infoTiles = [
+          _infoTile(Icons.location_on_outlined, 'LOCATION', _primeFitAddress,
+              _Palette.cyan,
+              onTap: openInMaps),
+          _infoTile(Icons.call_outlined, 'PHONE', '+63 917 847 8351',
+              _Palette.yellow,
+              onTap: () => _launchUri(Uri.parse('tel:+639178478351'))),
+          _infoTile(Icons.schedule_outlined, 'OPERATING HOURS',
+              'Mon–Sun: 7:00 AM – 10:00 PM', _Palette.cyan),
+          _infoTile(Icons.share_outlined, 'SOCIAL MEDIA', null, _Palette.yellow,
+              valueChild: Row(
+                children: [
+                  _SocialIconLink(
+                    icon: Icons.facebook_outlined,
+                    onTap: () => _launchUri(Uri.parse(
+                        'https://www.facebook.com/profile.php?id=61579305812618')),
+                  ),
+                  const SizedBox(width: 8),
+                  _SocialIconLink(
+                    icon: Icons.music_note_outlined,
+                    onTap: () => _launchUri(
+                        Uri.parse('https://www.tiktok.com/@primefit.fitness.g')),
+                  ),
+                ],
+              )),
+        ];
+
+        final infoColumn = Padding(
+          padding: EdgeInsets.all(isDesktop ? 32 : 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _locationRow(Icons.location_on_outlined, 'ADDRESS', _primeFitAddress,
-                  _Palette.cyan,
-                  onTap: openInMaps),
-              const SizedBox(height: 16),
-              PillButton('Get Directions',
-                  onPressed: openDirections, icon: Icons.directions),
-              const Divider(color: _Palette.cardBorder, height: 30),
-              _locationRow(
-                Icons.call_outlined,
-                'PHONE',
-                '+63 917 847 8351',
-                _Palette.yellow,
-                onTap: () => _launchUri(Uri.parse('tel:+639178478351')),
+              Text('Visit PrimeFit Gym',
+                  style: AppText.pageTitle(size: isDesktop ? 28 : 24)),
+              const SizedBox(height: 8),
+              Text(
+                'Find our gym, view its exact location, and get directions '
+                'in seconds.',
+                style: AppText.bodyText(
+                    size: 13.5, color: _Palette.lightGray, height: 1.5),
               ),
-              const Divider(color: _Palette.cardBorder, height: 30),
-              _locationRow(
-                Icons.mail_outline,
-                'EMAIL',
-                'primefitnesstaguig@gmail.com',
-                _Palette.cyan,
-                onTap: () =>
-                    _launchUri(Uri.parse('mailto:primefitnesstaguig@gmail.com')),
+              const SizedBox(height: 24),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 20,
+                childAspectRatio: isDesktop ? 2.3 : 1.7,
+                children: infoTiles,
               ),
-              const Divider(color: _Palette.cardBorder, height: 30),
-              _locationRow(Icons.schedule_outlined, 'HOURS',
-                  'Mon–Sun: 7:00 AM – 10:00 PM', _Palette.yellow),
+              const SizedBox(height: 12),
+              const Divider(color: _Palette.cardBorder, height: 1),
+              const SizedBox(height: 20),
+              // The existing interactive OSM map (flutter_map, no API key)
+              // -- unchanged functionality, just a tighter, rounded frame.
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  height: isDesktop ? 260 : 220,
+                  width: double.infinity,
+                  child: Stack(
+                    children: [
+                      FlutterMap(
+                        options: const MapOptions(
+                          initialCenter: _primeFitLatLng,
+                          initialZoom: 16,
+                          interactionOptions: InteractionOptions(
+                            flags: InteractiveFlag.pinchZoom |
+                                InteractiveFlag.drag |
+                                InteractiveFlag.doubleTapZoom |
+                                InteractiveFlag.scrollWheelZoom,
+                          ),
+                        ),
+                        children: [
+                          TileLayer(
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.primefit.app',
+                          ),
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: _primeFitLatLng,
+                                width: 120,
+                                height: 68,
+                                alignment: Alignment.topCenter,
+                                child: IgnorePointer(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.location_on,
+                                          color: _Palette.yellow, size: 34),
+                                      Container(
+                                        margin: const EdgeInsets.only(top: 4),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 9, vertical: 3),
+                                        decoration: BoxDecoration(
+                                            color: Colors.black
+                                                .withValues(alpha: 0.75),
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
+                                        child: const Text('Taguig',
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      // Thin border on top of the map so it reads as
+                      // "framed", matching the rest of the card.
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: _Palette.cardBorder),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Use the map above to view our exact location and nearby streets.',
+                style: AppText.bodySmall(color: _Palette.mutedGray),
+              ),
+              const SizedBox(height: 10),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: openDirections,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Open in Google Maps',
+                          style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: _Palette.cyan)),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.arrow_forward,
+                          size: 16, color: _Palette.cyan),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
+        );
+
+        final card = Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: _Palette.bgCard,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: _Palette.cardBorder),
+            boxShadow: AppColors.softCardShadow,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: isRow
+              ? IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(flex: 5, child: imageColumn),
+                      Expanded(flex: 6, child: infoColumn),
+                    ],
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [imageColumn, infoColumn],
+                ),
         );
 
         return Container(
@@ -2045,60 +2133,51 @@ class _Fonts {
                       size: 14, color: _Palette.lightGray, height: 1.6),
                   textAlign: TextAlign.center),
               const SizedBox(height: 44),
-              isWide
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: mapCard),
-                        const SizedBox(width: 28),
-                        Expanded(child: infoCard),
-                      ],
-                    )
-                  : Column(children: [
-                      mapCard,
-                      const SizedBox(height: 24),
-                      infoCard
-                    ]),
+              card,
             ],
           ),
         ).animate().fade(duration: 500.ms).slideY(begin: 0.2);
       }
 
-      Widget _locationRow(IconData icon, String label, String value, Color accent,
-          {VoidCallback? onTap}) {
+      Widget _infoTile(
+          IconData icon, String label, String? value, Color accent,
+          {VoidCallback? onTap, Widget? valueChild}) {
         final content = Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(10)),
               alignment: Alignment.center,
-              child: Icon(icon, color: accent, size: 19),
+              child: Icon(icon, color: accent, size: 17),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(label,
                       style: _Fonts.sectionLabel(color: _Palette.mutedGray)
-                          .copyWith(fontSize: 11)),
+                          .copyWith(fontSize: 10.5)),
                   const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: GoogleFonts.inter(
-                      color: onTap != null ? _Palette.cyan : _Palette.offWhite,
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w600,
-                      height: 1.4,
-                      decoration: onTap != null
-                          ? TextDecoration.underline
-                          : TextDecoration.none,
+                  if (valueChild != null)
+                    valueChild
+                  else
+                    Text(
+                      value ?? '',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: onTap != null ? _Palette.cyan : _Palette.offWhite,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        height: 1.35,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -2118,20 +2197,26 @@ class _Fonts {
       }
     }
 
-    class _MapChip extends StatelessWidget {
-      final String text;
-      const _MapChip({required this.text});
+    /// A small round tap target for a social-media link inside the
+    /// location card's "SOCIAL MEDIA" tile.
+    class _SocialIconLink extends StatelessWidget {
+      final IconData icon;
+      final VoidCallback onTap;
+      const _SocialIconLink({required this.icon, required this.onTap});
 
       @override
       Widget build(BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(8)),
-          child: Text(text,
-              style:
-                  _Fonts.sectionLabel(color: Colors.white).copyWith(fontSize: 10)),
+        return Material(
+          color: _Palette.cardBorder,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(7),
+              child: Icon(icon, size: 15, color: _Palette.white),
+            ),
+          ),
         );
       }
     }
