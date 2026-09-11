@@ -1877,12 +1877,16 @@ class _Fonts {
             ));
 
         // ---- LEFT: dominant image + gradient + athletic statement -------
+        // A fixed height (never IntrinsicHeight/stretch-to-match-content —
+        // that was blowing the whole card's height up to the image's
+        // unpredictable intrinsic size and pushing the map down) so the
+        // right column is free to size itself to its own compact content.
         final imageColumn = ClipRRect(
           borderRadius: isRow
               ? const BorderRadius.horizontal(left: Radius.circular(24))
               : const BorderRadius.vertical(top: Radius.circular(24)),
           child: SizedBox(
-            height: isRow ? null : 220,
+            height: isRow ? (isDesktop ? 580.0 : 520.0) : 220.0,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -1957,38 +1961,43 @@ class _Fonts {
         ];
 
         final infoColumn = Padding(
-          padding: EdgeInsets.all(isDesktop ? 32 : 22),
+          padding: EdgeInsets.all(isDesktop ? 24 : 18),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Visit PrimeFit Gym',
-                  style: AppText.pageTitle(size: isDesktop ? 28 : 24)),
-              const SizedBox(height: 8),
+                  style: AppText.pageTitle(size: isDesktop ? 26 : 22)),
+              const SizedBox(height: 6),
               Text(
                 'Find our gym, view its exact location, and get directions '
                 'in seconds.',
                 style: AppText.bodyText(
-                    size: 13.5, color: _Palette.lightGray, height: 1.5),
+                    size: 13, color: _Palette.lightGray, height: 1.4),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 14),
+              // Compact 2-column grid: Location + Phone, then Operating
+              // Hours + Social — the aspect ratio hugs each tile's actual
+              // content instead of leaving dead space inside it.
               GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 20,
-                childAspectRatio: isDesktop ? 2.3 : 1.7,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 10,
+                childAspectRatio: isDesktop ? 3.4 : 2.8,
                 children: infoTiles,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               const Divider(color: _Palette.cardBorder, height: 1),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               // The existing interactive OSM map (flutter_map, no API key)
-              // -- unchanged functionality, just a tighter, rounded frame.
+              // -- unchanged functionality, just a tighter, rounded frame,
+              // directly under the contact info with only a small gap.
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: SizedBox(
-                  height: isDesktop ? 260 : 220,
+                  height: isDesktop ? 250 : 220,
                   width: double.infinity,
                   child: Stack(
                     children: [
@@ -2061,12 +2070,12 @@ class _Fonts {
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 8),
               Text(
                 'Use the map above to view our exact location and nearby streets.',
                 style: AppText.bodySmall(color: _Palette.mutedGray),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -2100,15 +2109,18 @@ class _Fonts {
             boxShadow: AppColors.softCardShadow,
           ),
           clipBehavior: Clip.antiAlias,
+          // No IntrinsicHeight/stretch here on purpose: that combo forced
+          // the row's height to the image's unpredictable intrinsic size,
+          // ballooning the card and pushing the map down. The image column
+          // now carries its own fixed height, and the info column sizes to
+          // its own (compact) content via CrossAxisAlignment.start.
           child: isRow
-              ? IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(flex: 5, child: imageColumn),
-                      Expanded(flex: 6, child: infoColumn),
-                    ],
-                  ),
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 5, child: imageColumn),
+                    Expanded(flex: 6, child: infoColumn),
+                  ],
                 )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2146,13 +2158,13 @@ class _Fonts {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(9)),
               alignment: Alignment.center,
-              child: Icon(icon, color: accent, size: 17),
+              child: Icon(icon, color: accent, size: 16),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -2163,7 +2175,7 @@ class _Fonts {
                   Text(label,
                       style: _Fonts.sectionLabel(color: _Palette.mutedGray)
                           .copyWith(fontSize: 10.5)),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   if (valueChild != null)
                     valueChild
                   else
