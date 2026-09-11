@@ -1961,43 +1961,45 @@ class _Fonts {
         ];
 
         final infoColumn = Padding(
-          padding: EdgeInsets.all(isDesktop ? 24 : 18),
+          padding: EdgeInsets.all(isDesktop ? 20 : 14),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Visit PrimeFit Gym',
                   style: AppText.pageTitle(size: isDesktop ? 26 : 22)),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 'Find our gym, view its exact location, and get directions '
                 'in seconds.',
                 style: AppText.bodyText(
-                    size: 13, color: _Palette.lightGray, height: 1.4),
+                    size: 13, color: _Palette.lightGray, height: 1.35),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               // Compact 2-column grid: Location + Phone, then Operating
               // Hours + Social — the aspect ratio hugs each tile's actual
-              // content instead of leaving dead space inside it.
+              // content instead of leaving dead space inside it. Kept
+              // deliberately short so most of the column's height goes to
+              // the map below.
               GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 10,
-                childAspectRatio: isDesktop ? 3.4 : 2.8,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 6,
+                childAspectRatio: isDesktop ? 3.9 : 3.1,
                 children: infoTiles,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               const Divider(color: _Palette.cardBorder, height: 1),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               // The existing interactive OSM map (flutter_map, no API key)
-              // -- unchanged functionality, just a tighter, rounded frame,
-              // directly under the contact info with only a small gap.
+              // -- unchanged functionality. Larger now that the info above
+              // is compacted, so the map gets the bulk of the column height.
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: SizedBox(
-                  height: isDesktop ? 250 : 220,
+                  height: isDesktop ? 340 : 260,
                   width: double.infinity,
                   child: Stack(
                     children: [
@@ -2103,7 +2105,10 @@ class _Fonts {
         final card = Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: _Palette.bgCard,
+            // Deep black (matches the navbar/footer tone) rather than the
+            // lighter card-gray, so the section blends with the page
+            // instead of reading as a separate lighter panel.
+            color: _Palette.bgDeepBlack,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: _Palette.cardBorder),
             boxShadow: AppColors.softCardShadow,
@@ -2158,15 +2163,15 @@ class _Fonts {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(9)),
+                  borderRadius: BorderRadius.circular(8)),
               alignment: Alignment.center,
-              child: Icon(icon, color: accent, size: 16),
+              child: Icon(icon, color: accent, size: 14),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2175,7 +2180,7 @@ class _Fonts {
                   Text(label,
                       style: _Fonts.sectionLabel(color: _Palette.mutedGray)
                           .copyWith(fontSize: 10.5)),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   if (valueChild != null)
                     valueChild
                   else
@@ -2185,9 +2190,9 @@ class _Fonts {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: onTap != null ? _Palette.cyan : _Palette.offWhite,
-                        fontSize: 13,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        height: 1.35,
+                        height: 1.3,
                       ),
                     ),
                 ],
