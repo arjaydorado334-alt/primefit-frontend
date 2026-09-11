@@ -137,15 +137,39 @@ class AppButtons {
   /// Transparent with a hairline border — the secondary CTA. Light by
   /// default (the landing page runs on a dark theme); pass a darker
   /// [color] when placing it on a light surface.
-  static ButtonStyle pillOutline({Color color = const Color(0xFFE9EAEE)}) =>
-      OutlinedButton.styleFrom(
-        foregroundColor: color,
-        backgroundColor: Colors.transparent,
-        side: BorderSide(color: color.withValues(alpha: 0.55), width: 1.5),
-        padding: _pad,
-        textStyle: AppText.button(color: color),
-        shape: const StadiumBorder(),
-      );
+  ///
+  /// Pass [hoverFillColor] (+ optional [hoverForegroundColor]) to have the
+  /// button solidify to that fill on hover/press — e.g. a cyan outline
+  /// that turns solid gold on hover, matching a page's primary CTA.
+  static ButtonStyle pillOutline({
+    Color color = const Color(0xFFE9EAEE),
+    Color? hoverFillColor,
+    Color? hoverForegroundColor,
+  }) {
+    final base = OutlinedButton.styleFrom(
+      foregroundColor: color,
+      backgroundColor: Colors.transparent,
+      side: BorderSide(color: color.withValues(alpha: 0.55), width: 1.5),
+      padding: _pad,
+      textStyle: AppText.button(color: color),
+      shape: const StadiumBorder(),
+    );
+    if (hoverFillColor == null) return base;
+
+    bool isActive(Set<WidgetState> states) =>
+        states.contains(WidgetState.hovered) ||
+        states.contains(WidgetState.pressed);
+
+    return base.copyWith(
+      backgroundColor: WidgetStateProperty.resolveWith(
+          (states) => isActive(states) ? hoverFillColor : Colors.transparent),
+      foregroundColor: WidgetStateProperty.resolveWith((states) =>
+          isActive(states) ? (hoverForegroundColor ?? color) : color),
+      side: WidgetStateProperty.resolveWith((states) => BorderSide(
+          color: isActive(states) ? hoverFillColor : color.withValues(alpha: 0.55),
+          width: 1.5)),
+    );
+  }
 
   /// Ghost — white label + border, for use on a dark photo (hero overlay).
   static ButtonStyle pillGhost() => OutlinedButton.styleFrom(

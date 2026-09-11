@@ -652,11 +652,16 @@ class _Fonts {
 
         // Headline + subhead + subtext — plain over the scrim (the glass
         // treatment now lives on the nav bar, not the hero content). A
-        // strong text shadow keeps them legible over the photo.
+        // strong text shadow keeps the rest of this block legible over
+        // the photo.
         // Gradient fill across the full "FIT FOR ALL." headline (cyan ->
         // gold), same font/size/weight/layout as before -- only the fill
         // treatment changes. ShaderMask + BlendMode.srcIn recolors the
-        // glyphs using the underlying white text as the alpha mask.
+        // glyphs using the underlying white text as the alpha mask. No
+        // `shadows` on these two lines: a blurred text-shadow sits inside
+        // the same mask and gets tinted too, which reads as a soft glow
+        // instead of a crisp gradient fill — legibility here comes from
+        // the dark scrim behind the text, not a per-glyph shadow.
         final gradientHeadline = ShaderMask(
           blendMode: BlendMode.srcIn,
           shaderCallback: (bounds) => const LinearGradient(
@@ -670,10 +675,10 @@ class _Fonts {
             children: [
               Text('FIT FOR',
                   style: AppText.pageTitle(size: displaySize, color: Colors.white)
-                      .copyWith(height: 1.02, shadows: headlineShadow)),
+                      .copyWith(height: 1.02)),
               Text('ALL.',
                   style: AppText.pageTitle(size: displaySize, color: Colors.white)
-                      .copyWith(height: 1.02, shadows: headlineShadow)),
+                      .copyWith(height: 1.02)),
             ],
           ),
         );
@@ -1651,8 +1656,7 @@ class _Fonts {
                               const SizedBox(width: 6),
                               Text('/ ${widget.name.toLowerCase()}',
                                   style: AppText.bodySmall(
-                                      color: _Palette.cyan
-                                          .withValues(alpha: 0.75))),
+                                      color: _Palette.cyan)),
                             ],
                           ),
                           const SizedBox(height: 18),
@@ -1682,6 +1686,11 @@ class _Fonts {
                                 ? PillVariant.primary
                                 : PillVariant.outline,
                             color: rec ? null : AppColors.cyan,
+                            // Non-recommended cards: cyan outline that
+                            // solidifies to gold on hover/press, matching
+                            // the Recommended plan's already-gold button.
+                            hoverFillColor: rec ? null : AppColors.gold,
+                            hoverForegroundColor: rec ? null : AppColors.onGold,
                             onPressed: widget.onGetStarted,
                           ),
                         ],
@@ -1955,15 +1964,17 @@ class _Fonts {
         );
 
         // ---- RIGHT: heading + 2x2 contact grid + divider + map + CTA ----
+        // Every tile's icon (+ its circular badge) is gold; label/value
+        // text is white (set inside _infoTile) regardless of accent.
         final infoTiles = [
           _infoTile(Icons.location_on_outlined, 'LOCATION', _primeFitAddress,
-              _Palette.cyan,
+              _Palette.yellow,
               onTap: openInMaps),
           _infoTile(Icons.call_outlined, 'PHONE', '+63 917 847 8351',
               _Palette.yellow,
               onTap: () => _launchUri(Uri.parse('tel:+639178478351'))),
           _infoTile(Icons.schedule_outlined, 'OPERATING HOURS',
-              'Mon–Sun: 7:00 AM – 10:00 PM', _Palette.cyan),
+              'Mon–Sun: 7:00 AM – 10:00 PM', _Palette.yellow),
           _infoTile(Icons.share_outlined, 'SOCIAL MEDIA', null, _Palette.yellow,
               valueChild: Row(
                 children: [
@@ -1989,7 +2000,8 @@ class _Fonts {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Visit PrimeFit Gym',
-                  style: AppText.pageTitle(size: isDesktop ? 26 : 22)),
+                  style: AppText.pageTitle(
+                      size: isDesktop ? 26 : 22, color: _Palette.cyan)),
               const SizedBox(height: 4),
               Text(
                 'Find our gym, view its exact location, and get directions '
@@ -2211,7 +2223,7 @@ class _Fonts {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        color: onTap != null ? _Palette.cyan : _Palette.offWhite,
+                        color: _Palette.white,
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                         height: 1.3,
@@ -2246,14 +2258,14 @@ class _Fonts {
       @override
       Widget build(BuildContext context) {
         return Material(
-          color: _Palette.cardBorder,
+          color: _Palette.yellow.withValues(alpha: 0.14),
           shape: const CircleBorder(),
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: onTap,
             child: Padding(
               padding: const EdgeInsets.all(7),
-              child: Icon(icon, size: 15, color: _Palette.white),
+              child: Icon(icon, size: 15, color: _Palette.yellow),
             ),
           ),
         );
