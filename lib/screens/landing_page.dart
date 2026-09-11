@@ -1102,6 +1102,13 @@ class _Fonts {
       @override
       Widget build(BuildContext context) {
         final isWide = _breakpointOf(context) == _Breakpoint.desktop;
+        // Side-by-side (desktop) layout: the photo needs to be tall enough
+        // that its bottom edge roughly lines up with the bottom of the
+        // (taller) text column beside it, instead of leaving a gap of bare
+        // section background under a short photo. The stacked mobile/
+        // tablet layout has no such alignment to satisfy, so it keeps the
+        // original, more compact height.
+        final photoHeight = isWide ? 460.0 : 340.0;
 
         final visual = Stack(
           clipBehavior: Clip.none,
@@ -1109,7 +1116,7 @@ class _Fonts {
             ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                height: 340,
+                height: photoHeight,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
@@ -1629,7 +1636,7 @@ class _Fonts {
                               Expanded(
                                 child: Text(widget.name,
                                     style: AppText.sectionTitle(
-                                        size: 15.5, color: _Palette.white)),
+                                        size: 15.5, color: _Palette.cyan)),
                               ),
                               if (widget.badge != null && !rec)
                                 Container(
@@ -3034,16 +3041,22 @@ class _Fonts {
             padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
             decoration: BoxDecoration(
               // Gold-tinted charcoal + a thicker gold left accent bar, so
-              // this pull-strip carries the gold treatment.
+              // this pull-strip carries the gold treatment. A stronger tint
+              // + hairline + shadow than before (which was nearly the same
+              // tone as the page background with barely-visible borders and
+              // no shadow -- the only card on the page without one -- so it
+              // read as an empty dark rectangle instead of a card).
               color: Color.alphaBlend(
-                  AppColors.gold.withValues(alpha: 0.06), _Palette.bgCard),
+                  AppColors.gold.withValues(alpha: 0.1), _Palette.bgCard),
               borderRadius: BorderRadius.circular(18),
-              border: const Border(
-                left: BorderSide(color: AppColors.gold, width: 3),
-                top: BorderSide(color: Color(0x33F2B705)),
-                right: BorderSide(color: Color(0x33F2B705)),
-                bottom: BorderSide(color: Color(0x33F2B705)),
+              border: Border(
+                left: const BorderSide(color: AppColors.gold, width: 3),
+                top: BorderSide(color: AppColors.gold.withValues(alpha: 0.35)),
+                right: BorderSide(color: AppColors.gold.withValues(alpha: 0.35)),
+                bottom:
+                    BorderSide(color: AppColors.gold.withValues(alpha: 0.35)),
               ),
+              boxShadow: AppColors.softCardShadow,
             ),
             child: Column(
               children: [
@@ -3067,9 +3080,10 @@ class _Fonts {
                 ),
                 const SizedBox(height: 14),
                 Text('Monday – Saturday: 7:00 AM – 10:00 PM',
-                    style: _Fonts.body(size: 14.5)),
+                    style: _Fonts.body(size: 14.5, color: _Palette.offWhite)),
                 const SizedBox(height: 4),
-                Text('Sunday: 8:00 AM – 8:00 PM', style: _Fonts.body(size: 14.5)),
+                Text('Sunday: 8:00 AM – 8:00 PM',
+                    style: _Fonts.body(size: 14.5, color: _Palette.offWhite)),
               ],
             ),
           ),
@@ -3109,14 +3123,6 @@ class _Fonts {
 
         return Column(
           children: [
-            // Subtle cyan→gold accent divider between the page and the footer.
-            Container(
-              height: 3,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                    colors: [AppColors.cyan, AppColors.gold]),
-              ),
-            ),
             Container(
               width: double.infinity,
               color: _Palette.bgDeepBlack,
