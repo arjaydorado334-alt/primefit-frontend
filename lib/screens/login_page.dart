@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
@@ -96,34 +96,6 @@ class _GlassCell extends StatelessWidget {
           ),
           child: child,
         ),
-      ),
-    );
-  }
-}
-
-/// Muted "← Back" link for the bottom-left corner of the auth card. Its
-/// icon size (15), gap (5), Inter label (12.5), and grey
-/// (`AppColors.textMutedOnLight` == 0xFF6B7280) are identical to the
-/// `_backButton` helper on the Create Account steps, so the affordance is
-/// the same on both entry screens and sits natively on the white card.
-class _BackLink extends StatelessWidget {
-  final VoidCallback onTap;
-  const _BackLink({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.arrow_back,
-              size: 15, color: AppColors.textMutedOnLight),
-          const SizedBox(width: 5),
-          Text('Back',
-              style: GoogleFonts.inter(
-                  color: AppColors.textMutedOnLight, fontSize: 12.5)),
-        ],
       ),
     );
   }
@@ -249,6 +221,11 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    // A single size tier below which the card gets tighter padding/text so
+    // it never feels cramped or overflows on a narrow phone viewport. The
+    // enlarged card's maxWidth is only a ceiling either way, so this mainly
+    // tunes internal spacing rather than preventing overflow by itself.
+    final compact = MediaQuery.of(context).size.width < 420;
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -302,22 +279,29 @@ class _LoginPageState extends State<LoginPage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 560),
+                  // Larger card than before (was 560) -- this is only a
+                  // ceiling, so a narrow phone viewport (screen width minus
+                  // the 24px outer padding) still caps it well below this
+                  // and never overflows/clips.
+                  constraints: BoxConstraints(maxWidth: compact ? 480 : 680),
                   child: _GlassCell(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(40, 40, 40, 36),
+                      padding: compact
+                          ? const EdgeInsets.fromLTRB(28, 32, 28, 28)
+                          : const EdgeInsets.fromLTRB(56, 48, 56, 44),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              PrimeFitBadge(size: 34),
-                              SizedBox(width: 10),
-                              PrimeFitWordmark(fontSize: 19),
+                              PrimeFitLogoMark(size: compact ? 40 : 48),
+                              const SizedBox(width: 12),
+                              PrimeFitWordmark(fontSize: compact ? 21 : 25),
                             ],
                           ),
-                          const SizedBox(height: 28),
+                          SizedBox(height: compact ? 30 : 40),
                           _SignInForm(
+                            compact: compact,
                             formKey: _formKey,
                             emailController: _emailController,
                             passwordController: _passwordController,
@@ -333,12 +317,6 @@ class _LoginPageState extends State<LoginPage> {
                             onBack: () => Navigator.of(context).pop(),
                             onCreateAccount: _handleCreateAccount,
                           ),
-                          const SizedBox(height: 22),
-                          // Back to the previous screen (the landing page, or
-                          // wherever the user came from). Sits at the
-                          // bottom-left inside the card; the Create Account
-                          // form uses this exact control in the same spot.
-                          _BackLink(onTap: () => Navigator.of(context).pop()),
                         ],
                       ),
                     ),
@@ -354,6 +332,7 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 class _SignInForm extends StatelessWidget {
+  final bool compact;
   final GlobalKey<FormState> formKey;
   final TextEditingController emailController;
   final TextEditingController passwordController;
@@ -368,6 +347,7 @@ class _SignInForm extends StatelessWidget {
   final VoidCallback onCreateAccount;
 
   const _SignInForm({
+    required this.compact,
     required this.formKey,
     required this.emailController,
     required this.passwordController,
@@ -389,39 +369,40 @@ class _SignInForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Welcome Back', style: _AuthFonts.heading()),
-          const SizedBox(height: 6),
-          Text('Sign in to continue your fitness journey.',
-              style: _AuthFonts.subtitle()),
-          const SizedBox(height: 28),
-          Text('Email address', style: _AuthFonts.label()),
+          Text('Welcome Back',
+              style: _AuthFonts.heading(size: compact ? 28 : 34)),
           const SizedBox(height: 8),
+          Text('Sign in to continue your fitness journey.',
+              style: _AuthFonts.subtitle(size: compact ? 15 : 16)),
+          SizedBox(height: compact ? 28 : 36),
+          Text('Email address', style: _AuthFonts.label(size: 14)),
+          const SizedBox(height: 10),
           TextField(
             controller: emailController,
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.black),
+            style: GoogleFonts.inter(fontSize: 15, color: Colors.black),
             cursorColor: AppColors.yellow,
             decoration: _inputDecoration('member@primefit.com'),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: compact ? 20 : 26),
           Row(
             children: [
-              Text('Password', style: _AuthFonts.label()),
+              Text('Password', style: _AuthFonts.label(size: 14)),
               const Spacer(),
               TextButton(
                 onPressed: () {},
                 style: TextButton.styleFrom(
                     padding: EdgeInsets.zero, minimumSize: Size.zero),
                 child: Text('Forgot password?',
-                    style: _AuthFonts.link(size: 13, color: Colors.black)
+                    style: _AuthFonts.link(size: 13.5, color: Colors.black)
                         .copyWith(decoration: TextDecoration.underline)),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           TextField(
             controller: passwordController,
             obscureText: obscurePassword,
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.black),
+            style: GoogleFonts.inter(fontSize: 15, color: Colors.black),
             cursorColor: AppColors.yellow,
             decoration: _inputDecoration('').copyWith(
               suffixIcon: IconButton(
@@ -440,7 +421,7 @@ class _SignInForm extends StatelessWidget {
                 style:
                     GoogleFonts.inter(color: Colors.redAccent, fontSize: 13)),
           ],
-          const SizedBox(height: 20),
+          SizedBox(height: compact ? 24 : 30),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -448,27 +429,27 @@ class _SignInForm extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: compact ? 16 : 18),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
                 elevation: 0,
               ),
               child: Text(submitting ? 'SIGNING IN…' : 'SIGN IN',
-                  style: _AuthFonts.button()),
+                  style: _AuthFonts.button(size: compact ? 15 : 16)),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: compact ? 22 : 28),
           Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text("Don't have an account? ",
-                    style: _AuthFonts.body(size: 13.5, color: Colors.black)),
+                    style: _AuthFonts.body(size: 14, color: Colors.black)),
                 GestureDetector(
                   onTap: onCreateAccount,
                   behavior: HitTestBehavior.opaque,
                   child: Text('Create one',
-                      style: _AuthFonts.link(color: Colors.black)
+                      style: _AuthFonts.link(size: 14, color: Colors.black)
                           .copyWith(decoration: TextDecoration.underline)),
                 ),
               ],
@@ -482,10 +463,11 @@ class _SignInForm extends StatelessWidget {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: GoogleFonts.inter(color: Colors.grey.shade600, fontSize: 14),
+      hintStyle: GoogleFonts.inter(color: Colors.grey.shade600, fontSize: 15),
       filled: true,
       fillColor: Colors.white.withValues(alpha: 0.92),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide:

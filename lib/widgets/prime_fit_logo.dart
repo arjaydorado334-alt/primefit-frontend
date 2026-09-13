@@ -33,6 +33,27 @@ class PrimeFitBadge extends StatelessWidget {
   }
 }
 
+/// The actual PrimeFit gym logo photo (`assets/images/primefit_logo.jpg`)
+/// -- the same asset shown in the landing page's nav bar -- clipped into a
+/// circle. Use this wherever a header wants the real logo mark instead of
+/// the stylized [PrimeFitBadge] placeholder icon.
+class PrimeFitLogoMark extends StatelessWidget {
+  final double size;
+  const PrimeFitLogoMark({super.key, this.size = 40});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipOval(
+      child: Image.asset(
+        'assets/images/primefit_logo.jpg',
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+}
+
 /// "Prime" + "Fit" wordmark with two-tone coloring, used next to the badge.
 class PrimeFitWordmark extends StatelessWidget {
   final double fontSize;
