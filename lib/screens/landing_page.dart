@@ -3106,22 +3106,15 @@ class _Fonts {
             constraints: const BoxConstraints(maxWidth: 420),
             padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
             decoration: BoxDecoration(
-              // Gold-tinted charcoal + a thicker gold left accent bar, so
-              // this pull-strip carries the gold treatment. A stronger tint
-              // + hairline + shadow than before (which was nearly the same
-              // tone as the page background with barely-visible borders and
-              // no shadow -- the only card on the page without one -- so it
-              // read as an empty dark rectangle instead of a card).
-              color: Color.alphaBlend(
-                  AppColors.gold.withValues(alpha: 0.1), _Palette.bgCard),
+              // Same plain solid fill every other Contact card already uses
+              // (was a computed Color.alphaBlend tint, the one thing that
+              // made this card's background different from its neighbors)
+              // plus a single uniform gold border, so there's nothing about
+              // this card's paint that isn't already proven to render
+              // correctly elsewhere on this exact page.
+              color: _Palette.bgCard,
               borderRadius: BorderRadius.circular(18),
-              border: Border(
-                left: const BorderSide(color: AppColors.gold, width: 3),
-                top: BorderSide(color: AppColors.gold.withValues(alpha: 0.35)),
-                right: BorderSide(color: AppColors.gold.withValues(alpha: 0.35)),
-                bottom:
-                    BorderSide(color: AppColors.gold.withValues(alpha: 0.35)),
-              ),
+              border: Border.all(color: AppColors.gold, width: 1.5),
               boxShadow: AppColors.softCardShadow,
             ),
             child: Column(
@@ -3141,15 +3134,16 @@ class _Fonts {
                           color: _Palette.yellow, size: 18),
                     ),
                     const SizedBox(width: 10),
-                    Text('Business Hours', style: _Fonts.heading(size: 16)),
+                    Text('Business Hours',
+                        style: _Fonts.heading(size: 16, color: Colors.white)),
                   ],
                 ),
                 const SizedBox(height: 14),
                 Text('Monday – Saturday: 7:00 AM – 10:00 PM',
-                    style: _Fonts.body(size: 14.5, color: _Palette.offWhite)),
+                    style: _Fonts.body(size: 14.5, color: Colors.white)),
                 const SizedBox(height: 4),
                 Text('Sunday: 8:00 AM – 8:00 PM',
-                    style: _Fonts.body(size: 14.5, color: _Palette.offWhite)),
+                    style: _Fonts.body(size: 14.5, color: Colors.white)),
               ],
             ),
           ),
