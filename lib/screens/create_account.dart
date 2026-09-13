@@ -496,106 +496,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
     showDialog(
       context: context,
-      builder: (ctx) {
-        return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                        colors: [Color(0xFF22B8D8), Color(0xFF1BA0B8)]),
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Terms of Service',
-                          style: GoogleFonts.inter(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white)),
-                      IconButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          icon: const Icon(Icons.close_rounded,
-                              color: Colors.white70),
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints()),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(22),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: 280,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: borderGrey),
-                        ),
-                        child: ListView.builder(
-                          itemCount: terms.length,
-                          itemBuilder: (context, index) {
-                            final text = terms[index];
-                            final parts = text.split('\n');
-                            final title = parts.first;
-                            final body = parts.length > 1
-                                ? parts.sublist(1).join('\n')
-                                : '';
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 14),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(title,
-                                      style: GoogleFonts.inter(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: textDark)),
-                                  const SizedBox(height: 4),
-                                  Text(body,
-                                      style: GoogleFonts.inter(
-                                          fontSize: 13,
-                                          color: Colors.grey.shade700,
-                                          height: 1.5)),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Center(
-                        child: TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: Text('I Understand',
-                              style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: cyan)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (ctx) =>
+          const _LegalDialog(title: 'Terms of Service', sections: terms),
     );
   }
 
@@ -611,106 +513,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
     showDialog(
       context: context,
-      builder: (ctx) {
-        return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                        colors: [Color(0xFF22B8D8), Color(0xFF1BA0B8)]),
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Privacy Policy',
-                          style: GoogleFonts.inter(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white)),
-                      IconButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          icon: const Icon(Icons.close_rounded,
-                              color: Colors.white70),
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints()),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(22),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: 280,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: borderGrey),
-                        ),
-                        child: ListView.builder(
-                          itemCount: policy.length,
-                          itemBuilder: (context, index) {
-                            final text = policy[index];
-                            final parts = text.split('\n');
-                            final title = parts.first;
-                            final body = parts.length > 1
-                                ? parts.sublist(1).join('\n')
-                                : '';
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 14),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(title,
-                                      style: GoogleFonts.inter(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: textDark)),
-                                  const SizedBox(height: 4),
-                                  Text(body,
-                                      style: GoogleFonts.inter(
-                                          fontSize: 13,
-                                          color: Colors.grey.shade700,
-                                          height: 1.5)),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Center(
-                        child: TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: Text('I Understand',
-                              style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: cyan)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (ctx) =>
+          const _LegalDialog(title: 'Privacy Policy', sections: policy),
     );
   }
 
@@ -854,8 +658,11 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
               errorBuilder: (context, error, stackTrace) =>
                   Container(color: darkBg),
             ),
+            // Light frosting only -- was 24 (near-solid, photo unrecognizable).
+            // The tint below (not the blur) is what keeps the logo/text
+            // readable; the photo itself should still read as a photo.
             BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.45),
@@ -1092,12 +899,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
             ),
           ),
         ),
-        const SizedBox(height: 22),
-        // Back to the previous screen (landing page, or wherever the user
-        // came from). Bottom-left inside the card, using the same
-        // `_backButton` helper the later steps use, so the Login form and
-        // this one share one affordance.
-        _backButton(() => Navigator.of(context).pop()),
       ],
     );
   }
@@ -1954,6 +1755,126 @@ class _StatusPill extends StatelessWidget {
             style: GoogleFonts.inter(
                 color: color, fontWeight: FontWeight.w700, fontSize: 12.5)),
       ],
+    );
+  }
+}
+
+/// Shared dark-themed legal-document popup -- used for both the Terms of
+/// Service and Privacy Policy modals so they stay visually identical.
+/// One dark surface top to bottom (no separate colored header bar), white
+/// title/section-heading text, muted-light body text, and a solid gold
+/// "I Understand" button in place of the old plain cyan text link.
+class _LegalDialog extends StatelessWidget {
+  final String title;
+  final List<String> sections;
+  const _LegalDialog({required this.title, required this.sections});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.darkCard,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.darkBorder),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 18, 22, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(title,
+                        style: GoogleFonts.inter(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white)),
+                    IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close_rounded,
+                            color: Colors.white70),
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints()),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(22),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 280,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.darkBg,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.darkBorder),
+                      ),
+                      child: ListView.builder(
+                        itemCount: sections.length,
+                        itemBuilder: (context, index) {
+                          final text = sections[index];
+                          final parts = text.split('\n');
+                          final sectionTitle = parts.first;
+                          final body = parts.length > 1
+                              ? parts.sublist(1).join('\n')
+                              : '';
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(sectionTitle,
+                                    style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white)),
+                                const SizedBox(height: 4),
+                                Text(body,
+                                    style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        color: AppColors.textMutedOnDark,
+                                        height: 1.5)),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.gold,
+                          foregroundColor: AppColors.onGold,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 28, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: Text('I Understand',
+                            style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w700, fontSize: 14)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
