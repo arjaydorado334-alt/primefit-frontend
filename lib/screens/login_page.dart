@@ -16,9 +16,15 @@ import '../services/login_service.dart';
 /// consistent with the PrimeFit landing page: Archivo Black for the
 /// bold page heading, Inter for everything else (subtitle, labels,
 /// inputs, links, buttons).
+///
+/// Defaults are light (white / off-white) because they render directly
+/// on the dark-tinted glass card ([_GlassCell], using the shared
+/// [AppGlass] recipe) -- text *inside* a white surface (the input
+/// fields) always passes its own explicit dark color at the call site
+/// and is unaffected.
 class _AuthFonts {
   // Page heading — bold, confident, not oversized.
-  static TextStyle heading({double size = 30, Color color = Colors.black}) =>
+  static TextStyle heading({double size = 30, Color color = Colors.white}) =>
       GoogleFonts.archivoBlack(
         fontSize: size,
         color: color,
@@ -26,9 +32,9 @@ class _AuthFonts {
         letterSpacing: -0.3,
       );
 
-  // Subtitle under the heading — kept black so it stays clearly
-  // legible over the glass cell.
-  static TextStyle subtitle({double size = 14.5, Color color = Colors.black}) =>
+  // Subtitle under the heading.
+  static TextStyle subtitle(
+          {double size = 14.5, Color color = const Color(0xFFD6D8DC)}) =>
       GoogleFonts.inter(
           fontSize: size,
           color: color,
@@ -36,14 +42,14 @@ class _AuthFonts {
           fontWeight: FontWeight.w400);
 
   // Form field labels.
-  static TextStyle label({double size = 13, Color color = Colors.black}) =>
+  static TextStyle label({double size = 13, Color color = Colors.white}) =>
       GoogleFonts.inter(
           fontSize: size, fontWeight: FontWeight.w600, color: color);
 
   // Body / description text.
   static TextStyle body(
           {double size = 13.5,
-          Color color = Colors.black,
+          Color color = const Color(0xFFD6D8DC),
           double height = 1.5}) =>
       GoogleFonts.inter(
           fontSize: size,
@@ -67,11 +73,10 @@ class _AuthFonts {
           letterSpacing: 0.6);
 }
 
-/// Genuinely translucent frosted-glass panel that floats the form over
-/// the background photo — a strong backdrop blur diffuses the image
-/// into soft color/light so the low-opacity white tint still reads as
-/// legible "glass" rather than a flat white card, while the photo
-/// stays subtly visible through it.
+/// Translucent frosted-glass panel that floats the form over the
+/// background photo. Uses the shared [AppGlass] recipe -- the same tint/
+/// blur/border as the Create Account page's left panel -- so both auth
+/// surfaces read as one consistent glass treatment.
 class _GlassCell extends StatelessWidget {
   final Widget child;
   const _GlassCell({required this.child});
@@ -81,12 +86,13 @@ class _GlassCell extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+        filter: ImageFilter.blur(sigmaX: AppGlass.blur, sigmaY: AppGlass.blur),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.22),
+            color: Colors.black.withValues(alpha: AppGlass.tint),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+            border: Border.all(
+                color: Colors.white.withValues(alpha: AppGlass.borderOpacity)),
             boxShadow: [
               BoxShadow(
                   color: Colors.black.withValues(alpha: 0.4),
@@ -393,7 +399,7 @@ class _SignInForm extends StatelessWidget {
                 style: TextButton.styleFrom(
                     padding: EdgeInsets.zero, minimumSize: Size.zero),
                 child: Text('Forgot password?',
-                    style: _AuthFonts.link(size: 13.5, color: Colors.black)
+                    style: _AuthFonts.link(size: 13.5, color: Colors.white)
                         .copyWith(decoration: TextDecoration.underline)),
               ),
             ],
@@ -444,12 +450,12 @@ class _SignInForm extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text("Don't have an account? ",
-                    style: _AuthFonts.body(size: 14, color: Colors.black)),
+                    style: _AuthFonts.body(size: 14)),
                 GestureDetector(
                   onTap: onCreateAccount,
                   behavior: HitTestBehavior.opaque,
                   child: Text('Create one',
-                      style: _AuthFonts.link(size: 14, color: Colors.black)
+                      style: _AuthFonts.link(size: 14, color: Colors.white)
                           .copyWith(decoration: TextDecoration.underline)),
                 ),
               ],

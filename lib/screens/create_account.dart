@@ -658,22 +658,25 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
               errorBuilder: (context, error, stackTrace) =>
                   Container(color: darkBg),
             ),
-            // Light frosting only -- was 24 (near-solid, photo unrecognizable).
-            // The tint below (not the blur) is what keeps the logo/text
-            // readable; the photo itself should still read as a photo.
+            // Shared AppGlass recipe (see app_theme.dart) -- the exact same
+            // tint/blur/border as the Sign In page's glass card, so both
+            // auth surfaces read as one consistent glass treatment.
             BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              filter:
+                  ImageFilter.blur(sigmaX: AppGlass.blur, sigmaY: AppGlass.blur),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.45),
+                  color: Colors.black.withValues(alpha: AppGlass.tint),
                   border: Border(
                     right: compact
                         ? BorderSide.none
                         : BorderSide(
-                            color: Colors.white.withValues(alpha: 0.14)),
+                            color: Colors.white
+                                .withValues(alpha: AppGlass.borderOpacity)),
                     bottom: compact
                         ? BorderSide(
-                            color: Colors.white.withValues(alpha: 0.14))
+                            color: Colors.white
+                                .withValues(alpha: AppGlass.borderOpacity))
                         : BorderSide.none,
                   ),
                 ),
@@ -910,8 +913,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       key: const ValueKey('plan'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _backButton(() => setState(() => _screen = _Screen.account)),
-        const SizedBox(height: 8),
         Text('Choose Your Plan', style: _AuthFonts.heading(size: 24)),
         const SizedBox(height: 4),
         Text('Pick the membership that fits your goals.',
@@ -1017,8 +1018,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       key: const ValueKey('paymentMethod'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _backButton(() => setState(() => _screen = _Screen.plan)),
-        const SizedBox(height: 8),
         Text('Payment Method', style: _AuthFonts.heading(size: 24)),
         const SizedBox(height: 4),
         Text('Choose how to pay for your $planName plan.',
@@ -1265,8 +1264,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       key: const ValueKey('review'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _backButton(() => setState(() => _screen = _Screen.paymentMethod)),
-        const SizedBox(height: 8),
         Text('Order Summary', style: _AuthFonts.heading(size: 24)),
         const SizedBox(height: 4),
         Text('Confirm your details before proceeding to payment.',
@@ -1631,26 +1628,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
   // ==================== SHARED UI HELPERS ====================
 
-  Widget _backButton(VoidCallback onTap) {
-    // Sits directly on the right panel's dark background (not inside a
-    // white card), so this uses the app's muted-on-dark token instead of
-    // `textGrey`, which was tuned for the old lighter glass card.
-    return InkWell(
-      onTap: onTap,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.arrow_back,
-              size: 15, color: AppColors.textMutedOnDark),
-          const SizedBox(width: 5),
-          Text('Back',
-              style: GoogleFonts.inter(
-                  color: AppColors.textMutedOnDark, fontSize: 12.5)),
-        ],
-      ),
-    );
-  }
-
   Widget _primaryButton(String text, VoidCallback onTap,
       {bool disabled = false}) {
     return SizedBox(
@@ -1771,11 +1748,20 @@ class _LegalDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Enlarged from the original 520x280 -- still responsive: the width
+    // caps to a fraction of the viewport on narrow screens instead of a
+    // fixed maxWidth, and the scrollable section's height is a clamped
+    // fraction of the viewport height rather than a fixed 280.
+    final viewport = MediaQuery.of(context).size;
+    final dialogMaxWidth = viewport.width < 680 ? viewport.width * 0.92 : 620.0;
+    final sectionHeight = (viewport.height * 0.5).clamp(280.0, 460.0);
+
     return Dialog(
       backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
+        constraints: BoxConstraints(maxWidth: dialogMaxWidth),
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.darkCard,
@@ -1787,13 +1773,13 @@ class _LegalDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(22, 18, 22, 0),
+                padding: const EdgeInsets.fromLTRB(26, 22, 26, 0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(title,
                         style: GoogleFonts.inter(
-                            fontSize: 17,
+                            fontSize: 19,
                             fontWeight: FontWeight.w800,
                             color: Colors.white)),
                     IconButton(
@@ -1807,13 +1793,13 @@ class _LegalDialog extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(22),
+                padding: const EdgeInsets.all(26),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      height: 280,
-                      padding: const EdgeInsets.all(14),
+                      height: sectionHeight,
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: AppColors.darkBg,
                         borderRadius: BorderRadius.circular(10),
@@ -1829,28 +1815,28 @@ class _LegalDialog extends StatelessWidget {
                               ? parts.sublist(1).join('\n')
                               : '';
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
+                            padding: const EdgeInsets.only(bottom: 16),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(sectionTitle,
                                     style: GoogleFonts.inter(
-                                        fontSize: 13,
+                                        fontSize: 14,
                                         fontWeight: FontWeight.w700,
                                         color: Colors.white)),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 5),
                                 Text(body,
                                     style: GoogleFonts.inter(
-                                        fontSize: 13,
+                                        fontSize: 13.5,
                                         color: AppColors.textMutedOnDark,
-                                        height: 1.5)),
+                                        height: 1.55)),
                               ],
                             ),
                           );
                         },
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
                     Center(
                       child: ElevatedButton(
                         onPressed: () => Navigator.of(context).pop(),
