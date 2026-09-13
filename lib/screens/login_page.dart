@@ -3,10 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/prime_fit_logo.dart';
+import '../widgets/site_footer.dart';
 import 'member_portal_screen.dart';
 // 👇 Adjust this path if create_account.dart lives somewhere else
 // (e.g. '../create_account.dart' if it's directly under lib/).
 import 'create_account.dart';
+// Reused so the footer's links can navigate to the landing page's own
+// sections (LandingPage, LandingPageSection) -- this page isn't "on" the
+// landing page, so it has no scroll position of its own to jump from.
+import 'landing_page.dart';
 import 'user_session.dart';
 // 👇 Connects this screen to your PHP login API (login_api.php).
 // Adjust the path if login_service.dart lives somewhere else.
@@ -225,6 +230,16 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // Footer links: this page isn't "on" the landing page, so there's no
+  // existing scroll position to jump from -- navigate there and land on
+  // the requested section instead (see LandingPage's initialSection).
+  // Clears the whole stack (pushAndRemoveUntil) rather than pushing on top,
+  // so there's never a second LandingPage instance alive at once fighting
+  // over the page's single shared ScrollController/GlobalKeys.
+  void _goToLandingSection(LandingPageSection section) {
+    goToLandingSection(context, section);
+  }
+
   @override
   Widget build(BuildContext context) {
     // A single size tier below which the card gets tighter padding/text so
@@ -280,55 +295,95 @@ class _LoginPageState extends State<LoginPage> {
           // strong no matter where the card lands on the photo.
           Container(color: Colors.black.withValues(alpha: 0.1)),
           SafeArea(
-            child: Center(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-                child: ConstrainedBox(
-                  // Larger card than before (was 560) -- this is only a
-                  // ceiling, so a narrow phone viewport (screen width minus
-                  // the 24px outer padding) still caps it well below this
-                  // and never overflows/clips.
-                  constraints: BoxConstraints(maxWidth: compact ? 480 : 680),
-                  child: _GlassCell(
-                    child: SingleChildScrollView(
-                      padding: compact
-                          ? const EdgeInsets.fromLTRB(28, 32, 28, 28)
-                          : const EdgeInsets.fromLTRB(56, 48, 56, 44),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              PrimeFitLogoMark(size: compact ? 40 : 48),
-                              const SizedBox(width: 12),
-                              PrimeFitWordmark(fontSize: compact ? 21 : 25),
-                            ],
+            // LayoutBuilder gives the exact height available here (already
+            // safe-area-adjusted), so the SizedBox below reproduces the
+            // card's previous "fills the whole screen, centered" position
+            // pixel-for-pixel -- the footer only becomes visible by
+            // scrolling past that first full screen.
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: constraints.maxHeight,
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 40),
+                            child: ConstrainedBox(
+                              // Larger card than before (was 560) -- this is
+                              // only a ceiling, so a narrow phone viewport
+                              // (screen width minus the 24px outer padding)
+                              // still caps it well below this and never
+                              // overflows/clips.
+                              constraints: BoxConstraints(
+                                  maxWidth: compact ? 480 : 680),
+                              child: _GlassCell(
+                                child: SingleChildScrollView(
+                                  padding: compact
+                                      ? const EdgeInsets.fromLTRB(
+                                          28, 32, 28, 28)
+                                      : const EdgeInsets.fromLTRB(
+                                          56, 48, 56, 44),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          PrimeFitLogoMark(
+                                              size: compact ? 40 : 48),
+                                          const SizedBox(width: 12),
+                                          PrimeFitWordmark(
+                                              fontSize: compact ? 21 : 25),
+                                        ],
+                                      ),
+                                      SizedBox(height: compact ? 30 : 40),
+                                      _SignInForm(
+                                        compact: compact,
+                                        formKey: _formKey,
+                                        emailController: _emailController,
+                                        passwordController:
+                                            _passwordController,
+                                        obscurePassword: _obscurePassword,
+                                        rememberMe: _rememberMe,
+                                        errorText: _errorText,
+                                        submitting: _submitting,
+                                        onToggleObscure: () => setState(() =>
+                                            _obscurePassword =
+                                                !_obscurePassword),
+                                        onToggleRemember: (v) => setState(
+                                            () => _rememberMe = v ?? false),
+                                        onSignIn: _handleSignIn,
+                                        onBack: () =>
+                                            Navigator.of(context).pop(),
+                                        onCreateAccount: _handleCreateAccount,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                          SizedBox(height: compact ? 30 : 40),
-                          _SignInForm(
-                            compact: compact,
-                            formKey: _formKey,
-                            emailController: _emailController,
-                            passwordController: _passwordController,
-                            obscurePassword: _obscurePassword,
-                            rememberMe: _rememberMe,
-                            errorText: _errorText,
-                            submitting: _submitting,
-                            onToggleObscure: () => setState(
-                                () => _obscurePassword = !_obscurePassword),
-                            onToggleRemember: (v) =>
-                                setState(() => _rememberMe = v ?? false),
-                            onSignIn: _handleSignIn,
-                            onBack: () => Navigator.of(context).pop(),
-                            onCreateAccount: _handleCreateAccount,
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
+                      SiteFooter(
+                        onAbout: () =>
+                            _goToLandingSection(LandingPageSection.about),
+                        onMission: () =>
+                            _goToLandingSection(LandingPageSection.mission),
+                        onMembership: () => _goToLandingSection(
+                            LandingPageSection.membership),
+                        onMerchandise: () => _goToLandingSection(
+                            LandingPageSection.merchandise),
+                        onContact: () =>
+                            _goToLandingSection(LandingPageSection.contact),
+                      ),
+                    ],
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
         ],

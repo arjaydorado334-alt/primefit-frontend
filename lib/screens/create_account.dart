@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../theme/app_theme.dart';
 import '../widgets/prime_fit_logo.dart';
+import '../widgets/site_footer.dart';
 // 👇 Adjust this path if member_portal_screen.dart lives somewhere else.
 // If create_account.dart and member_portal_screen.dart are in the same
 // folder (e.g. both under lib/screens/), this relative import works as-is.
@@ -20,6 +21,10 @@ import '../services/plan_service.dart';
 // Adjust this path if login_page.dart lives somewhere else (it should be
 // in the same folder as create_account.dart based on its own imports).
 import 'login_page.dart';
+// Reused so the footer's links can navigate to the landing page's own
+// sections (LandingPage, LandingPageSection) -- this page isn't "on" the
+// landing page, so it has no scroll position of its own to jump from.
+import 'landing_page.dart';
 
 /// Shared typography for the onboarding flow, kept consistent with the
 /// PrimeFit landing page: Archivo Black for bold step headings, Inter
@@ -561,34 +566,53 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   // the split layout stays consistent across all four steps.
 
   Widget _buildSplitShell() {
-    return Row(
-      children: [
-        Expanded(child: _buildBrandPanel(compact: false)),
-        Expanded(
-          child: Container(
-            color: darkBg,
-            child: SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 480),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildStepIndicator(),
-                        const SizedBox(height: 26),
-                        _buildScreenContent(),
-                      ],
+    // The two panels fill exactly one viewport height (LayoutBuilder gives
+    // the exact available height, so this reproduces the previous "always
+    // fills the screen" look pixel-for-pixel), wrapped in an outer scroll
+    // view so the footer becomes reachable just below that first screen
+    // instead of disrupting the panels themselves.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              SizedBox(
+                height: constraints.maxHeight,
+                child: Row(
+                  children: [
+                    Expanded(child: _buildBrandPanel(compact: false)),
+                    Expanded(
+                      child: Container(
+                        color: darkBg,
+                        child: SafeArea(
+                          child: Center(
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 48, vertical: 40),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 480),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildStepIndicator(),
+                                    const SizedBox(height: 26),
+                                    _buildScreenContent(),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ),
+              _buildFooter(),
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -617,9 +641,25 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 ],
               ),
             ),
+            _buildFooter(),
           ],
         ),
       ),
+    );
+  }
+
+  // Footer links: this page isn't "on" the landing page, so there's no
+  // existing scroll position to jump from -- navigate there and land on
+  // the requested section instead (see LandingPage's initialSection).
+  Widget _buildFooter() {
+    void goTo(LandingPageSection section) => goToLandingSection(context, section);
+
+    return SiteFooter(
+      onAbout: () => goTo(LandingPageSection.about),
+      onMission: () => goTo(LandingPageSection.mission),
+      onMembership: () => goTo(LandingPageSection.membership),
+      onMerchandise: () => goTo(LandingPageSection.merchandise),
+      onContact: () => goTo(LandingPageSection.contact),
     );
   }
 

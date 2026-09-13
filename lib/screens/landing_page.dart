@@ -13,8 +13,8 @@ import '../widgets/glass_stat_card.dart';
 import '../widgets/gold_rule.dart';
 import '../widgets/landing_section.dart';
 import '../widgets/pill_button.dart';
-import '../widgets/prime_fit_logo.dart';
 import '../widgets/reviews_section.dart';
+import '../widgets/site_footer.dart';
 import '../data/gallery_images.dart';
 import 'login_page.dart';
 import 'create_account.dart';
@@ -142,11 +142,6 @@ class _Fonts {
     // needed -- "Get Directions" and the marker both use this.
     const LatLng _primeFitLatLng = LatLng(14.5089, 121.0569);
 
-    // Footer copyright year -- update this each January rather than computing
-    // it from DateTime.now(), so the footer doesn't silently roll over mid-way
-    // through a deploy or depend on the visitor's device clock.
-    const int _kFooterCopyrightYear = 2026;
-
     final GlobalKey _aboutKey = GlobalKey();
     final GlobalKey _missionKey = GlobalKey();
     final GlobalKey _pricingKey = GlobalKey();
@@ -176,8 +171,79 @@ class _Fonts {
       } catch (_) {}
     }
 
-    class LandingPage extends StatelessWidget {
-      const LandingPage({super.key});
+    /// Landing-page sections another page can ask [LandingPage] to land on
+    /// right after navigating there -- see the Sign In / Create Account
+    /// footer, which is otherwise not "on" the landing page itself and has
+    /// no scroll position of its own to jump from.
+    enum LandingPageSection { about, mission, membership, merchandise, contact }
+
+    /// Navigates to [LandingPage], landing on [section], clearing the whole
+    /// navigator stack first. Uses a zero-duration route transition rather
+    /// than a normal animated push: an animated transition keeps the old
+    /// route's widgets mounted alongside the new one for its ~300ms
+    /// duration, and since [LandingPage]'s section `GlobalKey`s and its
+    /// `ScrollController` are shared module-level singletons (not per-
+    /// instance state), that brief overlap made the initial-section scroll
+    /// land on the old (soon-to-be-removed) instance instead of the new,
+    /// visible one. Used by the Sign In / Create Account footers.
+    void goToLandingSection(BuildContext context, LandingPageSection section) {
+      Navigator.of(context).pushAndRemoveUntil(
+        PageRouteBuilder<void>(
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              LandingPage(initialSection: section),
+        ),
+        (route) => false,
+      );
+    }
+
+    class LandingPage extends StatefulWidget {
+      /// When set, [LandingPage] scrolls to this section once its first
+      /// frame has been laid out. Leave null for the normal top-of-page
+      /// landing (app launch, the nav bar's own logo, etc.) -- the page
+      /// behaves exactly as before when this is omitted.
+      final LandingPageSection? initialSection;
+
+      const LandingPage({super.key, this.initialSection});
+
+      @override
+      State<LandingPage> createState() => _LandingPageState();
+    }
+
+    class _LandingPageState extends State<LandingPage> {
+      @override
+      void initState() {
+        super.initState();
+        final section = widget.initialSection;
+        if (section != null) {
+          // The target section's GlobalKey has no `currentContext` until
+          // this page has actually built and laid out its first frame, so
+          // the scroll is scheduled for right after that instead of firing
+          // immediately (which would silently no-op). This is safe now
+          // that goToLandingSection uses a zero-duration transition -- no
+          // old LandingPage instance is left mounted to race with.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _scrollToSection(section);
+          });
+        }
+      }
+
+      void _scrollToSection(LandingPageSection section) {
+        switch (section) {
+          case LandingPageSection.about:
+            _scrollToKey(_aboutKey);
+          case LandingPageSection.mission:
+            _scrollToKey(_missionKey);
+          case LandingPageSection.membership:
+            _scrollToKey(_pricingKey);
+          case LandingPageSection.merchandise:
+            _scrollToKey(_merchKey);
+          case LandingPageSection.contact:
+            _scrollToKey(_contactKey);
+        }
+      }
 
       void _goToLogin(BuildContext context) {
         Navigator.of(context).push(
@@ -250,7 +316,7 @@ class _Fonts {
                         onJoin: () => _goToCreateAccount(context),
                         onViewPlans: () => _scrollToMembership(context),
                       ),
-                      _Footer(
+                      SiteFooter(
                         onAbout: () => _scrollToAbout(context),
                         onMission: () => _scrollToMission(context),
                         onMembership: () => _scrollToMembership(context),
@@ -3091,259 +3157,3 @@ class _Fonts {
       }
     }
 
-    /// ---------------------------------------------------------------------
-    /// FOOTER
-    /// ---------------------------------------------------------------------
-    ///
-    /// Layout pattern: a decorative scalloped edge transitions out of the
-    /// preceding (dark) section into the footer's own (darker) background,
-    /// then four columns -- Brand, Quick Links, Visit Us, Follow Along --
-    /// stack on narrow widths and sit side-by-side on wide ones, followed
-    /// by a thin copyright bar. PrimeFit's landing page is dark throughout
-    /// (there's no light section to transition from), so the scallop here
-    /// bridges two of the app's existing dark tones instead of light-to-dark.
-    class _Footer extends StatelessWidget {
-      final VoidCallback onAbout;
-      final VoidCallback onMission;
-      final VoidCallback onMembership;
-      final VoidCallback onMerchandise;
-      final VoidCallback onContact;
-
-      const _Footer({
-        required this.onAbout,
-        required this.onMission,
-        required this.onMembership,
-        required this.onMerchandise,
-        required this.onContact,
-      });
-
-      @override
-      Widget build(BuildContext context) {
-        final isWide = _breakpointOf(context) == _Breakpoint.desktop;
-
-        return Column(
-          children: [
-            Container(
-              width: double.infinity,
-              color: _Palette.bgDeepBlack,
-              padding: EdgeInsets.symmetric(
-                  horizontal: isWide ? 72 : 24, vertical: isWide ? 56 : 40),
-              child: isWide
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Expanded(flex: 3, child: _FooterBrandColumn()),
-                        Expanded(
-                          flex: 2,
-                          child: _FooterQuickLinksColumn(
-                            onAbout: onAbout,
-                            onMission: onMission,
-                            onMembership: onMembership,
-                            onMerchandise: onMerchandise,
-                            onContact: onContact,
-                          ),
-                        ),
-                        const Expanded(flex: 3, child: _FooterVisitUsColumn()),
-                        const Expanded(flex: 2, child: _FooterFollowColumn()),
-                      ],
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _FooterBrandColumn(),
-                        const SizedBox(height: 32),
-                        _FooterQuickLinksColumn(
-                          onAbout: onAbout,
-                          onMission: onMission,
-                          onMembership: onMembership,
-                          onMerchandise: onMerchandise,
-                          onContact: onContact,
-                        ),
-                        const SizedBox(height: 32),
-                        const _FooterVisitUsColumn(),
-                        const SizedBox(height: 32),
-                        const _FooterFollowColumn(),
-                      ],
-                    ),
-            ),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: const BoxDecoration(
-                color: _Palette.bgDeepBlack,
-                border:
-                    Border(top: BorderSide(color: _Palette.cardBorder, width: 1)),
-              ),
-              child: Center(
-                child: Text(
-                  '© $_kFooterCopyrightYear PrimeFit. All rights reserved.',
-                  style: _Fonts.body(size: 12, color: _Palette.mutedGray),
-                ),
-              ),
-            ),
-          ],
-        );
-      }
-    }
-
-    class _FooterBrandColumn extends StatelessWidget {
-      const _FooterBrandColumn();
-
-      @override
-      Widget build(BuildContext context) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ClipOval(
-                  child: Image.asset(
-                    'assets/images/primefit_logo.jpg',
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                const SizedBox(width: 9),
-                const PrimeFitWordmark(fontSize: 17),
-              ],
-            ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: 260,
-              child: Text('Your fitness journey starts here.',
-                  style: _Fonts.body(size: 13.5)),
-            ),
-          ],
-        );
-      }
-    }
-
-    class _FooterQuickLinksColumn extends StatelessWidget {
-      final VoidCallback onAbout;
-      final VoidCallback onMission;
-      final VoidCallback onMembership;
-      final VoidCallback onMerchandise;
-      final VoidCallback onContact;
-
-      const _FooterQuickLinksColumn({
-        required this.onAbout,
-        required this.onMission,
-        required this.onMembership,
-        required this.onMerchandise,
-        required this.onContact,
-      });
-
-      @override
-      Widget build(BuildContext context) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('QUICK LINKS', style: _Fonts.sectionLabel(color: _Palette.cyan)),
-            const SizedBox(height: 18),
-            _FooterLink('About', onAbout),
-            _FooterLink('Mission', onMission),
-            _FooterLink('Membership', onMembership),
-            _FooterLink('Merchandise', onMerchandise),
-            _FooterLink('Contact', onContact),
-          ],
-        );
-      }
-    }
-
-    class _FooterLink extends StatelessWidget {
-      final String label;
-      final VoidCallback onTap;
-      const _FooterLink(this.label, this.onTap);
-
-      @override
-      Widget build(BuildContext context) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: InkWell(
-            onTap: onTap,
-            child: Text(label,
-                style: _Fonts.body(size: 14, color: _Palette.lightGray)),
-          ),
-        );
-      }
-    }
-
-    class _FooterVisitUsColumn extends StatelessWidget {
-      const _FooterVisitUsColumn();
-
-      @override
-      Widget build(BuildContext context) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('VISIT US', style: _Fonts.sectionLabel(color: _Palette.cyan)),
-            const SizedBox(height: 18),
-            SizedBox(
-              width: 280,
-              child: Text(_primeFitAddress, style: _Fonts.body(size: 14)),
-            ),
-            const SizedBox(height: 14),
-            Text('Monday – Saturday: 7:00 AM – 10:00 PM',
-                style: _Fonts.body(size: 14)),
-            const SizedBox(height: 4),
-            Text('Sunday: 8:00 AM – 8:00 PM', style: _Fonts.body(size: 14)),
-          ],
-        );
-      }
-    }
-
-    class _FooterFollowColumn extends StatelessWidget {
-      const _FooterFollowColumn();
-
-      @override
-      Widget build(BuildContext context) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('FOLLOW ALONG', style: _Fonts.sectionLabel(color: _Palette.cyan)),
-            const SizedBox(height: 18),
-            _FooterSocialLink(
-              icon: Icons.facebook_outlined,
-              label: 'Facebook',
-              onTap: () => _launchUri(Uri.parse(
-                  'https://www.facebook.com/profile.php?id=61579305812618')),
-            ),
-            _FooterSocialLink(
-              icon: Icons.music_note_outlined,
-              label: 'TikTok',
-              onTap: () => _launchUri(
-                  Uri.parse('https://www.tiktok.com/@primefit.fitness.g')),
-            ),
-          ],
-        );
-      }
-    }
-
-    class _FooterSocialLink extends StatelessWidget {
-      final IconData icon;
-      final String label;
-      final VoidCallback onTap;
-      const _FooterSocialLink(
-          {required this.icon, required this.label, required this.onTap});
-
-      @override
-      Widget build(BuildContext context) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: InkWell(
-            onTap: onTap,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 16, color: _Palette.cyan),
-                const SizedBox(width: 8),
-                Text(label,
-                    style: _Fonts.body(size: 14, color: _Palette.lightGray)),
-              ],
-            ),
-          ),
-        );
-      }
-    }
