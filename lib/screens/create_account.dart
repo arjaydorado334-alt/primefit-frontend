@@ -24,9 +24,15 @@ import 'login_page.dart';
 /// Shared typography for the onboarding flow, kept consistent with the
 /// PrimeFit landing page: Archivo Black for bold step headings, Inter
 /// for everything else (subtitles, labels, body copy, buttons).
+///
+/// Defaults are light (white / off-white) because every remaining call
+/// site renders directly on the right panel's solid dark background (the
+/// old centered glass-over-photo card is gone) -- text *inside* a white
+/// card/field (plan cards, the receipt, input fields) always passes its
+/// own explicit dark color at the call site and is unaffected.
 class _AuthFonts {
   // Step heading — bold, confident, not oversized.
-  static TextStyle heading({double size = 26, Color color = Colors.black}) =>
+  static TextStyle heading({double size = 26, Color color = Colors.white}) =>
       GoogleFonts.archivoBlack(
         fontSize: size,
         color: color,
@@ -34,9 +40,9 @@ class _AuthFonts {
         letterSpacing: -0.3,
       );
 
-  // Subtitle under the heading — kept black so it stays clearly
-  // legible over the glass cell.
-  static TextStyle subtitle({double size = 13.5, Color color = Colors.black}) =>
+  // Subtitle under the heading.
+  static TextStyle subtitle(
+          {double size = 13.5, Color color = const Color(0xFFD6D8DC)}) =>
       GoogleFonts.inter(
           fontSize: size,
           color: color,
@@ -44,14 +50,14 @@ class _AuthFonts {
           fontWeight: FontWeight.w400);
 
   // Form field labels.
-  static TextStyle label({double size = 13, Color color = Colors.black}) =>
+  static TextStyle label({double size = 13, Color color = Colors.white}) =>
       GoogleFonts.inter(
           fontSize: size, fontWeight: FontWeight.w600, color: color);
 
   // Body / description text.
   static TextStyle body(
           {double size = 13,
-          Color color = Colors.black,
+          Color color = const Color(0xFFD6D8DC),
           double height = 1.5}) =>
       GoogleFonts.inter(
           fontSize: size,
@@ -78,40 +84,6 @@ class _AuthFonts {
   static TextStyle stepTitle(
           {required Color color, required FontWeight weight}) =>
       GoogleFonts.inter(fontSize: 15, color: color, fontWeight: weight);
-}
-
-/// Genuinely translucent frosted-glass panel that floats the form over
-/// the background photo — a strong backdrop blur diffuses the image
-/// into soft color/light so the low-opacity white tint still reads as
-/// legible "glass" rather than a flat white card, while the photo
-/// stays subtly visible through it.
-class _GlassCell extends StatelessWidget {
-  final Widget child;
-  const _GlassCell({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.22),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 50,
-                  offset: const Offset(0, 22)),
-            ],
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
 }
 
 /// PrimeFit onboarding simulation.
@@ -763,95 +735,147 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     return _StepStatus.pending;
   }
 
+  // Below this width there isn't enough room for two ~equal panels without
+  // cramping the form, so the shell stacks instead of splitting -- same
+  // "pick a sensible breakpoint" approach the landing page uses for its
+  // own tablet/desktop cutoffs.
+  static const double _kSplitMinWidth = 880;
+
   @override
   Widget build(BuildContext context) {
+    final isSplit = MediaQuery.of(context).size.width >= _kSplitMinWidth;
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Full-bleed background photo. Falls back to the dark brand
-          // background if the asset isn't found, instead of crashing.
-          Image.asset(
-            'assets/images/auth_bg.jpg',
-            fit: BoxFit.cover,
-            filterQuality: FilterQuality.high,
-            errorBuilder: (context, error, stackTrace) =>
-                Container(color: darkBg),
-          ),
-          // Vignette: lighter near the center (keeping the photo's subject
-          // visible behind the now-centered card) and darker toward the
-          // edges, for a moodier, more premium frame.
-          Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: const Alignment(0, -0.15),
-                radius: 1.3,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.32)
-                ],
-                stops: const [0.35, 1.0],
-              ),
-            ),
-          ),
-          // Bottom-heavy scrim so the lower edge of the frame reads darker
-          // and moodier, matching a premium gym-app aesthetic.
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.4)
-                ],
-                stops: const [0.5, 1.0],
-              ),
-            ),
-          ),
-          // Even, overall darkening wash so text/card contrast stays
-          // strong no matter where the card lands on the photo.
-          Container(color: Colors.black.withValues(alpha: 0.1)),
-          SafeArea(
-            child: Center(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 560),
-                  child: _GlassCell(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(40, 40, 40, 36),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildCellHeader(),
-                          const SizedBox(height: 22),
-                          _buildStepIndicator(),
-                          const SizedBox(height: 22),
-                          _buildScreenContent(),
-                        ],
-                      ),
+      backgroundColor: darkBg,
+      body: isSplit ? _buildSplitShell() : _buildStackedShell(),
+    );
+  }
+
+  // ==================== TWO-PANEL SHELL (wide) ====================
+  // Left: frosted dark-glass brand panel over the gym photo. Right: the
+  // step indicator + current step's form, on a solid dark background.
+  // Every step (_buildScreenContent) renders inside this same shell, so
+  // the split layout stays consistent across all four steps.
+
+  Widget _buildSplitShell() {
+    return Row(
+      children: [
+        Expanded(child: _buildBrandPanel(compact: false)),
+        Expanded(
+          child: Container(
+            color: darkBg,
+            child: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildStepIndicator(),
+                        const SizedBox(height: 26),
+                        _buildScreenContent(),
+                      ],
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  // ==================== STACKED SHELL (narrow / mobile) ====================
+  // The brand panel becomes a short header band (logo only, no form)
+  // above the full-width scrollable form, instead of forcing a cramped
+  // side-by-side split.
+
+  Widget _buildStackedShell() {
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildBrandPanel(compact: true),
+            Container(
+              width: double.infinity,
+              color: darkBg,
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStepIndicator(),
+                  const SizedBox(height: 22),
+                  _buildScreenContent(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // ==================== CELL HEADER (logo + wordmark) ====================
+  // ==================== BRAND PANEL (left panel / top band) ====================
+  // Frosted dark-glass over the same auth background photo this page
+  // already used -- semi-transparent dark tint, backdrop blur, and a thin
+  // light-opacity border on the seam facing the form panel, same
+  // glassmorphism language as `_GlassCell` elsewhere in the app, just
+  // shaped as a full-bleed edge-to-edge pane instead of a floating card.
+  Widget _buildBrandPanel({required bool compact}) {
+    final logoSize = compact ? 56.0 : 108.0;
+    final wordmarkSize = compact ? 24.0 : 34.0;
 
-  Widget _buildCellHeader() {
-    return const Row(
-      children: [
-        PrimeFitBadge(size: 36),
-        SizedBox(width: 10),
-        PrimeFitWordmark(fontSize: 20),
-      ],
+    final content = Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PrimeFitLogoMark(size: logoSize),
+          SizedBox(height: compact ? 10 : 20),
+          PrimeFitWordmark(fontSize: wordmarkSize),
+        ],
+      ),
+    );
+
+    return SizedBox(
+      height: compact ? 176 : double.infinity,
+      width: double.infinity,
+      child: ClipRect(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              'assets/images/auth_bg.jpg',
+              fit: BoxFit.cover,
+              filterQuality: FilterQuality.high,
+              errorBuilder: (context, error, stackTrace) =>
+                  Container(color: darkBg),
+            ),
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  border: Border(
+                    right: compact
+                        ? BorderSide.none
+                        : BorderSide(
+                            color: Colors.white.withValues(alpha: 0.14)),
+                    bottom: compact
+                        ? BorderSide(
+                            color: Colors.white.withValues(alpha: 0.14))
+                        : BorderSide.none,
+                  ),
+                ),
+                child: content,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -878,8 +902,12 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       _StepStatus.active => gold,
       _StepStatus.pending => const Color(0xFFE1E4E8),
     };
-    final labelColor =
-        status == _StepStatus.pending ? Colors.black38 : textDark;
+    // Sits directly on the right panel's dark background now (no more
+    // glass-over-photo card), so this needs a light color instead of the
+    // dark one that used to read fine on the lighter glass tint.
+    final labelColor = status == _StepStatus.pending
+        ? AppColors.textMutedOnDark
+        : Colors.white;
     return Column(
       children: [
         Container(
@@ -1012,13 +1040,14 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 padding: const EdgeInsets.only(top: 10),
                 child: RichText(
                   text: TextSpan(
-                    style: GoogleFonts.inter(color: textDark, fontSize: 12.5),
+                    style: GoogleFonts.inter(
+                        color: const Color(0xFFD6D8DC), fontSize: 12.5),
                     children: [
                       const TextSpan(text: 'I agree to the '),
                       TextSpan(
                         text: 'Terms of Service',
                         style: _AuthFonts.link(
-                                color: textDark, weight: FontWeight.w700)
+                                color: Colors.white, weight: FontWeight.w700)
                             .copyWith(decoration: TextDecoration.underline),
                         recognizer: _termsRecognizer,
                       ),
@@ -1026,7 +1055,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       TextSpan(
                         text: 'Privacy Policy',
                         style: _AuthFonts.link(
-                                color: textDark, weight: FontWeight.w700)
+                                color: Colors.white, weight: FontWeight.w700)
                             .copyWith(decoration: TextDecoration.underline),
                         recognizer: _privacyRecognizer,
                       ),
@@ -1046,13 +1075,16 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         Center(
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.inter(color: Colors.black, fontSize: 12.5),
+              style: GoogleFonts.inter(
+                  color: const Color(0xFFD6D8DC), fontSize: 12.5),
               children: [
                 const TextSpan(text: 'Already have an account? '),
                 TextSpan(
                   text: 'Sign in',
                   style: _AuthFonts.link(
-                          size: 12.5, color: textDark, weight: FontWeight.w700)
+                          size: 12.5,
+                          color: Colors.white,
+                          weight: FontWeight.w700)
                       .copyWith(decoration: TextDecoration.underline),
                   recognizer: _signInRecognizer,
                 ),
@@ -1207,7 +1239,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
           Center(
             child: Text(
               'Upload your receipt and confirm your payment to continue.',
-              style: _AuthFonts.body(size: 11.5, color: Colors.black87),
+              style: _AuthFonts.body(size: 11.5),
               textAlign: TextAlign.center,
             ),
           ),
@@ -1771,7 +1803,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
           onPressed: _startOver,
           child: Text('Start Over',
               style: GoogleFonts.inter(
-                  color: textGrey, fontWeight: FontWeight.w600)),
+                  color: AppColors.textMutedOnDark,
+                  fontWeight: FontWeight.w600)),
         ),
       ],
     );
@@ -1798,15 +1831,20 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   // ==================== SHARED UI HELPERS ====================
 
   Widget _backButton(VoidCallback onTap) {
+    // Sits directly on the right panel's dark background (not inside a
+    // white card), so this uses the app's muted-on-dark token instead of
+    // `textGrey`, which was tuned for the old lighter glass card.
     return InkWell(
       onTap: onTap,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.arrow_back, size: 15, color: textGrey),
+          const Icon(Icons.arrow_back,
+              size: 15, color: AppColors.textMutedOnDark),
           const SizedBox(width: 5),
           Text('Back',
-              style: GoogleFonts.inter(color: textGrey, fontSize: 12.5)),
+              style: GoogleFonts.inter(
+                  color: AppColors.textMutedOnDark, fontSize: 12.5)),
         ],
       ),
     );
