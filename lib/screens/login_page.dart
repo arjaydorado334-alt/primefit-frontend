@@ -236,7 +236,7 @@ class _LoginPageState extends State<LoginPage> {
   // Clears the whole stack (pushAndRemoveUntil) rather than pushing on top,
   // so there's never a second LandingPage instance alive at once fighting
   // over the page's single shared ScrollController/GlobalKeys.
-  void _goToLandingSection(LandingPageSection section) {
+  void _goToLandingSection([LandingPageSection? section]) {
     goToLandingSection(context, section);
   }
 
@@ -369,6 +369,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       SiteFooter(
+                        onLogoTap: () => _goToLandingSection(),
                         onAbout: () =>
                             _goToLandingSection(LandingPageSection.about),
                         onMission: () =>

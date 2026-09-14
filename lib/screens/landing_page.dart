@@ -171,22 +171,32 @@ class _Fonts {
       } catch (_) {}
     }
 
+    // The footer's logo/wordmark, when already on the landing page, just
+    // scrolls back up to the hero -- same mechanism as _scrollToKey.
+    void _scrollToTop() {
+      if (!_pageScroll.hasClients) return;
+      _pageScroll.animateTo(0,
+          duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
+    }
+
     /// Landing-page sections another page can ask [LandingPage] to land on
     /// right after navigating there -- see the Sign In / Create Account
     /// footer, which is otherwise not "on" the landing page itself and has
     /// no scroll position of its own to jump from.
     enum LandingPageSection { about, mission, membership, merchandise, contact }
 
-    /// Navigates to [LandingPage], landing on [section], clearing the whole
-    /// navigator stack first. Uses a zero-duration route transition rather
-    /// than a normal animated push: an animated transition keeps the old
-    /// route's widgets mounted alongside the new one for its ~300ms
-    /// duration, and since [LandingPage]'s section `GlobalKey`s and its
-    /// `ScrollController` are shared module-level singletons (not per-
-    /// instance state), that brief overlap made the initial-section scroll
-    /// land on the old (soon-to-be-removed) instance instead of the new,
-    /// visible one. Used by the Sign In / Create Account footers.
-    void goToLandingSection(BuildContext context, LandingPageSection section) {
+    /// Navigates to [LandingPage], landing on [section] (or the very top of
+    /// the page, i.e. the hero, when [section] is omitted -- e.g. the
+    /// footer's own logo/wordmark), clearing the whole navigator stack
+    /// first. Uses a zero-duration route transition rather than a normal
+    /// animated push: an animated transition keeps the old route's widgets
+    /// mounted alongside the new one for its ~300ms duration, and since
+    /// [LandingPage]'s section `GlobalKey`s and its `ScrollController` are
+    /// shared module-level singletons (not per-instance state), that brief
+    /// overlap made the initial-section scroll land on the old (soon-to-
+    /// be-removed) instance instead of the new, visible one. Used by the
+    /// Sign In / Create Account footers.
+    void goToLandingSection(BuildContext context, [LandingPageSection? section]) {
       Navigator.of(context).pushAndRemoveUntil(
         PageRouteBuilder<void>(
           transitionDuration: Duration.zero,
@@ -317,6 +327,7 @@ class _Fonts {
                         onViewPlans: () => _scrollToMembership(context),
                       ),
                       SiteFooter(
+                        onLogoTap: _scrollToTop,
                         onAbout: () => _scrollToAbout(context),
                         onMission: () => _scrollToMission(context),
                         onMembership: () => _scrollToMembership(context),
@@ -1983,14 +1994,19 @@ class _Fonts {
         // ---- LEFT: dominant image + gradient + athletic statement -------
         // A fixed height (never IntrinsicHeight/stretch-to-match-content —
         // that was blowing the whole card's height up to the image's
-        // unpredictable intrinsic size and pushing the map down) so the
-        // right column is free to size itself to its own compact content.
+        // unpredictable intrinsic size and pushing the map down) tuned to
+        // match the info column's total height (below) so the photo's
+        // bottom edge lines up with the map's bottom edge. The info
+        // column's own text elements are now all fixed-height slots
+        // (rather than sized by however many lines they happen to wrap
+        // to), so this match holds at any viewport width instead of only
+        // the one width it happened to be tuned against.
         final imageColumn = ClipRRect(
           borderRadius: isRow
               ? const BorderRadius.horizontal(left: Radius.circular(24))
               : const BorderRadius.vertical(top: Radius.circular(24)),
           child: SizedBox(
-            height: isRow ? (isDesktop ? 580.0 : 520.0) : 220.0,
+            height: isRow ? (isDesktop ? 649.0 : 552.0) : 220.0,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -2076,25 +2092,41 @@ class _Fonts {
                   style: AppText.pageTitle(
                       size: isDesktop ? 26 : 22, color: _Palette.cyan)),
               const SizedBox(height: 4),
-              Text(
-                'Find our gym, view its exact location, and get directions '
-                'in seconds.',
-                style: AppText.bodyText(
-                    size: 13, color: _Palette.lightGray, height: 1.35),
+              // Fixed-height slot (reserves 2 lines' worth of space even
+              // when the text only needs 1) so this column's total height
+              // is the same at every viewport width -- the photo column's
+              // fixed height (below) is tuned to match that total.
+              SizedBox(
+                height: 36,
+                child: Text(
+                  'Find our gym, view its exact location, and get directions '
+                  'in seconds.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.bodyText(
+                      size: 13, color: _Palette.lightGray, height: 1.35),
+                ),
               ),
               const SizedBox(height: 10),
               // Compact 2-column grid: Location + Phone, then Operating
-              // Hours + Social — the aspect ratio hugs each tile's actual
-              // content instead of leaving dead space inside it. Kept
-              // deliberately short so most of the column's height goes to
-              // the map below.
-              GridView.count(
-                crossAxisCount: 2,
+              // Hours + Social. A fixed per-row height (mainAxisExtent)
+              // instead of an aspect ratio, so the grid's height is the
+              // same regardless of viewport width -- needed so the photo
+              // column's fixed height (below) can reliably match this
+              // column's total height at any screen size. 52px comfortably
+              // fits a tile's label + its *2-line* value (both the address
+              // and the operating hours wrap to 2 lines at this column
+              // width) -- the address tile visibly overlapped the row
+              // below it at the smaller height this was first tried at.
+              GridView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 6,
-                childAspectRatio: isDesktop ? 3.9 : 3.1,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 6,
+                  mainAxisExtent: 52,
+                ),
                 children: infoTiles,
               ),
               const SizedBox(height: 6),
@@ -2180,9 +2212,14 @@ class _Fonts {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Use the map above to view our exact location and nearby streets.',
-                style: AppText.bodySmall(color: _Palette.mutedGray),
+              SizedBox(
+                height: 32,
+                child: Text(
+                  'Use the map above to view our exact location and nearby streets.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.bodySmall(color: _Palette.mutedGray),
+                ),
               ),
               const SizedBox(height: 6),
               Material(
@@ -3029,13 +3066,19 @@ class _Fonts {
 
       @override
       Widget build(BuildContext context) {
-        // Only text sizing/line-height still depends on value length; the
-        // card itself is now a fixed size for every item so the 5 cards
-        // (including the longer address) line up evenly.
+        // Card size is already fixed (same for every item); the label and
+        // value are now ALSO given fixed-height slots (reserving up to 2
+        // lines for the label, up to 3 for the value -- the longest cases,
+        // the wrapping "FACEBOOK / MESSENGER" label and the 3-line
+        // address) so every card's content block is the exact same total
+        // height. That's what actually keeps the icon/label/value rows
+        // level with each other across all 5 cards -- centering alone
+        // only keeps each card's own content centered *within itself*,
+        // which still drifts card-to-card whenever content length differs.
         final isLongValue = item.value.length > 30;
         final card = Container(
           width: 260,
-          height: 232,
+          height: 240,
           padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
           decoration: BoxDecoration(
             color: _Palette.bgCard,
@@ -3045,6 +3088,7 @@ class _Fonts {
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 width: 56,
@@ -3057,21 +3101,36 @@ class _Fonts {
                 child: Icon(item.icon, color: item.accent, size: 26),
               ),
               const SizedBox(height: 16),
-              Text(item.label,
-                  style: _Fonts.sectionLabel(color: _Palette.mutedGray)
-                      .copyWith(fontSize: 12)),
+              SizedBox(
+                height: 32,
+                child: Center(
+                  child: Text(item.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: _Fonts.sectionLabel(color: _Palette.mutedGray)
+                          .copyWith(fontSize: 12)),
+                ),
+              ),
               const SizedBox(height: 6),
-              Text(
-                item.value,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w700,
-                  fontSize: isLongValue ? 13.5 : 17,
-                  height: isLongValue ? 1.5 : 1.3,
-                  color: item.looksLikeLink ? _Palette.cyan : _Palette.offWhite,
-                  decoration: item.looksLikeLink
-                      ? TextDecoration.underline
-                      : TextDecoration.none,
+              SizedBox(
+                height: 62,
+                child: Center(
+                  child: Text(
+                    item.value,
+                    textAlign: TextAlign.center,
+                    maxLines: isLongValue ? 3 : 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      fontSize: isLongValue ? 13.5 : 17,
+                      height: isLongValue ? 1.5 : 1.3,
+                      color:
+                          item.looksLikeLink ? _Palette.cyan : _Palette.offWhite,
+                      decoration: item.looksLikeLink
+                          ? TextDecoration.underline
+                          : TextDecoration.none,
+                    ),
+                  ),
                 ),
               ),
             ],

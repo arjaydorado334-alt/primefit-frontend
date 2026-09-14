@@ -15,7 +15,10 @@ import 'prime_fit_logo.dart';
 /// itself they scroll the current page; from another page (Sign In,
 /// Create Account) they navigate to the landing page and land on that
 /// section (see `LandingPage`'s `initialSection` in `landing_page.dart`).
+/// `onLogoTap` is the same idea for the logo/wordmark: scroll-to-top on
+/// the landing page itself, or navigate there from elsewhere.
 class SiteFooter extends StatelessWidget {
+  final VoidCallback onLogoTap;
   final VoidCallback onAbout;
   final VoidCallback onMission;
   final VoidCallback onMembership;
@@ -24,6 +27,7 @@ class SiteFooter extends StatelessWidget {
 
   const SiteFooter({
     super.key,
+    required this.onLogoTap,
     required this.onAbout,
     required this.onMission,
     required this.onMembership,
@@ -55,7 +59,9 @@ class SiteFooter extends StatelessWidget {
               ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Expanded(flex: 3, child: _FooterBrandColumn()),
+                    Expanded(
+                        flex: 3,
+                        child: _FooterBrandColumn(onLogoTap: onLogoTap)),
                     Expanded(
                       flex: 2,
                       child: _FooterQuickLinksColumn(
@@ -73,7 +79,7 @@ class SiteFooter extends StatelessWidget {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _FooterBrandColumn(),
+                    _FooterBrandColumn(onLogoTap: onLogoTap),
                     const SizedBox(height: 32),
                     _FooterQuickLinksColumn(
                       onAbout: onAbout,
@@ -110,27 +116,32 @@ class SiteFooter extends StatelessWidget {
 }
 
 class _FooterBrandColumn extends StatelessWidget {
-  const _FooterBrandColumn();
+  final VoidCallback onLogoTap;
+  const _FooterBrandColumn({required this.onLogoTap});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipOval(
-              child: Image.asset(
-                'assets/images/primefit_logo.jpg',
-                width: 32,
-                height: 32,
-                fit: BoxFit.cover,
+        InkWell(
+          onTap: onLogoTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipOval(
+                child: Image.asset(
+                  'assets/images/primefit_logo.jpg',
+                  width: 32,
+                  height: 32,
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-            const SizedBox(width: 9),
-            const PrimeFitWordmark(fontSize: 17),
-          ],
+              const SizedBox(width: 9),
+              const PrimeFitWordmark(fontSize: 17),
+            ],
+          ),
         ),
         const SizedBox(height: 14),
         SizedBox(

@@ -550,12 +550,42 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   // own tablet/desktop cutoffs.
   static const double _kSplitMinWidth = 880;
 
+  // The 4 steps (Account/Plan/Payment/Review/Done) are all one route --
+  // they're swapped via local `_screen` state, not separate pushed pages
+  // -- so without this, the browser's back button (or a device's back
+  // gesture) would skip the whole step flow and leave the page entirely
+  // from any step, instead of going to the previous step like a user
+  // would expect. Returns null for Account/Done: there's no previous step
+  // to fall back to, so the browser back button there does its normal
+  // thing (leaves this page).
+  _Screen? _previousStep(_Screen current) {
+    switch (current) {
+      case _Screen.plan:
+        return _Screen.account;
+      case _Screen.paymentMethod:
+        return _Screen.plan;
+      case _Screen.review:
+        return _Screen.paymentMethod;
+      case _Screen.account:
+      case _Screen.done:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isSplit = MediaQuery.of(context).size.width >= _kSplitMinWidth;
-    return Scaffold(
-      backgroundColor: darkBg,
-      body: isSplit ? _buildSplitShell() : _buildStackedShell(),
+    final previousStep = _previousStep(_screen);
+    return PopScope(
+      canPop: previousStep == null,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || previousStep == null) return;
+        setState(() => _screen = previousStep);
+      },
+      child: Scaffold(
+        backgroundColor: darkBg,
+        body: isSplit ? _buildSplitShell() : _buildStackedShell(),
+      ),
     );
   }
 
@@ -652,9 +682,11 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   // existing scroll position to jump from -- navigate there and land on
   // the requested section instead (see LandingPage's initialSection).
   Widget _buildFooter() {
-    void goTo(LandingPageSection section) => goToLandingSection(context, section);
+    void goTo([LandingPageSection? section]) =>
+        goToLandingSection(context, section);
 
     return SiteFooter(
+      onLogoTap: () => goTo(),
       onAbout: () => goTo(LandingPageSection.about),
       onMission: () => goTo(LandingPageSection.mission),
       onMembership: () => goTo(LandingPageSection.membership),
