@@ -1,5 +1,4 @@
-﻿import 'dart:ui';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/prime_fit_logo.dart';
@@ -78,10 +77,12 @@ class _AuthFonts {
           letterSpacing: 0.6);
 }
 
-/// Translucent frosted-glass panel that floats the form over the
-/// background photo. Uses the shared [AppGlass] recipe -- the same tint/
-/// blur/border as the Create Account page's left panel -- so both auth
-/// surfaces read as one consistent glass treatment.
+/// Translucent glass panel that floats the form over the background photo.
+/// Uses the shared [AppGlass] recipe -- the same tint/border as the Create
+/// Account page's left panel -- so both auth surfaces read as one
+/// consistent glass treatment. No backdrop blur: the photo behind the tint
+/// renders sharp (mirrors the same blur-removal fix applied to the Admin
+/// Staff Sign In page's left panel).
 class _GlassCell extends StatelessWidget {
   final Widget child;
   const _GlassCell({required this.child});
@@ -90,23 +91,20 @@ class _GlassCell extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: AppGlass.blur, sigmaY: AppGlass.blur),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: AppGlass.tint),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-                color: Colors.white.withValues(alpha: AppGlass.borderOpacity)),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 50,
-                  offset: const Offset(0, 22)),
-            ],
-          ),
-          child: child,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: AppGlass.tint),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+              color: Colors.white.withValues(alpha: AppGlass.borderOpacity)),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.4),
+                blurRadius: 50,
+                offset: const Offset(0, 22)),
+          ],
         ),
+        child: child,
       ),
     );
   }

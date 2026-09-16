@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -697,10 +696,11 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
   // ==================== BRAND PANEL (left panel / top band) ====================
   // Frosted dark-glass over the same auth background photo this page
-  // already used -- semi-transparent dark tint, backdrop blur, and a thin
-  // light-opacity border on the seam facing the form panel, same
-  // glassmorphism language as `_GlassCell` elsewhere in the app, just
-  // shaped as a full-bleed edge-to-edge pane instead of a floating card.
+  // already used -- semi-transparent dark tint (no backdrop blur, so the
+  // photo behind it stays sharp) and a thin light-opacity border on the
+  // seam facing the form panel, same glass language as `_GlassCell`
+  // elsewhere in the app, just shaped as a full-bleed edge-to-edge pane
+  // instead of a floating card.
   Widget _buildBrandPanel({required bool compact}) {
     final logoSize = compact ? 56.0 : 108.0;
     final wordmarkSize = compact ? 24.0 : 34.0;
@@ -731,29 +731,26 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                   Container(color: darkBg),
             ),
             // Shared AppGlass recipe (see app_theme.dart) -- the exact same
-            // tint/blur/border as the Sign In page's glass card, so both
-            // auth surfaces read as one consistent glass treatment.
-            BackdropFilter(
-              filter:
-                  ImageFilter.blur(sigmaX: AppGlass.blur, sigmaY: AppGlass.blur),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: AppGlass.tint),
-                  border: Border(
-                    right: compact
-                        ? BorderSide.none
-                        : BorderSide(
-                            color: Colors.white
-                                .withValues(alpha: AppGlass.borderOpacity)),
-                    bottom: compact
-                        ? BorderSide(
-                            color: Colors.white
-                                .withValues(alpha: AppGlass.borderOpacity))
-                        : BorderSide.none,
-                  ),
+            // tint/border as the Sign In page's glass card, so both auth
+            // surfaces read as one consistent glass treatment. No backdrop
+            // blur: the photo behind the tint stays sharp.
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: AppGlass.tint),
+                border: Border(
+                  right: compact
+                      ? BorderSide.none
+                      : BorderSide(
+                          color: Colors.white
+                              .withValues(alpha: AppGlass.borderOpacity)),
+                  bottom: compact
+                      ? BorderSide(
+                          color: Colors.white
+                              .withValues(alpha: AppGlass.borderOpacity))
+                      : BorderSide.none,
                 ),
-                child: content,
               ),
+              child: content,
             ),
           ],
         ),

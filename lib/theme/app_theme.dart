@@ -26,20 +26,19 @@ import 'package:google_fonts/google_fonts.dart';
 ///   body ................ Inter 14    w400
 ///   body small .......... Inter 12.5  w400
 ///   status badge/pill ... Inter 12    w600
-/// Shared glass-panel "recipe" for the auth flow's frosted-glass surfaces
-/// (the Sign In card, the Create Account left panel) so both use the
-/// exact same transparency, blur, and border -- change it once here and
-/// both pages follow. Not used by the landing page's own [GlassPanel]
+/// Shared glass-panel "recipe" for the auth flow's glass surfaces (the Sign
+/// In card, the Create Account left panel) so both use the exact same
+/// transparency and border -- change it once here and both pages follow.
+/// No backdrop blur: the tint sits directly over a sharp, unblurred photo
+/// (mirrors the same blur-removal fix applied to the Admin Staff Sign In
+/// page's left panel). Not used by the landing page's own [GlassPanel]
 /// (`lib/widgets/glass_stat_card.dart`), which is tuned separately for
 /// small stat cards over a busier hero photo.
 class AppGlass {
   AppGlass._();
 
-  /// Near-black tint opacity over the backdrop-blurred photo.
+  /// Near-black tint opacity over the sharp, unblurred photo.
   static const double tint = 0.32;
-
-  /// Backdrop blur sigma (both axes).
-  static const double blur = 8;
 
   /// Hairline border opacity (white).
   static const double borderOpacity = 0.16;
