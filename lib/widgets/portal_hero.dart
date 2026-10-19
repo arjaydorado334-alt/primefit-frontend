@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// The solid flat-cyan header banner shown at the top of every member-portal
-/// screen — same single colour as the sidebar (explicitly no gradient),
-/// rounded corners, soft shadow. Mirrors the PrimeFit Admin app's header
-/// treatment: a plum uppercase eyebrow, a gold leading icon (no emoji), a
-/// bold white title, and an optional muted-white subtitle. Purely
-/// presentational — it renders whatever each screen passes in.
+/// Page header shown at the top of the member-portal screens, restyled to
+/// match the admin portal: a plain bold title with a muted subtitle (no cyan
+/// banner box). Purely presentational — it renders whatever each screen
+/// passes in.
+///
+/// The constructor is unchanged so every screen that uses it keeps compiling:
+/// [eyebrow] and [icon] are accepted but no longer drawn (the new design has
+/// no eyebrow label or leading icon); [trailing] is still pinned to the right
+/// and is hidden on the narrowest layout, as before.
 class PortalHero extends StatelessWidget {
-  /// Uppercase eyebrow label (e.g. "DASHBOARD"). Rendered in the plum accent.
+  /// Kept for compatibility; not shown in the new design.
   final String eyebrow;
 
-  /// Gold icon shown immediately before the white title. No emojis.
+  /// Kept for compatibility; not shown in the new design.
   final IconData icon;
 
   final String title;
   final String? subtitle;
 
-  /// Optional widget pinned to the right of the banner (e.g. a status
-  /// pill). Hidden automatically on the narrowest layout.
+  /// Optional widget pinned to the right of the header (e.g. a status pill).
+  /// Hidden automatically on the narrowest layout.
   final Widget? trailing;
 
   const PortalHero({
@@ -32,43 +35,33 @@ class PortalHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pad = context.isMobile ? 20.0 : 26.0;
-    final titleSize = context.isMobile ? 21.0 : 24.0;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final heading = dark ? Colors.white : const Color(0xFF1F2937);
+    final muted = dark ? AppColors.textMutedOnDark : const Color(0xFF6B7280);
+    final titleSize = context.isMobile ? 22.0 : 28.0;
 
     final text = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(eyebrow.toUpperCase(), style: AppText.eyebrow()),
-        const SizedBox(height: 10),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(icon, color: AppColors.goldOnCyan, size: titleSize + 4),
-            const SizedBox(width: 10),
-            Flexible(
-              child: Text(
-                title,
-                style: AppText.bannerTitle(size: titleSize),
-              ),
-            ),
-          ],
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: titleSize,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            color: heading,
+          ),
         ),
         if (subtitle != null) ...[
-          const SizedBox(height: 8),
-          Text(subtitle!, style: AppText.bannerSubtitle()),
+          const SizedBox(height: 4),
+          Text(subtitle!, style: TextStyle(fontSize: 14, color: muted)),
         ],
       ],
     );
 
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      padding: EdgeInsets.all(pad),
-      decoration: BoxDecoration(
-        color: AppColors.heroFill,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: AppColors.softCardShadow,
-      ),
       child: (trailing != null && !context.isMobile)
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.center,

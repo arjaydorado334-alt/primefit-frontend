@@ -63,6 +63,23 @@ class _ChatPanelState extends State<ChatPanel> {
   late String _currentSessionId;
   final List<_PendingImage> _pendingImages = [];
 
+  // Dark-mode state, synced once per build (same pattern as
+  // profile_settings.dart) so every color decision below can branch on it.
+  bool _dark = false;
+
+  // -- Dark-aware color getters --------------------------------------
+  Color get _accent => _dark ? const Color(0xFF4DD8EF) : const Color(0xFF00B4D8);
+  Color get _panelBg => _dark ? const Color(0xFF1E1E1E) : Colors.white;
+  Color get _dividerColor => _dark ? const Color(0xFF3A3A3A) : const Color(0xFFEEEEEE);
+  Color get _titleColor => _dark ? Colors.white : Colors.black87;
+  Color get _iconMuted => _dark ? Colors.white54 : Colors.black45;
+  Color get _bubbleOther => _dark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F1F1);
+  Color get _bubbleOtherText => _dark ? Colors.white70 : Colors.black87;
+  Color get _inputFill => _dark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5);
+  Color get _hintColor => _dark ? Colors.white38 : Colors.black45;
+  Color get _inputText => _dark ? Colors.white : Colors.black87;
+  Color get _subtitleColor => _dark ? Colors.white54 : Colors.black54;
+
   @override
   void initState() {
     super.initState();
@@ -187,37 +204,37 @@ class _ChatPanelState extends State<ChatPanel> {
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: _dividerColor)),
       ),
       child: Row(
         children: [
           if (_showHistory)
             IconButton(
-              icon: const Icon(Icons.arrow_back, size: 20),
+              icon: Icon(Icons.arrow_back, size: 20, color: _titleColor),
               onPressed: () => setState(() => _showHistory = false),
             )
           else
-            const Icon(Icons.support_agent, color: Color(0xFF00B4D8)),
+            Icon(Icons.support_agent, color: _accent),
           const SizedBox(width: 8),
           Text(
             _showHistory ? 'Chat History' : 'PrimeFit Support',
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            style: TextStyle(fontWeight: FontWeight.w300, fontSize: 16, color: _titleColor),
           ),
           const Spacer(),
           if (!_showHistory)
             IconButton(
               tooltip: 'History',
-              icon: const Icon(Icons.history, size: 20),
+              icon: Icon(Icons.history, size: 20, color: _titleColor),
               onPressed: () => setState(() => _showHistory = true),
             ),
           IconButton(
             tooltip: 'New chat',
-            icon: const Icon(Icons.add_comment_outlined, size: 20),
+            icon: Icon(Icons.add_comment_outlined, size: 20, color: _titleColor),
             onPressed: _newChat,
           ),
           IconButton(
-            icon: const Icon(Icons.close, size: 20),
+            icon: Icon(Icons.close, size: 20, color: _titleColor),
             onPressed: widget.onClose,
           ),
         ],
@@ -227,19 +244,19 @@ class _ChatPanelState extends State<ChatPanel> {
 
   Widget _buildHistoryList() {
     if (_sessions.isEmpty) {
-      return const Center(child: Text('No conversations yet.'));
+      return Center(child: Text('No conversations yet.', style: TextStyle(color: _subtitleColor)));
     }
     return ListView.separated(
       padding: const EdgeInsets.all(12),
       itemCount: _sessions.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, __) => Divider(height: 1, color: _dividerColor),
       itemBuilder: (context, index) {
         final session = _sessions[index];
         final isCurrent = session.id == _currentSessionId;
         return ListTile(
           leading: Icon(
             Icons.chat_bubble_outline,
-            color: isCurrent ? const Color(0xFF00B4D8) : Colors.black45,
+            color: isCurrent ? _accent : _iconMuted,
           ),
           title: Text(
             session.title,
@@ -247,10 +264,12 @@ class _ChatPanelState extends State<ChatPanel> {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+              color: _titleColor,
             ),
           ),
           subtitle: Text(
             '${session.messages.length} messages · ${_formatTime(session.createdAt)}',
+            style: TextStyle(color: _subtitleColor),
           ),
           selected: isCurrent,
           onTap: () => _selectSession(session.id),
@@ -273,7 +292,7 @@ class _ChatPanelState extends State<ChatPanel> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             constraints: BoxConstraints(maxWidth: maxBubbleWidth),
             decoration: BoxDecoration(
-              color: msg.isMe ? const Color(0xFF00B4D8) : const Color(0xFFF1F1F1),
+              color: msg.isMe ? _accent : _bubbleOther,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Column(
@@ -286,9 +305,9 @@ class _ChatPanelState extends State<ChatPanel> {
                     runSpacing: 6,
                     children: msg.images
                         .map((bytes) => ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.memory(bytes, width: 100, height: 100, fit: BoxFit.cover),
-                            ))
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.memory(bytes, width: 100, height: 100, fit: BoxFit.cover),
+                          ))
                         .toList(),
                   ),
                 if (msg.images.isNotEmpty && msg.text.isNotEmpty)
@@ -303,16 +322,16 @@ class _ChatPanelState extends State<ChatPanel> {
                           data: msg.text,
                           selectable: true,
                           styleSheet: MarkdownStyleSheet(
-                            p: const TextStyle(color: Colors.black87, fontSize: 14),
-                            strong: const TextStyle(
-                              color: Colors.black87,
+                            p: TextStyle(color: _bubbleOtherText, fontSize: 14),
+                            strong: TextStyle(
+                              color: _bubbleOtherText,
                               fontWeight: FontWeight.bold,
                             ),
-                            listBullet: const TextStyle(color: Colors.black87),
-                            h1: const TextStyle(
-                                color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
-                            h2: const TextStyle(
-                                color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
+                            listBullet: TextStyle(color: _bubbleOtherText),
+                            h1: TextStyle(
+                                color: _bubbleOtherText, fontWeight: FontWeight.bold, fontSize: 18),
+                            h2: TextStyle(
+                                color: _bubbleOtherText, fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                         ),
               ],
@@ -328,8 +347,8 @@ class _ChatPanelState extends State<ChatPanel> {
     return Container(
       height: 72,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: _dividerColor)),
       ),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
@@ -370,24 +389,26 @@ class _ChatPanelState extends State<ChatPanel> {
     final atLimit = _pendingImages.length >= kMaxChatImages;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: _dividerColor)),
       ),
       child: Row(
         children: [
           IconButton(
             tooltip: atLimit ? 'Photo limit reached ($kMaxChatImages)' : 'Attach photos',
-            icon: const Icon(Icons.image_outlined, color: Color(0xFF00B4D8)),
+            icon: Icon(Icons.image_outlined, color: _accent),
             onPressed: _sending ? null : _pickImages,
           ),
           Expanded(
             child: TextField(
               controller: _controller,
               enabled: !_sending,
+              style: TextStyle(color: _inputText),
               decoration: InputDecoration(
                 hintText: 'Type a message...',
+                hintStyle: TextStyle(color: _hintColor),
                 filled: true,
-                fillColor: const Color(0xFFF5F5F5),
+                fillColor: _inputFill,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
@@ -399,7 +420,7 @@ class _ChatPanelState extends State<ChatPanel> {
           ),
           const SizedBox(width: 8),
           IconButton(
-            icon: const Icon(Icons.send, color: Color(0xFF00B4D8)),
+            icon: Icon(Icons.send, color: _accent),
             onPressed: _sending ? null : _send,
           ),
         ],
@@ -409,33 +430,37 @@ class _ChatPanelState extends State<ChatPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxBubbleWidth = constraints.maxWidth * 0.72;
-        return Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: _showHistory
-                  ? _buildHistoryList()
-                  : _buildMessages(maxBubbleWidth),
-            ),
-            if (!_showHistory) ...[
-              if (_sending)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 8),
-                  child: SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+    _dark = Theme.of(context).brightness == Brightness.dark;
+    return Material(
+      color: _panelBg,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxBubbleWidth = constraints.maxWidth * 0.72;
+          return Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: _showHistory
+                    ? _buildHistoryList()
+                    : _buildMessages(maxBubbleWidth),
+              ),
+              if (!_showHistory) ...[
+                if (_sending)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   ),
-                ),
-              _buildPendingImageStrip(),
-              _buildInputBar(),
+                _buildPendingImageStrip(),
+                _buildInputBar(),
+              ],
             ],
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

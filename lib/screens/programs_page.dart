@@ -1,6 +1,8 @@
 import 'dart:typed_data';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 // 👇 Connects this screen to your PHP programs API (programs_api.php).
 // Adjust the path if programs_service.dart lives somewhere else.
 import '../services/programs_service.dart';
@@ -9,11 +11,11 @@ import '../widgets/portal_hero.dart';
 import 'user_session.dart';
 
 /// Dark-mode-aware color tokens for this screen's chrome (page/dialog
-/// backgrounds, card surfaces, borders, and text) -- per-program brand
-/// colors (cardBg/borderColor/themeColor/badge colors, all data-driven
-/// from the Programs table) are left untouched since they're content,
-/// not page theme. Call [sync] once at the top of each build() in this
-/// file before reading any other getter.
+/// backgrounds, card surfaces, borders, and text). The cards are now neutral
+/// white surfaces; each program's own brand colors from the Programs table
+/// (themeColor, badge colors) are still used, but only for the small
+/// category label and the level badge. Call [sync] once at the top of each
+/// build() in this file before reading any other getter.
 class _Colors {
   static bool _dark = false;
   static void sync(BuildContext c) => _dark = Theme.of(c).brightness == Brightness.dark;
@@ -22,15 +24,174 @@ class _Colors {
   static Color get surface => _dark ? AppColors.darkCard : Colors.white;
   static Color get surfaceAlt => _dark ? AppColors.darkCard : const Color(0xFFF1F5F9);
   static Color get border => _dark ? AppColors.darkBorder : const Color(0xFFE2E8F0);
-  static Color get textPrimary => _dark ? Colors.white : Colors.black87;
+  static Color get textPrimary => _dark ? Colors.white : const Color(0xFF1F2937);
   static Color get textSecondary => _dark ? AppColors.textMutedOnDark : Colors.grey.shade600;
   static Color get textMuted => _dark ? AppColors.textMutedOnDark : Colors.grey.shade400;
   static List<BoxShadow> get cardShadow =>
       _dark ? const [] : AppColors.softCardShadow;
 
-  /// Plum section/dialog-title accent (lighter on dark), admin parity.
-  static Color get sectionTitle =>
-      _dark ? const Color(0xFFB39DDB) : AppColors.plum;
+  /// Section/dialog titles are plain dark text now (they used to be plum).
+  static Color get sectionTitle => textPrimary;
+
+  /// Cyan text that stays readable on both the light and dark surfaces.
+  static Color get cyanText => _dark ? AppColors.cyan : const Color(0xFF0E7490);
+
+  /// Fill for primary buttons and selected pills: dark gray in light mode,
+  /// cyan in dark mode (replaces the old gold / cyan buttons).
+  static Color get primaryFill => _dark ? AppColors.cyan : const Color(0xFF111827);
+
+  // "Create Program" dialog form fields -- explicit per-field colors
+  // (rather than the app's global InputDecorationTheme, which only styles
+  // the light theme) so text fields stay legible and on-brand in dark mode.
+  static Color get fieldFill => _dark ? AppColors.darkBg : const Color(0xFFF8FAFC);
+  static Color get fieldHint => _dark ? AppColors.textMutedOnDark : Colors.grey.shade500;
+  static Color get fieldText => _dark ? Colors.white : Colors.black87;
+}
+
+/// Primary action button style: dark pill (cyan in dark mode).
+ButtonStyle _primaryStyle({EdgeInsetsGeometry? padding}) {
+  return ElevatedButton.styleFrom(
+    backgroundColor: _Colors.primaryFill,
+    foregroundColor: Colors.white,
+    elevation: 0,
+    padding: padding,
+    shape: const StadiumBorder(),
+    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+  );
+}
+
+/// Secondary action button style: outlined pill.
+ButtonStyle _outlineStyle({EdgeInsetsGeometry? padding}) {
+  return OutlinedButton.styleFrom(
+    foregroundColor: _Colors.textPrimary,
+    side: BorderSide(color: _Colors.textPrimary.withValues(alpha: 0.35)),
+    padding: padding,
+    shape: const StadiumBorder(),
+    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+  );
+}
+
+// ==========================================
+// HEVY ACKNOWLEDGMENT & REFERENCE
+// ==========================================
+// The workout programs feature was inspired by the Hevy app, so it is
+// credited on the Programs page (list view and program detail view).
+// Update the retrieval date below if you re-check the Hevy site later.
+const String _kHevyUrl = 'https://www.hevyapp.com/';
+
+class _HevyCitation extends StatefulWidget {
+  const _HevyCitation();
+
+  @override
+  State<_HevyCitation> createState() => _HevyCitationState();
+}
+
+class _HevyCitationState extends State<_HevyCitation> {
+  late final TapGestureRecognizer _linkTap;
+
+  @override
+  void initState() {
+    super.initState();
+    _linkTap = TapGestureRecognizer()..onTap = _openHevy;
+  }
+
+  @override
+  void dispose() {
+    _linkTap.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openHevy() async {
+    try {
+      await launchUrl(Uri.parse(_kHevyUrl));
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _Colors.sync(context);
+    final bodyStyle =
+        TextStyle(fontSize: 12.5, height: 1.55, color: _Colors.textSecondary);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: _Colors.surfaceAlt,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _Colors.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(Icons.menu_book_outlined,
+                size: 18, color: _Colors.textMuted),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Acknowledgment & Reference',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _Colors.textPrimary)),
+                const SizedBox(height: 6),
+                Text(
+                  'The workout programs feature on this page was inspired by '
+                  'Hevy, a workout tracker and gym logger app. PrimeFit is an '
+                  'independent project and is not affiliated with or '
+                  'endorsed by Hevy.',
+                  style: bodyStyle,
+                ),
+                const SizedBox(height: 10),
+                RichText(
+                  text: TextSpan(
+                    style: bodyStyle,
+                    children: [
+                      const TextSpan(text: 'Hevy. (n.d.). '),
+                      const TextSpan(
+                        text: 'Hevy – The #1 workout tracker & gym logger app',
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      ),
+                      const TextSpan(
+                          text: '. Retrieved October 9, 2026, from '),
+                      TextSpan(
+                        text: _kHevyUrl,
+                        style: TextStyle(
+                          color: _Colors.cyanText,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                        recognizer: _linkTap,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: _openHevy,
+                  style: TextButton.styleFrom(
+                    foregroundColor: _Colors.cyanText,
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    textStyle: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700),
+                  ),
+                  icon: const Icon(Icons.open_in_new, size: 15),
+                  label: const Text('Visit Hevy'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // --- MAIN WORKOUT INTERFACE WITH PERSISTENT SIDEBAR ---
@@ -280,7 +441,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
             }
 
             return Dialog(
-              backgroundColor: _Colors.bg,
+              backgroundColor: _Colors.surface,
               insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               child: ConstrainedBox(
@@ -327,6 +488,8 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                   const SizedBox(width: 12),
                                   OutlinedButton(
                                     onPressed: pickImage,
+                                    style: _outlineStyle(
+                                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12)),
                                     child: Text(imageBytes == null ? 'Add Cover Image (optional)' : 'Change Image'),
                                   ),
                                 ],
@@ -380,8 +543,12 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                   ),
                                 ),
                               ),
-                              const Divider(height: 32),
-                              const Text('Workout Days', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              Divider(height: 32, color: _Colors.border),
+                              Text('Workout Days',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                      color: _Colors.textPrimary)),
                               const SizedBox(height: 12),
                               ...days.asMap().entries.map((dayEntry) {
                                 final dayIndex = dayEntry.key;
@@ -403,10 +570,15 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                           Expanded(
                                             child: TextField(
                                               controller: day['label'] as TextEditingController,
-                                              decoration: const InputDecoration(
+                                              style: TextStyle(color: _Colors.fieldText),
+                                              decoration: InputDecoration(
                                                 isDense: true,
-                                                border: OutlineInputBorder(),
+                                                filled: true,
+                                                fillColor: _Colors.fieldFill,
+                                                border: OutlineInputBorder(borderSide: BorderSide(color: _Colors.border)),
+                                                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: _Colors.border)),
                                                 hintText: 'Day label (e.g. Day A - Strength)',
+                                                hintStyle: TextStyle(color: _Colors.fieldHint),
                                               ),
                                             ),
                                           ),
@@ -430,7 +602,8 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                                 flex: 3,
                                                 child: TextField(
                                                   controller: ex['name'],
-                                                  decoration: const InputDecoration(isDense: true, hintText: 'Exercise name'),
+                                                  style: TextStyle(color: _Colors.fieldText),
+                                                  decoration: _exerciseFieldDecoration('Exercise name'),
                                                 ),
                                               ),
                                               const SizedBox(width: 6),
@@ -438,7 +611,8 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                                 flex: 1,
                                                 child: TextField(
                                                   controller: ex['sets'],
-                                                  decoration: const InputDecoration(isDense: true, hintText: 'Sets'),
+                                                  style: TextStyle(color: _Colors.fieldText),
+                                                  decoration: _exerciseFieldDecoration('Sets'),
                                                 ),
                                               ),
                                               const SizedBox(width: 6),
@@ -446,7 +620,8 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                                 flex: 1,
                                                 child: TextField(
                                                   controller: ex['reps'],
-                                                  decoration: const InputDecoration(isDense: true, hintText: 'Reps'),
+                                                  style: TextStyle(color: _Colors.fieldText),
+                                                  decoration: _exerciseFieldDecoration('Reps'),
                                                 ),
                                               ),
                                               const SizedBox(width: 6),
@@ -454,7 +629,8 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                                 flex: 1,
                                                 child: TextField(
                                                   controller: ex['rest'],
-                                                  decoration: const InputDecoration(isDense: true, hintText: 'Rest'),
+                                                  style: TextStyle(color: _Colors.fieldText),
+                                                  decoration: _exerciseFieldDecoration('Rest'),
                                                 ),
                                               ),
                                               IconButton(
@@ -467,6 +643,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                       }),
                                       TextButton.icon(
                                         onPressed: () => addExercise(dayIndex),
+                                        style: TextButton.styleFrom(foregroundColor: _Colors.cyanText),
                                         icon: const Icon(Icons.add, size: 16),
                                         label: const Text('Add Exercise'),
                                       ),
@@ -476,6 +653,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                               }),
                               TextButton.icon(
                                 onPressed: addDay,
+                                style: TextButton.styleFrom(foregroundColor: _Colors.cyanText),
                                 icon: const Icon(Icons.add, size: 16),
                                 label: const Text('Add Another Day'),
                               ),
@@ -489,18 +667,18 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                           Expanded(
                             child: OutlinedButton(
                               onPressed: saving ? null : () => Navigator.of(ctx).pop(),
+                              style: _outlineStyle(
+                                  padding: const EdgeInsets.symmetric(vertical: 14)),
                               child: const Text('Cancel'),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.gold,
-                                  foregroundColor: AppColors.onGold),
+                              style: _primaryStyle(
+                                  padding: const EdgeInsets.symmetric(vertical: 14)),
                               onPressed: saving ? null : handleSave,
-                              child: Text(saving ? 'Saving…' : 'Save Program',
-                                  style: const TextStyle(color: AppColors.onGold)),
+                              child: Text(saving ? 'Saving…' : 'Save Program'),
                             ),
                           ),
                         ],
@@ -516,9 +694,25 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
     );
   }
 
+  /// Compact dark-aware decoration shared by the per-exercise name/sets/
+  /// reps/rest fields inside the "Create Program" dialog.
+  InputDecoration _exerciseFieldDecoration(String hint) => InputDecoration(
+        isDense: true,
+        hintText: hint,
+        hintStyle: TextStyle(color: _Colors.fieldHint),
+        filled: true,
+        fillColor: _Colors.fieldFill,
+        border: OutlineInputBorder(borderSide: BorderSide(color: _Colors.border)),
+        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: _Colors.border)),
+      );
+
   Widget _dialogLabel(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 6, top: 4),
-        child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        child: Text(text,
+            style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: _Colors.textPrimary)),
       );
 
   Widget _dialogInput(TextEditingController controller, {String? hint, int maxLines = 1, bool number = false}) {
@@ -528,10 +722,15 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
         controller: controller,
         maxLines: maxLines,
         keyboardType: number ? TextInputType.number : TextInputType.text,
+        style: TextStyle(color: _Colors.fieldText),
         decoration: InputDecoration(
           isDense: true,
           hintText: hint,
-          border: const OutlineInputBorder(),
+          hintStyle: TextStyle(color: _Colors.fieldHint),
+          filled: true,
+          fillColor: _Colors.fieldFill,
+          border: OutlineInputBorder(borderSide: BorderSide(color: _Colors.border)),
+          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: _Colors.border)),
         ),
       ),
     );
@@ -579,15 +778,10 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
               const Spacer(),
               ElevatedButton.icon(
                 onPressed: _openCreateProgramDialog,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.gold,
-                  foregroundColor: AppColors.onGold,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                icon: const Icon(Icons.add, size: 18, color: AppColors.onGold),
-                label: const Text('Create Program', style: TextStyle(color: AppColors.onGold, fontWeight: FontWeight.w600)),
+                style: _primaryStyle(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14)),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Create Program'),
               ),
             ],
           ),
@@ -606,26 +800,34 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                               alignment: Alignment.topLeft,
                               child: Container(
                                 constraints: const BoxConstraints(maxWidth: 900),
-                                child: GridView.builder(
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  shrinkWrap: true,
-                                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                                    maxCrossAxisExtent: 420,
-                                    mainAxisExtent: 185,
-                                    crossAxisSpacing: 32,
-                                    mainAxisSpacing: 24,
-                                  ),
-                                  itemCount: displayedWorkouts.length,
-                                  itemBuilder: (context, index) {
-                                    final workout = displayedWorkouts[index];
-                                    return InkWell(
-                                      borderRadius: BorderRadius.circular(16),
-                                      onTap: () {
-                                        setState(() => _selectedWorkout = workout);
+                                child: Column(
+                                  children: [
+                                    GridView.builder(
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      shrinkWrap: true,
+                                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                        maxCrossAxisExtent: 420,
+                                        mainAxisExtent: 185,
+                                        crossAxisSpacing: 32,
+                                        mainAxisSpacing: 24,
+                                      ),
+                                      itemCount: displayedWorkouts.length,
+                                      itemBuilder: (context, index) {
+                                        final workout = displayedWorkouts[index];
+                                        return InkWell(
+                                          borderRadius: BorderRadius.circular(16),
+                                          onTap: () {
+                                            setState(() => _selectedWorkout = workout);
+                                          },
+                                          child: _buildWorkoutCard(workout),
+                                        );
                                       },
-                                      child: _buildWorkoutCard(workout),
-                                    );
-                                  },
+                                    ),
+                                    // Formal credit to Hevy (the idea behind
+                                    // the workout programs feature).
+                                    const SizedBox(height: 28),
+                                    const _HevyCitation(),
+                                  ],
                                 ),
                               ),
                             ),
@@ -636,25 +838,31 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
     );
   }
 
+  /// Filter pill: dark when selected (cyan in dark mode), white with a
+  /// hairline border otherwise.
   Widget _buildFilterButton(String text) {
     final bool isActive = _selectedFilter == text;
     return Container(
-      margin: const EdgeInsets.only(right: 12),
-      child: OutlinedButton(
-        onPressed: () => setState(() => _selectedFilter = text),
-        style: OutlinedButton.styleFrom(
-          backgroundColor: isActive ? const Color(0xFF00B4D8) : _Colors.surface,
-          side: BorderSide(color: isActive ? const Color(0xFF00B4D8) : _Colors.border),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          elevation: 0,
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: isActive ? Colors.white : _Colors.textSecondary,
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
+      margin: const EdgeInsets.only(right: 10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: () => setState(() => _selectedFilter = text),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+          decoration: BoxDecoration(
+            color: isActive ? _Colors.primaryFill : _Colors.surface,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+                color: isActive ? _Colors.primaryFill : _Colors.border),
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: isActive ? Colors.white : _Colors.textPrimary,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
           ),
         ),
       ),
@@ -666,9 +874,9 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: workout['cardBg'],
+        color: _Colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: workout['borderColor'], width: 1.5),
+        border: Border.all(color: _Colors.border),
         boxShadow: _Colors.cardShadow,
       ),
       child: Column(
@@ -700,18 +908,18 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                         Expanded(
                           child: Text(
                             workout['title'],
-                            // Fixed (not _Colors.*): this card's background is
-                            // workout['cardBg'] -- a per-program pastel color
-                            // from the DB that stays light in both themes, so
-                            // its text must stay dark regardless of app theme.
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.3,
+                                color: _Colors.textPrimary),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey.shade400),
+                  Icon(Icons.arrow_forward_ios, size: 12, color: _Colors.textMuted),
                 ],
               ),
               const SizedBox(height: 2),
@@ -722,7 +930,7 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
               const SizedBox(height: 8),
               Text(
                 workout['description'],
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.3),
+                style: TextStyle(fontSize: 13, color: _Colors.textSecondary, height: 1.3),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -733,13 +941,13 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.access_time, size: 14, color: Colors.grey.shade400),
+                  Icon(Icons.access_time, size: 14, color: _Colors.textMuted),
                   const SizedBox(width: 4),
-                  Text(workout['duration'], style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                  Text(workout['duration'], style: TextStyle(color: _Colors.textSecondary, fontSize: 12)),
                   const SizedBox(width: 12),
-                  Icon(Icons.flash_on, size: 14, color: Colors.grey.shade400),
+                  Icon(Icons.flash_on, size: 14, color: _Colors.textMuted),
                   const SizedBox(width: 2),
-                  Text(workout['frequency'], style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                  Text(workout['frequency'], style: TextStyle(color: _Colors.textSecondary, fontSize: 12)),
                 ],
               ),
               Container(
@@ -799,8 +1007,8 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
         children: [
           TextButton.icon(
             onPressed: widget.onBack,
-            icon: Icon(Icons.arrow_back, size: 16, color: _Colors.textMuted),
-            label: Text('Back to programs', style: TextStyle(color: _Colors.textMuted, fontSize: 14)),
+            icon: Icon(Icons.arrow_back, size: 16, color: _Colors.textSecondary),
+            label: Text('Back to programs', style: TextStyle(color: _Colors.textSecondary, fontSize: 14)),
             style: TextButton.styleFrom(padding: EdgeInsets.zero),
           ),
           const SizedBox(height: 16),
@@ -817,17 +1025,15 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
             ),
             const SizedBox(height: 16),
           ],
-          // Fixed (not _Colors.*) throughout: this card's background is
-          // data['cardBg'] -- a per-program pastel color from the DB that
-          // stays light in both themes, so its content must stay dark
-          // regardless of app theme.
+          // Neutral card; the program's own colors are only used for the
+          // category label and the level badge.
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: data['cardBg'],
+              color: _Colors.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: data['borderColor'], width: 1.5),
+              border: Border.all(color: _Colors.border),
               boxShadow: _Colors.cardShadow,
             ),
             child: Column(
@@ -836,7 +1042,7 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(data['title'], style: AppText.pageTitle(size: 24, color: Colors.black87)),
+                    Text(data['title'], style: AppText.pageTitle(size: 24, color: _Colors.textPrimary)),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(color: data['badgeBg'], borderRadius: BorderRadius.circular(12)),
@@ -846,17 +1052,17 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                 ),
                 Text(data['category'], style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: data['themeColor'])),
                 const SizedBox(height: 12),
-                Text(data['description'], style: TextStyle(fontSize: 14, color: Colors.grey.shade700, height: 1.4)),
+                Text(data['description'], style: TextStyle(fontSize: 14, color: _Colors.textSecondary, height: 1.4)),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Icon(Icons.access_time, size: 16, color: Colors.grey.shade500),
+                    Icon(Icons.access_time, size: 16, color: _Colors.textMuted),
                     const SizedBox(width: 4),
-                    Text(data['duration'], style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                    Text(data['duration'], style: TextStyle(color: _Colors.textSecondary, fontSize: 13)),
                     const SizedBox(width: 14),
-                    Icon(Icons.flash_on, size: 16, color: Colors.grey.shade500),
+                    Icon(Icons.flash_on, size: 16, color: _Colors.textMuted),
                     const SizedBox(width: 4),
-                    Text(data['frequency'], style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                    Text(data['frequency'], style: TextStyle(color: _Colors.textSecondary, fontSize: 13)),
                   ],
                 ),
               ],
@@ -869,18 +1075,28 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                 ...(data['tabs'] as List<String>).map((tabName) {
                   bool isTabActive = _activeSubTab == tabName;
                   return Container(
-                    margin: const EdgeInsets.only(right: 12),
-                    child: ElevatedButton(
-                      onPressed: () => setState(() => _activeSubTab = tabName),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isTabActive ? const Color(0xFF00B4D8) : _Colors.surface,
-                        foregroundColor: isTabActive ? Colors.white : _Colors.textSecondary,
-                        elevation: 0,
-                        side: BorderSide(color: isTabActive ? const Color(0xFF00B4D8) : _Colors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    margin: const EdgeInsets.only(right: 10),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(999),
+                      onTap: () => setState(() => _activeSubTab = tabName),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+                        decoration: BoxDecoration(
+                          color: isTabActive ? _Colors.primaryFill : _Colors.surface,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                              color: isTabActive ? _Colors.primaryFill : _Colors.border),
+                        ),
+                        child: Text(
+                          tabName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: isTabActive ? Colors.white : _Colors.textPrimary,
+                          ),
+                        ),
                       ),
-                      child: Text(tabName, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
                     ),
                   );
                 }),
@@ -892,14 +1108,9 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: _Colors._dark
-                    ? _Colors.surface
-                    : AppColors.cardTint(AppColors.accentCyan),
+                color: _Colors.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                    color: _Colors._dark
-                        ? _Colors.border
-                        : AppColors.cardTintBorder(AppColors.accentCyan)),
+                border: Border.all(color: _Colors.border),
                 boxShadow: _Colors.cardShadow,
               ),
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -908,9 +1119,14 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    child: Text(_activeSubTab.replaceAll(' - ', ' — '), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    child: Text(_activeSubTab.replaceAll(' - ', ' — '),
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                            color: _Colors.textPrimary)),
                   ),
-                  const Divider(),
+                  Divider(color: _Colors.border),
                   ...currentExercises.map((exercise) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -919,7 +1135,7 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                           Container(
                             width: 28,
                             height: 28,
-                            decoration: BoxDecoration(color: _Colors.surfaceAlt, borderRadius: BorderRadius.circular(6)),
+                            decoration: BoxDecoration(color: _Colors.surfaceAlt, borderRadius: BorderRadius.circular(8)),
                             alignment: Alignment.center,
                             child: Text(exercise['num'], style: TextStyle(color: data['themeColor'], fontWeight: FontWeight.bold)),
                           ),
@@ -928,7 +1144,7 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(exercise['name'], style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: _Colors.textPrimary)),
+                                Text(exercise['name'], style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _Colors.textPrimary)),
                                 if ((exercise['tip'] as String).isNotEmpty) ...[
                                   const SizedBox(height: 2),
                                   Text(
@@ -942,7 +1158,7 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(exercise['sets'], style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange.shade700)),
+                              Text(exercise['sets'], style: TextStyle(fontWeight: FontWeight.w800, color: _Colors.textPrimary)),
                               Text('sets', style: TextStyle(fontSize: 11, color: _Colors.textMuted)),
                             ],
                           ),
@@ -950,7 +1166,7 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(exercise['reps'], style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF00B4D8))),
+                              Text(exercise['reps'], style: TextStyle(fontWeight: FontWeight.w800, color: _Colors.textPrimary)),
                               Text('reps', style: TextStyle(fontSize: 11, color: _Colors.textMuted)),
                             ],
                           ),
@@ -958,7 +1174,7 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(exercise['rest'], style: TextStyle(fontWeight: FontWeight.bold, color: _Colors.textMuted)),
+                              Text(exercise['rest'], style: TextStyle(fontWeight: FontWeight.w800, color: _Colors.textPrimary)),
                               Text('rest', style: TextStyle(fontSize: 11, color: _Colors.textMuted)),
                             ],
                           ),
@@ -969,7 +1185,11 @@ class _ProgramDetailEmbeddedWidgetState extends State<ProgramDetailEmbeddedWidge
                 ],
               ),
             ),
-          ]
+          ],
+          // Formal credit to Hevy (the idea behind the workout programs
+          // feature), also shown on each program's detail view.
+          const SizedBox(height: 28),
+          const _HevyCitation(),
         ],
       ),
     );

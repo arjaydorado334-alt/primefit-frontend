@@ -37,6 +37,7 @@ class CompleteRegistrationService {
     required String paymentMethod,
     String phone = "",
     String dateOfBirth = "",
+    String gender = "",
     String address = "",
     // NEW: the proof-of-payment screenshot/photo picked on the QR payment
     // screen, as raw bytes (works on web + desktop + mobile). Optional
@@ -55,6 +56,7 @@ class CompleteRegistrationService {
       request.fields["password"] = password;
       request.fields["phone"] = phone;
       request.fields["date_of_birth"] = dateOfBirth;
+      request.fields["gender"] = gender;
       request.fields["address"] = address;
       request.fields["plan_id"] = planId.toString();
       request.fields["payment_method"] = paymentMethod;

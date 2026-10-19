@@ -5,9 +5,10 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config.dart';
 
 class ProfileService {
-  static const String apiUrl = "https://member-account-backend.onrender.com/profile_api.php";
+  static const String apiUrl = "${AppConfig.baseUrl}/profile_api.php";
 
   static Future<Map<String, dynamic>> fetchProfile(int memberId) async {
     try {
@@ -25,6 +26,7 @@ class ProfileService {
     required String email,
     required String phone,
     required String dateOfBirth, // expected format: "YYYY-MM-DD" or ""
+    String gender = "", // "Male" / "Female" / "Other" / "" (not set)
     required String address,
   }) async {
     try {
@@ -38,6 +40,7 @@ class ProfileService {
           "email": email,
           "phone": phone,
           "date_of_birth": dateOfBirth,
+          "gender": gender,
           "address": address,
         }),
       );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../screens/user_session.dart';
-import 'portal_hero.dart';
 import 'status_alert_banner.dart';
 
 class _Colors {
@@ -10,6 +9,7 @@ class _Colors {
 
   static Color get cardBg => _dark ? AppColors.darkCard : Colors.white;
   static Color get cardBorder => _dark ? AppColors.darkBorder : AppColors.cardBorder;
+  static Color get heading => _dark ? Colors.white : const Color(0xFF1F2937);
   static Color get textSecondary => _dark ? AppColors.textMutedOnDark : Colors.grey.shade600;
   static Color get textMuted => _dark ? AppColors.textMutedOnDark : Colors.grey.shade500;
   static Color get mutedSurface => _dark ? AppColors.darkBorder : const Color(0xFFF1F2F4);
@@ -17,14 +17,14 @@ class _Colors {
   static List<BoxShadow> get cardShadow =>
       _dark ? const [] : AppColors.softCardShadow;
 
-  static Color cardBgFor(Color? accent) =>
-      (accent == null || _dark) ? cardBg : AppColors.cardTint(accent);
-  static Color cardBorderFor(Color? accent) =>
-      (accent == null || _dark) ? cardBorder : AppColors.cardTintBorder(accent);
+  /// Status-pill background, blended toward the dark card surface in dark
+  /// mode instead of using the light pastel tint at full strength.
+  static Color badgeBg(Color accent, Color lightBg) =>
+      _dark ? Color.alphaBlend(accent.withValues(alpha: 0.18), AppColors.darkCard) : lightBg;
 
-  /// Plum section-title accent (lighter on dark), shared with the admin app.
-  static Color get sectionTitle =>
-      _dark ? const Color(0xFFB39DDB) : AppColors.plum;
+  /// Matching pill text colour: lightened toward white in dark mode.
+  static Color badgeFg(Color accent, Color lightFg) =>
+      _dark ? (Color.lerp(accent, Colors.white, 0.45) ?? accent) : lightFg;
 }
 
 class DashboardView extends StatelessWidget {
@@ -32,6 +32,7 @@ class DashboardView extends StatelessWidget {
   final int visitsThisWeek;
   final int dayStreak;
   final int monthlyGoalPercent;
+  final int monthlyVisits;
   final List<bool?> weekCheckins; // null = future day, true = checked, false = missed
   final int sessionCreditsLeft;
   final int sessionCreditsTotal;
@@ -48,6 +49,7 @@ class DashboardView extends StatelessWidget {
     this.visitsThisWeek = 0,
     this.dayStreak = 0,
     this.monthlyGoalPercent = 0,
+    this.monthlyVisits = 0,
     this.weekCheckins = const [],
     this.sessionCreditsLeft = 0,
     this.sessionCreditsTotal = 0,
@@ -71,62 +73,13 @@ class DashboardView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          PortalHero(
-            eyebrow: 'Dashboard',
-            icon: Icons.grid_view_rounded,
-            title: 'Welcome back, $memberFirstName',
-            subtitle: "Here's a quick look at your activity.",
-          ),
+          _header(),
           const SizedBox(height: 20),
           StatusAlertBanner(session: UserSession.instance, onManageTap: onGoToMembership),
           const SizedBox(height: 4),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              _StatCard(icon: Icons.calendar_today_outlined, iconBg: AppColors.cyanTint, iconColor: const Color(0xFF0E7490), accent: AppColors.accentCyan, value: '$visitsThisWeek', label: 'Visits this week'),
-              _StatCard(icon: Icons.local_fire_department, iconBg: AppColors.goldTint, iconColor: const Color(0xFFB4770E), accent: AppColors.accentGold, value: '$dayStreak', label: 'Day streak'),
-              _StatCard(icon: Icons.adjust, iconBg: const Color(0xFFF0E6FF), iconColor: const Color(0xFF7C3AED), accent: AppColors.accentViolet, value: '$monthlyGoalPercent%', label: 'Monthly goal'),
-            ],
-          ),
+          _statGrid(),
           const SizedBox(height: 20),
-          _Card(
-            accent: AppColors.accentCyan,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('This Week', style: AppText.sectionTitle(color: _Colors.sectionTitle)),
-                const SizedBox(height: 16),
-                Row(
-                  children: List.generate(_days.length, (i) {
-                    final state = i < weekCheckins.length ? weekCheckins[i] : null;
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Column(
-                          children: [
-                            Container(
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: state == true ? AppColors.cyan : _Colors.mutedSurface,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              alignment: Alignment.center,
-                              child: state == true
-                                  ? const Icon(Icons.check, color: Colors.white, size: 18)
-                                  : null,
-                            ),
-                            const SizedBox(height: 6),
-                            Text(_days[i], style: TextStyle(fontSize: 12, color: _Colors.textSecondary)),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ),
+          _weekCard(),
           const SizedBox(height: 20),
           isWide
               ? Row(
@@ -139,14 +92,105 @@ class DashboardView extends StatelessWidget {
                 )
               : Column(children: [_sessionCreditsCard(), const SizedBox(height: 20), _membershipCard()]),
           const SizedBox(height: 24),
-          Text('QUICK ACTIONS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _Colors.textMuted, letterSpacing: 1)),
+          Text('QUICK ACTIONS',
+              style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: _Colors.textMuted,
+                  letterSpacing: 1.1)),
           const SizedBox(height: 12),
           Wrap(
             spacing: 16,
             runSpacing: 16,
             children: [
-              _QuickAction(icon: Icons.qr_code_2, label: 'Check-In', bg: AppColors.cyanTint, iconColor: const Color(0xFF0E7490), onTap: onGoToCheckIn),
+              _QuickAction(icon: Icons.qr_code_2, label: 'Check-In', onTap: onGoToCheckIn),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Plain page title (replaces the big cyan banner).
+  Widget _header() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Welcome back, $memberFirstName',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            color: _Colors.heading,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          "Here's a quick look at your activity.",
+          style: TextStyle(fontSize: 14, color: _Colors.textSecondary),
+        ),
+      ],
+    );
+  }
+
+  /// Four KPI cards that share the full width (2 per row on narrower
+  /// windows, 1 per row on phones).
+  Widget _statGrid() {
+    final cards = <Widget>[
+      _StatCard(icon: Icons.calendar_today_outlined, value: '$visitsThisWeek', label: 'Visits this week'),
+      _StatCard(icon: Icons.local_fire_department, value: '$dayStreak', label: 'Day streak'),
+      _StatCard(icon: Icons.adjust, value: '$monthlyGoalPercent%', label: 'Monthly goal'),
+      _StatCard(icon: Icons.event_available_outlined, value: '$monthlyVisits', label: 'Monthly attendance'),
+    ];
+    return LayoutBuilder(builder: (context, constraints) {
+      final w = constraints.maxWidth;
+      final cols = w >= 900 ? 4 : (w >= 520 ? 2 : 1);
+      const gap = 16.0;
+      final cardWidth = (w - gap * (cols - 1)) / cols;
+      return Wrap(
+        spacing: gap,
+        runSpacing: gap,
+        children: [
+          for (final c in cards) SizedBox(width: cardWidth, child: c),
+        ],
+      );
+    });
+  }
+
+  Widget _weekCard() {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _PanelTitle('This Week'),
+          const SizedBox(height: 16),
+          Row(
+            children: List.generate(_days.length, (i) {
+              final state = i < weekCheckins.length ? weekCheckins[i] : null;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: state == true ? AppColors.cyan : _Colors.mutedSurface,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        alignment: Alignment.center,
+                        child: state == true
+                            ? const Icon(Icons.check, color: Colors.white, size: 18)
+                            : null,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(_days[i], style: TextStyle(fontSize: 12, color: _Colors.textSecondary)),
+                    ],
+                  ),
+                ),
+              );
+            }),
           ),
         ],
       ),
@@ -156,14 +200,13 @@ class DashboardView extends StatelessWidget {
   Widget _sessionCreditsCard() {
     final progress = sessionCreditsTotal == 0 ? 0.0 : (sessionCreditsTotal - sessionCreditsLeft) / sessionCreditsTotal;
     return _Card(
-      accent: AppColors.accentCyan,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Session Credits', style: AppText.sectionTitle(color: _Colors.sectionTitle)),
+              const _PanelTitle('Session Credits'),
               TextButton.icon(
                 onPressed: onGoToCheckIn,
                 icon: const Icon(Icons.qr_code_2, size: 16, color: AppColors.cyan),
@@ -190,7 +233,8 @@ class DashboardView extends StatelessWidget {
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('$sessionCreditsLeft', style: AppText.statNumber(size: 16)),
+                        Text('$sessionCreditsLeft',
+                            style: AppText.statNumber(size: 16, color: _Colors.heading)),
                       ],
                     ),
                   ],
@@ -200,7 +244,8 @@ class DashboardView extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('$sessionCreditsLeft/$sessionCreditsTotal', style: AppText.statNumber(size: 18)),
+                  Text('$sessionCreditsLeft/$sessionCreditsTotal',
+                      style: AppText.statNumber(size: 20, color: _Colors.heading)),
                   Text('$sessionsUsed sessions used', style: TextStyle(color: _Colors.textSecondary, fontSize: 12.5)),
                 ],
               ),
@@ -213,40 +258,67 @@ class DashboardView extends StatelessWidget {
 
   Widget _membershipCard() {
     final session = UserSession.instance;
-    // Style-only: an expiring/expired membership leans amber, otherwise green.
+    // Style-only: the colored left bar only shows when the membership is
+    // expiring or expired (needs attention).
     final needsAttention =
         session.isMembershipExpired || session.isMembershipExpiringSoon;
     return _Card(
-      accent: needsAttention ? AppColors.accentAmber : AppColors.accentGreen,
+      accent: needsAttention ? AppColors.accentAmber : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Membership', style: AppText.sectionTitle(color: _Colors.sectionTitle)),
+              const _PanelTitle('Membership'),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: AppColors.successBg, borderRadius: BorderRadius.circular(20)),
-                child: Text('Active', style: AppText.badgeLabel(color: AppColors.success)),
+                decoration: BoxDecoration(
+                    color: _Colors.badgeBg(AppColors.success, AppColors.successBg),
+                    borderRadius: BorderRadius.circular(20)),
+                child: Text('Active',
+                    style: AppText.badgeLabel(
+                        color: _Colors.badgeFg(AppColors.success, AppColors.success))),
               ),
             ],
           ),
           const SizedBox(height: 16),
           Text('Current Plan', style: TextStyle(color: _Colors.textMuted, fontSize: 12)),
-          Text(planName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+          Text(planName, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: _Colors.heading)),
           const SizedBox(height: 12),
           Text('Renews on', style: TextStyle(color: _Colors.textMuted, fontSize: 12)),
-          Text(renewsOn, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+          Text(renewsOn, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: _Colors.heading)),
           const SizedBox(height: 12),
           Text('Monthly Rate', style: TextStyle(color: _Colors.textMuted, fontSize: 12)),
-          Text(monthlyRate, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.yellow)),
+          Text(monthlyRate, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: _Colors.heading)),
         ],
       ),
     );
   }
 }
 
+/// Small uppercase gray card title (Haws Prints style).
+class _PanelTitle extends StatelessWidget {
+  final String text;
+  const _PanelTitle(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    _Colors.sync(context);
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        fontSize: 12.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.1,
+        color: _Colors.textSecondary,
+      ),
+    );
+  }
+}
+
+/// Neutral white card with a hairline border and soft shadow. [accent] draws
+/// a thin colored bar on the left edge, reserved for cards that need attention.
 class _Card extends StatelessWidget {
   final Widget child;
   final Color? accent;
@@ -257,31 +329,41 @@ class _Card extends StatelessWidget {
     _Colors.sync(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: _Colors.cardBgFor(accent),
+        color: _Colors.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _Colors.cardBorderFor(accent)),
+        border: Border.all(color: _Colors.cardBorder),
         boxShadow: _Colors.cardShadow,
       ),
-      child: child,
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: child,
+          ),
+          if (accent != null)
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Container(width: 4, color: accent),
+            ),
+        ],
+      ),
     );
   }
 }
 
+/// KPI card: small gray label + small cyan icon tile on top, big bold number
+/// underneath. No tinted fill, so every card matches.
 class _StatCard extends StatelessWidget {
   final IconData icon;
-  final Color iconBg;
-  final Color iconColor;
-  final Color? accent;
   final String value;
   final String label;
 
   const _StatCard({
     required this.icon,
-    required this.iconBg,
-    this.iconColor = Colors.black87,
-    this.accent,
     required this.value,
     required this.label,
   });
@@ -290,45 +372,58 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     _Colors.sync(context);
     return Container(
-      width: 220,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
       decoration: BoxDecoration(
-        color: _Colors.cardBgFor(accent),
+        color: _Colors.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _Colors.cardBorderFor(accent)),
+        border: Border.all(color: _Colors.cardBorder),
         boxShadow: _Colors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            alignment: Alignment.center,
-            child: Icon(icon, size: 20, color: iconColor),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: _Colors.textSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                alignment: Alignment.center,
+                child: Icon(icon, size: 18, color: AppColors.cyan),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-          Text(value, style: AppText.statNumber(size: 28)),
-          Text(label, style: AppText.statCaption(color: _Colors.textSecondary)),
+          const SizedBox(height: 10),
+          Text(value, style: AppText.statNumber(size: 32, color: _Colors.heading)),
         ],
       ),
     );
   }
 }
 
+/// Quick action as an outlined pill (Haws Prints "View" button style).
 class _QuickAction extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color bg;
-  final Color iconColor;
   final VoidCallback onTap;
 
   const _QuickAction({
     required this.icon,
     required this.label,
-    required this.bg,
-    this.iconColor = Colors.black87,
     required this.onTap,
   });
 
@@ -336,30 +431,23 @@ class _QuickAction extends StatelessWidget {
   Widget build(BuildContext context) {
     _Colors.sync(context);
     return Material(
-      color: _Colors.cardBgFor(AppColors.accentCyan),
-      borderRadius: BorderRadius.circular(16),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(999),
         onTap: onTap,
         child: Container(
-          width: 200,
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _Colors.cardBorderFor(AppColors.accentCyan)),
-            boxShadow: _Colors.cardShadow,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: _Colors.heading.withValues(alpha: 0.35)),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-                alignment: Alignment.center,
-                child: Icon(icon, size: 20, color: iconColor),
-              ),
-              const SizedBox(width: 12),
-              Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Icon(icon, size: 20, color: _Colors.heading),
+              const SizedBox(width: 10),
+              Text(label,
+                  style: TextStyle(fontWeight: FontWeight.w600, color: _Colors.heading)),
             ],
           ),
         ),
