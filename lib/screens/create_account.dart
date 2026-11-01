@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -5,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../theme/app_theme.dart';
 import '../widgets/prime_fit_logo.dart';
-import '../widgets/site_footer.dart';
 // 👇 Adjust this path if member_portal_screen.dart lives somewhere else.
 // If create_account.dart and member_portal_screen.dart are in the same
 // folder (e.g. both under lib/screens/), this relative import works as-is.
@@ -16,14 +16,10 @@ import 'user_session.dart';
 // complete_registration_service.dart lives somewhere else.
 import '../services/complete_registration_service.dart';
 import '../services/plan_service.dart';
-// 👇 Connects the "Sign in" link on the card to your LoginPage.
+// 👇 Connects the "Sign in" link on the card to your LoginPage popup.
 // Adjust this path if login_page.dart lives somewhere else (it should be
 // in the same folder as create_account.dart based on its own imports).
 import 'login_page.dart';
-// Reused so the footer's links can navigate to the landing page's own
-// sections (LandingPage, LandingPageSection) -- this page isn't "on" the
-// landing page, so it has no scroll position of its own to jump from.
-import 'landing_page.dart';
 
 /// Shared typography for the onboarding flow. Redesigned to match the
 /// Haws Prints admin sign-in look: clean bold Inter headings, muted
@@ -90,13 +86,12 @@ class _AuthFonts {
       color: const Color(0xFFC4C8CE));
 }
 
-/// PrimeFit onboarding.
+/// PrimeFit onboarding, shown as a popup over the current page.
 /// Flow: Create Account -> Choose Plan -> Payment Method -> Order Summary -> Done (Receipt)
 ///
-/// Navigate to `const CreateAccountPage()` from wherever your "Join now" /
-/// "Sign up" button lives:
+/// Open it from anywhere (landing page, navbar, Sign In popup, etc.) with:
 ///
-///   Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateAccountPage()));
+///   CreateAccountPage.show(context);
 ///
 /// The Account step is local-only validation. The Member, Membership, and
 /// Payment rows are all created TOGETHER in a single transaction when the
@@ -110,6 +105,22 @@ class _AuthFonts {
 /// manually confirm the payment (see CompleteRegistrationService.register).
 class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key});
+
+  /// Shows the create-account popup over the current page. If the member
+  /// taps "Sign in" inside it, the popup closes and the Sign In popup opens.
+  static Future<void> show(BuildContext context) async {
+    final result = await showDialog<String>(
+      context: context,
+      // A multi-step form: don't let a stray click outside wipe it. Use
+      // the X button to close.
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.72),
+      builder: (_) => const CreateAccountPage(),
+    );
+    if (result == 'signin' && context.mounted) {
+      await LoginPage.show(context);
+    }
+  }
 
   @override
   State<CreateAccountPage> createState() => _CreateAccountPageState();
@@ -139,17 +150,12 @@ class _PaymentOption {
 class _CreateAccountPageState extends State<CreateAccountPage> {
   _Screen _screen = _Screen.account;
 
-  // 👇 Path to the existing PrimeFit logo (the same asset the footer
-  // uses). Change this one line if your logo lives somewhere else.
-  static const String _logoAsset = 'assets/images/primefit_logo.jpg';
-
   // ---------------- design tokens ----------------
   // cyan / gold match AppColors so the accents stay identical to the
   // Sign In screen's, instead of drifting apart.
   static const Color cyan = AppColors.cyan;
   static const Color gold = AppColors.yellow;
-  static const Color darkBg = Color(0xFF0B0B0C); // page background (same as Sign In)
-  static const Color cardBg = Color(0xFF15161A); // the centered card (same as Sign In)
+  static const Color cardBg = Color(0xFF15161A); // the card (same as Sign In)
   static const Color cardBorder = Color(0xFF262832);
   static const Color fieldFill = Color(0xFF1E2025); // inputs (same as Sign In)
   static const Color fieldBorder = Color(0xFF2C2F36);
@@ -176,6 +182,12 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   bool _agreedToTerms = false;
   late final TapGestureRecognizer _termsRecognizer;
   late final TapGestureRecognizer _privacyRecognizer;
+
+  // Message banner shown at the bottom of the popup. (A normal SnackBar
+  // would appear on the page *behind* the popup, hidden by the dark
+  // backdrop, so messages are shown inside the popup instead.)
+  String? _notice;
+  Timer? _noticeTimer;
 
   // The real MemberID assigned by MySQL (AUTO_INCREMENT) after registration.
   // Null until the account step successfully registers the member.
@@ -278,6 +290,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
   @override
   void dispose() {
+    _noticeTimer?.cancel();
     _lastNameCtrl.dispose();
     _firstNameCtrl.dispose();
     _emailCtrl.dispose();
@@ -289,10 +302,18 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     super.dispose();
   }
 
+  // Shows a short message inside the popup (auto-hides after a few seconds).
   void _snack(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    _noticeTimer?.cancel();
+    setState(() => _notice = message);
+    _noticeTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) setState(() => _notice = null);
+    });
+  }
+
+  void _clearNotice() {
+    _noticeTimer?.cancel();
+    _notice = null;
   }
 
   // Lets the member pick a screenshot/photo of their GCash/Maya payment
@@ -352,16 +373,21 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     // once payment is confirmed at the end of the flow (see
     // _handleConfirmPayment), so nothing exists in the Members table
     // until the customer has actually paid.
-    setState(() => _screen = _Screen.plan);
+    setState(() {
+      _clearNotice();
+      _screen = _Screen.plan;
+    });
+  }
+
+  // Closes this popup (the X button).
+  void _close() {
+    Navigator.of(context).pop();
   }
 
   void _goToSignIn() {
-    // Takes the user to the existing Member Sign In screen (LoginPage).
-    // Using push (not pushReplacement) so the back arrow on LoginPage
-    // returns here to the Account step.
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-    );
+    // Closes this popup and tells CreateAccountPage.show to open the
+    // Sign In popup in its place.
+    Navigator.of(context).pop('signin');
   }
 
   void _handleConfirmPayment() async {
@@ -490,8 +516,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   }
 
   void _goToDashboard() {
-    // Clears the whole signup/plan/payment stack so the back button on the
-    // dashboard doesn't lead back into the onboarding flow.
+    // Clears the whole stack (this popup + the pages behind it) so the
+    // back button on the dashboard doesn't lead back into onboarding.
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const MemberPortalScreen()),
       (route) => false,
@@ -517,6 +543,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       _receiptBytes = null;
       _receiptFileName = null;
       _paymentStatus = 'Pending';
+      _clearNotice();
     });
   }
 
@@ -576,14 +603,12 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     return _StepStatus.pending;
   }
 
-  // The steps (Account/Plan/Payment/Review/Done) are all one route --
+  // The steps (Account/Plan/Payment/Review/Done) are all one popup --
   // they're swapped via local `_screen` state, not separate pushed pages
-  // -- so without this, the browser's back button (or a device's back
-  // gesture) would skip the whole step flow and leave the page entirely
-  // from any step, instead of going to the previous step like a user
-  // would expect. Returns null for Account/Done: there's no previous step
-  // to fall back to, so the browser back button there does its normal
-  // thing (leaves this page).
+  // -- so without this, the Esc key / browser back button would close
+  // the whole popup from any step, instead of going to the previous step
+  // like a user would expect. Returns null for Account/Done: there's no
+  // previous step to fall back to, so Esc there just closes the popup.
   _Screen? _previousStep(_Screen current) {
     switch (current) {
       case _Screen.plan:
@@ -602,52 +627,88 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   Widget build(BuildContext context) {
     final previousStep = _previousStep(_screen);
     return PopScope(
-      canPop: previousStep == null,
+      // Don't let Esc / back close the popup while the registration is
+      // being submitted.
+      canPop: previousStep == null && !_submitting,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop || previousStep == null) return;
+        if (didPop || _submitting || previousStep == null) return;
         setState(() => _screen = previousStep);
       },
-      child: Scaffold(
-        backgroundColor: darkBg,
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // The centered card. minHeight = the visible screen so
-                    // the card sits in the middle on tall screens and the
-                    // footer starts below the fold.
-                    ConstrainedBox(
-                      constraints:
-                          BoxConstraints(minHeight: constraints.maxHeight),
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 40),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 720),
-                            child: _buildCard(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    _buildFooter(),
-                  ],
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: _wide ? 24 : 12,
+          vertical: 24,
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Stack(
+            children: [
+              // Scrolls on short windows so the card never overflows.
+              SingleChildScrollView(child: _buildCard()),
+              // Close (X) button -- stays fixed at the popup's top-right.
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  tooltip: 'Close',
+                  onPressed: _submitting ? null : _close,
+                  icon: const Icon(Icons.close_rounded,
+                      size: 22, color: Color(0xFF9CA3AF)),
                 ),
-              );
-            },
+              ),
+              // Validation / error messages.
+              if (_notice != null)
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  child: _noticeBanner(_notice!),
+                ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // ==================== CENTERED CARD ====================
-  // One dark card on a near-black page (same look as the Haws Prints
-  // admin sign-in). Every step renders inside this same card, so the
-  // layout stays consistent across steps.
+  Widget _noticeBanner(String message) {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2A1518),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF7F2A33)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.4),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline,
+                size: 18, color: Color(0xFFFF6B6B)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(message,
+                  style: GoogleFonts.inter(
+                      fontSize: 13, color: Colors.white, height: 1.4)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==================== CARD ====================
+  // One dark card (same look as the Sign In popup). Every step renders
+  // inside this same card, so the layout stays consistent across steps.
 
   Widget _buildCard() {
     final wide = _wide;
@@ -679,42 +740,11 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     );
   }
 
-  // Footer links: this page isn't "on" the landing page, so there's no
-  // existing scroll position to jump from -- navigate there and land on
-  // the requested section instead (see LandingPage's initialSection).
-  Widget _buildFooter() {
-    void goTo([LandingPageSection? section]) =>
-        goToLandingSection(context, section);
-
-    return SiteFooter(
-      onLogoTap: () => goTo(),
-      onAbout: () => goTo(LandingPageSection.about),
-      onMission: () => goTo(LandingPageSection.mission),
-      onMembership: () => goTo(LandingPageSection.membership),
-      onMerchandise: () => goTo(LandingPageSection.merchandise),
-      onContact: () => goTo(LandingPageSection.contact),
-    );
-  }
-
-  // Centered brand header -- same as the Sign In page: round logo, the
-  // cyan/gold PrimeFit wordmark, and a tracked-caps subtitle.
+  // Centered brand header: the cyan/gold PrimeFit wordmark and a
+  // tracked-caps subtitle (the round logo was removed).
   Widget _buildHeader() {
     return Column(
       children: [
-        // Round PrimeFit logo (same asset as the footer / Sign In page).
-        // If the path is wrong, the built-in logo mark shows instead --
-        // just fix _logoAsset at the top of this class.
-        ClipOval(
-          child: Image.asset(
-            _logoAsset,
-            width: 64,
-            height: 64,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stack) =>
-                const PrimeFitLogoMark(size: 64),
-          ),
-        ),
-        const SizedBox(height: 12),
         const PrimeFitWordmark(fontSize: 24),
         const SizedBox(height: 6),
         Text('MEMBER REGISTRATION',
@@ -1188,7 +1218,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 borderRadius: BorderRadius.circular(10),
               ),
               alignment: Alignment.center,
-              child: Icon(opt.icon, color: selected ? cyan : mutedText, size: 20),
+              child:
+                  Icon(opt.icon, color: selected ? cyan : mutedText, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1405,8 +1436,18 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
   String _todayText() {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June', 'July',
-      'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     final d = DateTime.now();
     return '${months[d.month - 1]} ${d.day}, ${d.year}';
@@ -1971,7 +2012,8 @@ class _ReceiptPaper extends StatelessWidget {
             child: Text(
               l.value,
               textAlign: TextAlign.right,
-              style: _t(12.5, weight: l.bold ? FontWeight.w700 : FontWeight.w500),
+              style:
+                  _t(12.5, weight: l.bold ? FontWeight.w700 : FontWeight.w500),
             ),
           ),
         ],
@@ -2027,7 +2069,8 @@ class _ReceiptPaper extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                  child: Text(itemName, style: _t(13, weight: FontWeight.w600))),
+                  child:
+                      Text(itemName, style: _t(13, weight: FontWeight.w600))),
               const SizedBox(width: 12),
               Text(itemAmount, style: _t(13, weight: FontWeight.w600)),
             ],

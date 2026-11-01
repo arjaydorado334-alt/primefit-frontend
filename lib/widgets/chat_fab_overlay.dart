@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'chat_panel.dart';
 
 /// Wraps a page's content with a persistent floating chat button pinned to
@@ -71,8 +72,12 @@ class _ChatFabOverlayState extends State<ChatFabOverlay>
               child: FadeTransition(
                 opacity: _controller,
                 child: Material(
+                  // Transparent so the dark ChatPanel's own rounded corners
+                  // show cleanly (no light surface peeking out at the edges).
+                  color: Colors.transparent,
                   elevation: 12,
-                  borderRadius: BorderRadius.circular(16),
+                  shadowColor: Colors.black,
+                  borderRadius: BorderRadius.circular(22),
                   clipBehavior: Clip.antiAlias,
                   child: SizedBox(
                     width: panelWidth,
@@ -89,7 +94,8 @@ class _ChatFabOverlayState extends State<ChatFabOverlay>
           right: 24,
           child: FloatingActionButton(
             onPressed: _toggle,
-            backgroundColor: const Color(0xFF00B4D8),
+            backgroundColor: AppColors.gold,
+            foregroundColor: const Color(0xFF0A0A0A),
             shape: const CircleBorder(),
             elevation: 4,
             child: AnimatedSwitcher(
@@ -97,7 +103,7 @@ class _ChatFabOverlayState extends State<ChatFabOverlay>
               child: Icon(
                 _open ? Icons.close : Icons.chat_bubble_outline,
                 key: ValueKey(_open),
-                color: Colors.white,
+                color: const Color(0xFF0A0A0A),
               ),
             ),
           ),

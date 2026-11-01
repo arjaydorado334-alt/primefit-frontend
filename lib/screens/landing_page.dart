@@ -237,16 +237,15 @@ class LandingPage extends StatelessWidget {
   final LandingPageSection? initialSection;
   const LandingPage({super.key, this.initialSection});
 
+  // Opens the Sign In card as a popup over the landing page (instead of
+  // navigating to a separate page).
   void _goToLogin(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-    );
+    LoginPage.show(context);
   }
 
+  // Opens the Create Account card as a popup over the landing page.
   void _goToCreateAccount(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const CreateAccountPage()),
-    );
+    CreateAccountPage.show(context);
   }
 
   void _scrollToHome(BuildContext context) => _scrollToTop();
@@ -560,8 +559,8 @@ class _NavLogo extends StatelessWidget {
         const SizedBox(width: 10),
         RichText(
           text: TextSpan(
-            style:
-                GoogleFonts.barlow(fontSize: fontSize, fontWeight: FontWeight.w800),
+            style: GoogleFonts.barlow(
+                fontSize: fontSize, fontWeight: FontWeight.w800),
             children: const [
               TextSpan(text: 'Prime', style: TextStyle(color: _Palette.cyan)),
               TextSpan(text: 'Fit', style: TextStyle(color: _Palette.yellow)),
@@ -1498,8 +1497,8 @@ class _MissionSection extends StatelessWidget {
                 _HoverScale(
                   endScale: 1.03,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 20, horizontal: 14),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 20, horizontal: 14),
                     decoration: BoxDecoration(
                       color: _Palette.bgCard,
                       borderRadius: BorderRadius.circular(14),
@@ -1511,9 +1510,7 @@ class _MissionSection extends StatelessWidget {
                         Text(v[0] as String,
                             textAlign: TextAlign.center,
                             style: _Fonts.display(
-                                size: 14,
-                                color: v[2] as Color,
-                                height: 1.2)),
+                                size: 14, color: v[2] as Color, height: 1.2)),
                         const SizedBox(height: 6),
                         Text(v[1] as String,
                             textAlign: TextAlign.center,
@@ -2562,12 +2559,12 @@ class _MerchCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(item.code,
-                          style: _Fonts.body(
-                              size: 12, color: _Palette.mutedGray)),
+                          style:
+                              _Fonts.body(size: 12, color: _Palette.mutedGray)),
                       const SizedBox(height: 12),
                       Text(item.price,
-                          style: _Fonts.display(
-                              size: 22, color: _Palette.yellow)),
+                          style:
+                              _Fonts.display(size: 22, color: _Palette.yellow)),
                     ],
                   ),
                 ),
@@ -3105,8 +3102,8 @@ class _LocationSectionState extends State<_LocationSection> {
           Text(
             'Find our gym, view its exact location, and get directions '
             'in seconds.',
-            style: _Fonts.body(
-                size: 13.5, color: _Palette.lightGray, height: 1.4),
+            style:
+                _Fonts.body(size: 13.5, color: _Palette.lightGray, height: 1.4),
           ),
           const SizedBox(height: 18),
           tiles,
@@ -3549,7 +3546,8 @@ class _InkPill extends StatelessWidget {
     return Material(
       color: filled ? _Palette.ink : Colors.transparent,
       clipBehavior: Clip.antiAlias,
-      shape: const StadiumBorder(side: BorderSide(color: _Palette.ink, width: 1.6)),
+      shape:
+          const StadiumBorder(side: BorderSide(color: _Palette.ink, width: 1.6)),
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -3594,8 +3592,8 @@ class _Footer extends StatelessWidget {
         Container(
           width: double.infinity,
           color: _Palette.bgDeepBlack,
-          padding: EdgeInsets.symmetric(
-              horizontal: 24, vertical: isWide ? 56 : 40),
+          padding:
+              EdgeInsets.symmetric(horizontal: 24, vertical: isWide ? 56 : 40),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: _kContentMaxWidth),
@@ -3736,8 +3734,8 @@ class _FooterLink extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
-        child: Text(label,
-            style: _Fonts.body(size: 14.5, color: _Palette.white)),
+        child:
+            Text(label, style: _Fonts.body(size: 14.5, color: _Palette.white)),
       ),
     );
   }
@@ -3811,8 +3809,7 @@ class _FooterSocialLink extends StatelessWidget {
           children: [
             Icon(icon, size: 16, color: _Palette.cyan),
             const SizedBox(width: 8),
-            Text(label,
-                style: _Fonts.body(size: 14.5, color: _Palette.cyan)),
+            Text(label, style: _Fonts.body(size: 14.5, color: _Palette.cyan)),
           ],
         ),
       ),
