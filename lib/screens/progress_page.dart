@@ -1006,10 +1006,15 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
           } catch (_) {
             parsedDate = DateTime.now();
           }
-          return FoodLogEntry(
+                    return FoodLogEntry(
             logId: int.tryParse('${r['LogID']}'),
             foodName: r['FoodName']?.toString() ?? '',
-            mealType: r['MealType']?.toString() ?? kMealTypes.first,
+            mealType: kMealTypes.firstWhere(
+              (m) =>
+                  m.toLowerCase() ==
+                  (r['MealType']?.toString() ?? '').toLowerCase(),
+              orElse: () => kMealTypes.first,
+            ),
             calories: int.tryParse('${r['Calories']}') ?? 0,
             protein: double.tryParse('${r['Protein']}') ?? 0,
             carbs: double.tryParse('${r['Carbs']}') ?? 0,
