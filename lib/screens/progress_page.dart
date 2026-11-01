@@ -2676,8 +2676,8 @@ class _BodyPhotosTab extends StatelessWidget {
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              Image.network(
-                                p.url,
+                                Image.network(
+                                p.url.replaceFirst('http://', 'https://'),
                                 fit: BoxFit.cover,
                                 loadingBuilder: (context, child, progress) {
                                   if (progress == null) return child;
