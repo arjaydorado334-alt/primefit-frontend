@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/chatbot_service.dart';
+import '../theme/app_theme.dart';
 
 const int kMaxChatImages = 10;
 const String _kGreeting = "Hi! How can we help you today?";
@@ -62,6 +63,26 @@ class _ChatPanelState extends State<ChatPanel> {
   final List<_ChatSession> _sessions = [];
   late String _currentSessionId;
   final List<_PendingImage> _pendingImages = [];
+
+  // -- Colors --------------------------------------------------------
+  // Restyled to match the PrimeFit Support widget on the landing page: a
+  // near-black panel with gold + cyan accents, in both light and dark mode.
+  static const Color _cyan = Color(0xFF18B7D9);
+  static const Color _onGold = Color(0xFF0A0A0A);
+
+  Color get _accent => AppColors.gold;
+  Color get _panelBg => const Color(0xFF0A0A0A);
+  Color get _panelBorder => const Color(0xFF26262B);
+  Color get _dividerColor => const Color(0xFF1F1F23);
+  Color get _titleColor => Colors.white;
+  Color get _iconMuted => const Color(0xFFB4B4BC);
+  Color get _bubbleOther => const Color(0xFF1A1A1D);
+  Color get _bubbleOtherBorder => const Color(0xFF26262B);
+  Color get _bubbleOtherText => const Color(0xFFF4F4F5);
+  Color get _inputFill => const Color(0xFF0A0A0A);
+  Color get _hintColor => const Color(0xFFA1A1AA);
+  Color get _inputText => Colors.white;
+  Color get _subtitleColor => const Color(0xFFA1A1AA);
 
   @override
   void initState() {
@@ -186,38 +207,74 @@ class _ChatPanelState extends State<ChatPanel> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
+      padding: const EdgeInsets.fromLTRB(24, 20, 12, 16),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: _dividerColor)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_showHistory)
-            IconButton(
-              icon: const Icon(Icons.arrow_back, size: 20),
-              onPressed: () => setState(() => _showHistory = false),
-            )
-          else
-            const Icon(Icons.support_agent, color: Color(0xFF00B4D8)),
-          const SizedBox(width: 8),
-          Text(
-            _showHistory ? 'Chat History' : 'PrimeFit Support',
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: IconButton(
+                icon: Icon(Icons.arrow_back, size: 20, color: _titleColor),
+                onPressed: () => setState(() => _showHistory = false),
+              ),
+            ),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(top: _showHistory ? 10 : 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_showHistory)
+                    Text(
+                      'Chat History',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          color: _titleColor),
+                    )
+                  else ...[
+                    Text.rich(
+                      TextSpan(
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 20),
+                        children: [
+                          const TextSpan(
+                              text: 'Prime', style: TextStyle(color: _cyan)),
+                          TextSpan(
+                              text: 'Fit', style: TextStyle(color: _accent)),
+                          TextSpan(
+                              text: ' Support',
+                              style: TextStyle(color: _titleColor)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Ask about your membership, workouts and more.',
+                      style: TextStyle(fontSize: 13, color: _subtitleColor),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
-          const Spacer(),
           if (!_showHistory)
             IconButton(
               tooltip: 'History',
-              icon: const Icon(Icons.history, size: 20),
+              icon: Icon(Icons.history, size: 20, color: _iconMuted),
               onPressed: () => setState(() => _showHistory = true),
             ),
           IconButton(
             tooltip: 'New chat',
-            icon: const Icon(Icons.add_comment_outlined, size: 20),
+            icon: Icon(Icons.add_comment_outlined, size: 20, color: _iconMuted),
             onPressed: _newChat,
           ),
           IconButton(
-            icon: const Icon(Icons.close, size: 20),
+            icon: Icon(Icons.close, size: 20, color: _iconMuted),
             onPressed: widget.onClose,
           ),
         ],
@@ -227,19 +284,21 @@ class _ChatPanelState extends State<ChatPanel> {
 
   Widget _buildHistoryList() {
     if (_sessions.isEmpty) {
-      return const Center(child: Text('No conversations yet.'));
+      return Center(child: Text('No conversations yet.', style: TextStyle(color: _subtitleColor)));
     }
     return ListView.separated(
       padding: const EdgeInsets.all(12),
       itemCount: _sessions.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, __) => Divider(height: 1, color: _dividerColor),
       itemBuilder: (context, index) {
         final session = _sessions[index];
         final isCurrent = session.id == _currentSessionId;
         return ListTile(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          selectedTileColor: const Color(0x14FFFFFF),
           leading: Icon(
             Icons.chat_bubble_outline,
-            color: isCurrent ? const Color(0xFF00B4D8) : Colors.black45,
+            color: isCurrent ? _accent : _iconMuted,
           ),
           title: Text(
             session.title,
@@ -247,10 +306,12 @@ class _ChatPanelState extends State<ChatPanel> {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+              color: _titleColor,
             ),
           ),
           subtitle: Text(
             '${session.messages.length} messages · ${_formatTime(session.createdAt)}',
+            style: TextStyle(color: _subtitleColor),
           ),
           selected: isCurrent,
           onTap: () => _selectSession(session.id),
@@ -262,19 +323,20 @@ class _ChatPanelState extends State<ChatPanel> {
   Widget _buildMessages(double maxBubbleWidth) {
     final messages = _currentSession.messages;
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       itemCount: messages.length,
       itemBuilder: (context, index) {
         final msg = messages[index];
         return Align(
           alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             constraints: BoxConstraints(maxWidth: maxBubbleWidth),
             decoration: BoxDecoration(
-              color: msg.isMe ? const Color(0xFF00B4D8) : const Color(0xFFF1F1F1),
-              borderRadius: BorderRadius.circular(14),
+              color: msg.isMe ? _accent : _bubbleOther,
+              borderRadius: BorderRadius.circular(18),
+              border: msg.isMe ? null : Border.all(color: _bubbleOtherBorder),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,9 +348,9 @@ class _ChatPanelState extends State<ChatPanel> {
                     runSpacing: 6,
                     children: msg.images
                         .map((bytes) => ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.memory(bytes, width: 100, height: 100, fit: BoxFit.cover),
-                            ))
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.memory(bytes, width: 100, height: 100, fit: BoxFit.cover),
+                          ))
                         .toList(),
                   ),
                 if (msg.images.isNotEmpty && msg.text.isNotEmpty)
@@ -297,22 +359,25 @@ class _ChatPanelState extends State<ChatPanel> {
                   msg.isMe
                       ? Text(
                           msg.text,
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(
+                            color: _onGold,
+                            fontWeight: FontWeight.w600,
+                          ),
                         )
                       : MarkdownBody(
                           data: msg.text,
                           selectable: true,
                           styleSheet: MarkdownStyleSheet(
-                            p: const TextStyle(color: Colors.black87, fontSize: 14),
-                            strong: const TextStyle(
-                              color: Colors.black87,
+                            p: TextStyle(color: _bubbleOtherText, fontSize: 14.5, height: 1.45),
+                            strong: TextStyle(
+                              color: _bubbleOtherText,
                               fontWeight: FontWeight.bold,
                             ),
-                            listBullet: const TextStyle(color: Colors.black87),
-                            h1: const TextStyle(
-                                color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18),
-                            h2: const TextStyle(
-                                color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
+                            listBullet: TextStyle(color: _bubbleOtherText),
+                            h1: TextStyle(
+                                color: _bubbleOtherText, fontWeight: FontWeight.bold, fontSize: 18),
+                            h2: TextStyle(
+                                color: _bubbleOtherText, fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                         ),
               ],
@@ -328,8 +393,8 @@ class _ChatPanelState extends State<ChatPanel> {
     return Container(
       height: 72,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: _dividerColor)),
       ),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
@@ -366,40 +431,56 @@ class _ChatPanelState extends State<ChatPanel> {
     );
   }
 
+  OutlineInputBorder _inputBorder(Color color) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(999),
+        borderSide: BorderSide(color: color, width: 1.5),
+      );
+
   Widget _buildInputBar() {
     final atLimit = _pendingImages.length >= kMaxChatImages;
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: _dividerColor)),
       ),
       child: Row(
         children: [
           IconButton(
             tooltip: atLimit ? 'Photo limit reached ($kMaxChatImages)' : 'Attach photos',
-            icon: const Icon(Icons.image_outlined, color: Color(0xFF00B4D8)),
+            icon: Icon(Icons.image_outlined, color: _accent),
             onPressed: _sending ? null : _pickImages,
           ),
           Expanded(
             child: TextField(
               controller: _controller,
               enabled: !_sending,
+              style: TextStyle(color: _inputText),
+              cursorColor: _accent,
               decoration: InputDecoration(
                 hintText: 'Type a message...',
+                hintStyle: TextStyle(color: _hintColor),
                 filled: true,
-                fillColor: const Color(0xFFF5F5F5),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
+                fillColor: _inputFill,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                border: _inputBorder(_accent),
+                enabledBorder: _inputBorder(_accent),
+                focusedBorder: _inputBorder(_accent),
+                disabledBorder: _inputBorder(_accent.withValues(alpha: 0.4)),
               ),
               onSubmitted: (_) => _send(),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           IconButton(
-            icon: const Icon(Icons.send, color: Color(0xFF00B4D8)),
+            style: IconButton.styleFrom(
+              backgroundColor: _accent,
+              foregroundColor: _onGold,
+              disabledBackgroundColor: _accent.withValues(alpha: 0.4),
+              disabledForegroundColor: _onGold,
+              fixedSize: const Size(48, 48),
+              shape: const CircleBorder(),
+            ),
+            icon: const Icon(Icons.send_rounded, size: 22),
             onPressed: _sending ? null : _send,
           ),
         ],
@@ -409,33 +490,44 @@ class _ChatPanelState extends State<ChatPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxBubbleWidth = constraints.maxWidth * 0.72;
-        return Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: _showHistory
-                  ? _buildHistoryList()
-                  : _buildMessages(maxBubbleWidth),
-            ),
-            if (!_showHistory) ...[
-              if (_sending)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 8),
-                  child: SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+    return Material(
+      color: _panelBg,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: BorderSide(color: _panelBorder),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxBubbleWidth = constraints.maxWidth * 0.72;
+          return Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: _showHistory
+                    ? _buildHistoryList()
+                    : _buildMessages(maxBubbleWidth),
+              ),
+              if (!_showHistory) ...[
+                if (_sending)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: _accent,
+                      ),
+                    ),
                   ),
-                ),
-              _buildPendingImageStrip(),
-              _buildInputBar(),
+                _buildPendingImageStrip(),
+                _buildInputBar(),
+              ],
             ],
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

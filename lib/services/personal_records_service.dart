@@ -5,9 +5,10 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config.dart';
 
 class PersonalRecordsService {
-  static const String apiUrl = "https://member-account-backend.onrender.com/personal_records_api.php";
+  static const String apiUrl = "${AppConfig.baseUrl}/personal_records_api.php";
 
   static Future<Map<String, dynamic>> fetchRecords(int memberId) async {
     try {
@@ -25,6 +26,8 @@ class PersonalRecordsService {
     required int weight,
     required int sets,
     required int reps,
+    // Optional -- only relevant for time-based exercises (planks, cardio).
+    int? durationSeconds,
   }) async {
     try {
       final response = await http.post(
@@ -37,6 +40,7 @@ class PersonalRecordsService {
           "weight": weight,
           "sets": sets,
           "reps": reps,
+          "duration_seconds": durationSeconds,
         }),
       );
       return jsonDecode(response.body);

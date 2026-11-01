@@ -21,7 +21,10 @@ class BillingService {
 
   /// POSTs the member's payment receipt for admin review.
   ///
-  /// Fields: `member_id`, `plan_id`, `method`; file: `receipt`.
+  /// Fields: `member_id`, `plan_id`, `method`, `purpose`; file: `receipt`.
+  /// `purpose` is one of "New Registration" | "Renewal" | "Upgrade" and is
+  /// used purely to label the payment for the admin -- it doesn't change how
+  /// the receipt is reviewed or approved.
   /// Returns the decoded JSON body, or
   /// `{ "success": false, "message": "..." }` on a transport error.
   static Future<Map<String, dynamic>> submitReceipt({
@@ -30,12 +33,14 @@ class BillingService {
     required String method,
     required Uint8List receiptBytes,
     String receiptFileName = 'receipt.jpg',
+    String purpose = 'New Registration',
   }) async {
     try {
       final request = http.MultipartRequest('POST', _submitReceiptUrl);
       request.fields['member_id'] = memberId.toString();
       request.fields['plan_id'] = planId.toString();
       request.fields['method'] = method;
+      request.fields['purpose'] = purpose;
       request.files.add(
         http.MultipartFile.fromBytes(
           'receipt',

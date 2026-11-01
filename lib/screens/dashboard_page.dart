@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../screens/membership_page.dart';
 import '../screens/profile_settings.dart';
 import '../screens/programs_page.dart';
 import '../screens/progress_page.dart';
 import '../screens/user_session.dart';
+import '../theme/app_theme.dart';
 import '../widgets/qr_checkin_view.dart';
+
+/// Colors used by this page (light page, same palette as the admin portal).
+class _Ui {
+  static const Color cyan = Color(0xff18B7D9);
+  static const Color heading = Color(0xff1F2937);
+  static const Color muted = Color(0xff6B7280);
+  static const Color border = Color(0xffE5E7EB);
+  static const Color subtle = Color(0xffF3F4F6);
+
+  /// Muted white used on the dark sidebar.
+  static const Color railMuted = Color(0x8CFFFFFF);
+  static const Color railDivider = Color(0x14FFFFFF);
+}
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -64,74 +79,41 @@ _pages = [
   }
 
   Widget _navItem(IconData icon, String title, int index) {
-    final selected = selectedIndex == index;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () {
-          setState(() {
-            selectedIndex = index;
-          });
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          decoration: BoxDecoration(
-            color: selected
-                ? const Color(0xffDDF7FC)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color: selected
-                    ? const Color(0xff18B7D9)
-                    : Colors.grey[700],
-              ),
-              const SizedBox(width: 18),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: selected
-                      ? FontWeight.bold
-                      : FontWeight.w500,
-                  color: selected
-                      ? const Color(0xff18B7D9)
-                      : Colors.grey[800],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return _NavTile(
+      icon: icon,
+      title: title,
+      selected: selectedIndex == index,
+      onTap: () {
+        setState(() {
+          selectedIndex = index;
+        });
+      },
     ).animate().slideX(begin: -.2);
   }
 
   Widget _buildSidebar() {
     return Container(
-      width: 300,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          right: BorderSide(color: Color(0xffE5E7EB)),
-        ),
-      ),
+      width: 260,
+      // Same dark gray the dark-mode version uses.
+      color: AppColors.darkCard,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
+          // ---------------- Branding ----------------
+          // Logo + wordmark directly on the rail ("Prime" cyan, "Fit" gold).
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.fromLTRB(20, 24, 16, 12),
             child: Row(
               children: [
                 Container(
-                  width: 62,
-                  height: 62,
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(50),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      width: 1.5,
+                    ),
                     image: const DecorationImage(
                       image: AssetImage("assets/images/PrimeFit_Logo.png"),
                       fit: BoxFit.cover,
@@ -139,70 +121,257 @@ _pages = [
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "PrimeFit",
-                      style: TextStyle(
-                        fontSize: 31,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xff14B8E6),
+                    Text.rich(
+                      TextSpan(
+                        style: GoogleFonts.archivoBlack(
+                          fontSize: 18,
+                          letterSpacing: -0.3,
+                        ),
+                        children: const [
+                          TextSpan(text: 'Prime', style: TextStyle(color: _Ui.cyan)),
+                          TextSpan(text: 'Fit', style: TextStyle(color: AppColors.gold)),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      "Member Portal",
-                      style: TextStyle(color: Colors.grey),
+                      'Member Portal'.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.4,
+                        color: _Ui.railMuted,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 30),
-          _navItem(Icons.dashboard_outlined, "Dashboard", 0),
-          _navItem(Icons.show_chart, "Progress", 1),
-          _navItem(Icons.fitness_center, "Programs", 2),
-          _navItem(Icons.card_membership, "Membership", 3),
-          _navItem(Icons.qr_code_scanner, "Check-In", 4),
-          _navItem(Icons.person_outline, "Profile", 5),
-          const Spacer(),
-          const Divider(),
+
+          // ---------------- Navigation ----------------
+          const Padding(
+            padding: EdgeInsets.fromLTRB(26, 18, 20, 8),
+            child: Text(
+              'MY PORTAL',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.4,
+                color: _Ui.railMuted,
+              ),
+            ),
+          ),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Column(
+              children: [
+                _navItem(Icons.dashboard_outlined, "Dashboard", 0),
+                _navItem(Icons.show_chart, "Progress", 1),
+                _navItem(Icons.fitness_center, "Programs", 2),
+                _navItem(Icons.card_membership, "Membership", 3),
+                _navItem(Icons.qr_code_scanner, "Check-In", 4),
+                _navItem(Icons.person_outline, "Profile", 5),
+              ],
+            ),
+          ),
+          const Spacer(),
+          const Divider(height: 1, color: _Ui.railDivider),
+
+          // ---------------- Member profile + Sign Out ----------------
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
             child: Row(
               children: [
-                const CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Color(0xff14B8E6),
-                  child: Icon(Icons.person, color: Colors.white),
+                Container(
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _Ui.cyan.withValues(alpha: 0.18),
+                    border: Border.all(color: _Ui.cyan.withValues(alpha: 0.45)),
+                  ),
+                  child: const Icon(Icons.person, size: 18, color: Colors.white),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
+                const SizedBox(width: 11),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         "John Doe",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13.5,
+                          color: Colors.white,
+                        ),
                       ),
-                      Text(
-                        "7 Months",
-                        style: TextStyle(color: Colors.grey),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          "7 Months",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.gold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed: () {},
-                ),
               ],
             ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
+            child: _SignOutTile(onTap: () {}),
           ),
         ],
       ),
     ).animate().fade(duration: 500.ms);
+  }
+}
+
+/// One sidebar row: active = cyan-tinted pill with a cyan border; hover = a
+/// light cyan wash; inactive = muted white.
+class _NavTile extends StatefulWidget {
+  final IconData icon;
+  final String title;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _NavTile({
+    required this.icon,
+    required this.title,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  State<_NavTile> createState() => _NavTileState();
+}
+
+class _NavTileState extends State<_NavTile> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = widget.selected;
+    const cyan = _Ui.cyan;
+
+    final Color rowBg = active
+        ? cyan.withValues(alpha: 0.28)
+        : (_hovered ? cyan.withValues(alpha: 0.20) : Colors.transparent);
+    final Color borderColor = active
+        ? cyan.withValues(alpha: 0.55)
+        : (_hovered ? cyan.withValues(alpha: 0.30) : Colors.transparent);
+    final Color textColor =
+        (active || _hovered) ? Colors.white : Colors.white.withValues(alpha: 0.72);
+    final Color iconColor =
+        (active || _hovered) ? cyan : Colors.white.withValues(alpha: 0.65);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            color: rowBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: widget.onTap,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                child: Row(
+                  children: [
+                    Icon(widget.icon, size: 19, color: iconColor),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Text(
+                        widget.title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+                          letterSpacing: -0.1,
+                          color: textColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Sign Out row: quiet by default, soft red on hover.
+class _SignOutTile extends StatefulWidget {
+  final VoidCallback onTap;
+  const _SignOutTile({required this.onTap});
+
+  @override
+  State<_SignOutTile> createState() => _SignOutTileState();
+}
+
+class _SignOutTileState extends State<_SignOutTile> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color fg =
+        _hovered ? const Color(0xFFFCA5A5) : Colors.white.withValues(alpha: 0.65);
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          hoverColor: const Color(0x14FFFFFF),
+          onTap: widget.onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            child: Row(
+              children: [
+                Icon(Icons.logout, size: 18, color: fg),
+                const SizedBox(width: 13),
+                Text(
+                  'Sign Out',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.1,
+                    color: fg,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -214,16 +383,16 @@ class _DashboardView extends StatelessWidget {
   Widget build(BuildContext context) {
     final session = UserSession.instance;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(40),
+      padding: const EdgeInsets.all(32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(session),
-          const SizedBox(height: 25),
+          const SizedBox(height: 24),
           _buildTopCards(session),
-          const SizedBox(height: 25),
+          const SizedBox(height: 24),
           _buildWeekTracker(session),
-          const SizedBox(height: 25),
+          const SizedBox(height: 24),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -232,9 +401,9 @@ class _DashboardView extends StatelessWidget {
               Expanded(child: _buildMembershipCard(session)),
             ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 24),
           _buildAttendanceList(),
-          const SizedBox(height: 30),
+          const SizedBox(height: 24),
           _buildQuickActions(),
         ],
       ),
@@ -265,6 +434,19 @@ class _DashboardView extends StatelessWidget {
     return streak;
   }
 
+  /// Small uppercase gray card title.
+  Widget _panelTitle(String text) {
+    return Text(
+      text.toUpperCase(),
+      style: const TextStyle(
+        fontSize: 12.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.1,
+        color: _Ui.muted,
+      ),
+    );
+  }
+
   Widget _buildHeader(UserSession session) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,15 +454,16 @@ class _DashboardView extends StatelessWidget {
         Text(
           "Welcome back, ${session.firstName}",
           style: const TextStyle(
-            fontSize: 44,
-            fontWeight: FontWeight.bold,
-            color: Color(0xff1F2937),
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            color: _Ui.heading,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         const Text(
           "Here's a quick look at your activity.",
-          style: TextStyle(fontSize: 20, color: Color(0xff6B7280)),
+          style: TextStyle(fontSize: 14, color: _Ui.muted),
         ),
       ],
     ).animate().fade().slideY(begin: -.2);
@@ -293,72 +476,63 @@ class _DashboardView extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _statCard(
-            Icons.calendar_today,
-            Colors.cyan.shade100,
-            const Color(0xff06B6D4),
-            Text('$visitsThisWeek', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
-            "Visits this week",
-          ),
+          child: _statCard(Icons.calendar_today, '$visitsThisWeek', "Visits this week"),
         ),
-        const SizedBox(width: 22),
+        const SizedBox(width: 16),
         Expanded(
-          child: _statCard(
-            Icons.local_fire_department,
-            Colors.amber.shade100,
-            Colors.orange,
-            Text('$dayStreak', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
-            "Day streak",
-          ),
+          child: _statCard(Icons.local_fire_department, '$dayStreak', "Day streak"),
         ),
-        const SizedBox(width: 22),
+        const SizedBox(width: 16),
         Expanded(
-          child: _statCard(
-            Icons.adjust,
-            Colors.purple.shade100,
-            Colors.deepPurple,
-            Text('$monthlyGoal%', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
-            "Monthly goal",
-          ),
+          child: _statCard(Icons.adjust, '$monthlyGoal%', "Monthly goal"),
         ),
       ],
     );
   }
 
-  Widget _statCard(IconData icon, Color bg, Color iconColor, Widget number, String title) {
+  /// KPI card: small gray label + small cyan icon tile on top, big bold number.
+  Widget _statCard(IconData icon, String value, String title) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.all(22),
-        height: 165,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+      child: _Panel(
+        padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: iconColor),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: _Ui.muted,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: _Ui.cyan.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 18, color: _Ui.cyan),
+                ),
+              ],
             ),
-            const Spacer(),
-            number,
-            const SizedBox(height: 6),
-            Text(title, style: const TextStyle(fontSize: 18, color: Colors.grey)),
+            const SizedBox(height: 10),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+                color: _Ui.heading,
+              ),
+            ),
           ],
         ),
       ),
@@ -386,29 +560,19 @@ class _DashboardView extends StatelessWidget {
       }
     }
     final dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return _Panel(
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("This Week", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text('${weekActiveDays.length} visit${weekActiveDays.length == 1 ? '' : 's'} this week', style: const TextStyle(color: Colors.grey, fontSize: 16)),
-          const SizedBox(height: 30),
+          _panelTitle("This Week"),
+          const SizedBox(height: 6),
+          Text(
+            '${weekActiveDays.length} visit${weekActiveDays.length == 1 ? '' : 's'} this week',
+            style: const TextStyle(color: _Ui.muted, fontSize: 14),
+          ),
+          const SizedBox(height: 22),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (index) {
               final isActive = weekActiveDays.contains(weekDates[index].weekday);
               return _dayCard(dayLabels[index], isActive);
@@ -420,38 +584,51 @@ class _DashboardView extends StatelessWidget {
   }
 
   Widget _dayCard(String day, bool active) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        width: 72,
-        height: 90,
-        decoration: BoxDecoration(
-          color: active ? const Color(0xffDDF7FC) : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(day, style: TextStyle(fontWeight: FontWeight.bold, color: active ? const Color(0xff18B7D9) : Colors.grey)),
-            const SizedBox(height: 12),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: active ? const Color(0xff18B7D9) : Colors.white,
-                border: Border.all(color: active ? const Color(0xff18B7D9) : Colors.grey.shade300),
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            height: 90,
+            decoration: BoxDecoration(
+              color: active ? _Ui.cyan.withValues(alpha: 0.10) : _Ui.subtle,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: active ? _Ui.cyan.withValues(alpha: 0.35) : Colors.transparent,
               ),
-              child: active
-                  ? const Icon(Icons.check, size: 20, color: Colors.white)
-                  : null,
             ),
-          ],
-        ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  day,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: active ? _Ui.cyan : _Ui.muted,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: active ? _Ui.cyan : Colors.white,
+                    border: Border.all(color: active ? _Ui.cyan : _Ui.border),
+                  ),
+                  child: active
+                      ? const Icon(Icons.check, size: 19, color: Colors.white)
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ).animate().scale(end: const Offset(1.05, 1.05), duration: 200.ms, curve: Curves.easeOut).onHover(),
       ),
-    ).animate().scale(end: const Offset(1.05, 1.05), duration: 200.ms, curve: Curves.easeOut).onHover();
+    );
   }
 
 Widget _buildSessionCredits(UserSession session) {
@@ -459,56 +636,45 @@ Widget _buildSessionCredits(UserSession session) {
     final total = session.creditsTotal;
     final remaining = total - used;
     final usedPercent = total > 0 ? used / total : 0.0;
-    return Container(
-      padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return _Panel(
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
-                  color: const Color(0xff18B7D9).withValues(alpha: 0.1),
+                  color: _Ui.cyan.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.confirmation_number_outlined, color: Color(0xff18B7D9), size: 20),
+                child: const Icon(Icons.confirmation_number_outlined, color: _Ui.cyan, size: 18),
               ),
               const SizedBox(width: 12),
-              const Text("Session Credits", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+              _panelTitle("Session Credits"),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
           Row(
             children: [
-              Expanded(child: _creditStatCard(icon: Icons.check_circle_outline, label: 'Remaining', value: '$remaining', color: const Color(0xFF059669), bg: const Color(0xFFECFDF5))),
-              const SizedBox(width: 16),
-              Expanded(child: _creditStatCard(icon: Icons.access_time_outlined, label: 'Used This Period', value: '$used', color: const Color(0xFFD97706), bg: const Color(0xFFFFFBEB))),
-              const SizedBox(width: 16),
-              Expanded(child: _creditStatCard(icon: Icons.all_inclusive_outlined, label: 'Total Credits', value: '$total', color: const Color(0xff18B7D9), bg: const Color(0xffDDF7FC))),
+              Expanded(child: _creditStatCard(icon: Icons.check_circle_outline, label: 'Remaining', value: '$remaining', color: const Color(0xFF059669))),
+              const SizedBox(width: 14),
+              Expanded(child: _creditStatCard(icon: Icons.access_time_outlined, label: 'Used This Period', value: '$used', color: const Color(0xFFD97706))),
+              const SizedBox(width: 14),
+              Expanded(child: _creditStatCard(icon: Icons.all_inclusive_outlined, label: 'Total Credits', value: '$total', color: _Ui.cyan)),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('${(usedPercent * 100).round()}% used', style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
-                  Text('$remaining of $total left', style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+                  Text('${(usedPercent * 100).round()}% used', style: const TextStyle(fontSize: 13, color: _Ui.muted, fontWeight: FontWeight.w500)),
+                  Text('$remaining of $total left', style: const TextStyle(fontSize: 13, color: _Ui.muted, fontWeight: FontWeight.w500)),
                 ],
               ),
               const SizedBox(height: 10),
@@ -517,8 +683,8 @@ Widget _buildSessionCredits(UserSession session) {
                 child: LinearProgressIndicator(
                   value: usedPercent.clamp(0.0, 1.0),
                   minHeight: 10,
-                  backgroundColor: const Color(0xFFF3F4F6),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xff18B7D9)),
+                  backgroundColor: _Ui.subtle,
+                  valueColor: const AlwaysStoppedAnimation<Color>(_Ui.cyan),
                 ),
               ),
             ],
@@ -528,18 +694,23 @@ Widget _buildSessionCredits(UserSession session) {
     ).animate().fade().slideY(begin: .2).onHover(duration: 200.ms, curve: Curves.easeOut).scale(end: const Offset(1.02, 1.02));
   }
 
-  Widget _creditStatCard({required IconData icon, required String label, required String value, required Color color, required Color bg}) {
+  /// Neutral credit tile: only the small icon carries a color.
+  Widget _creditStatCard({required IconData icon, required String label, required String value, required Color color}) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14), border: Border.all(color: color.withValues(alpha: 0.15))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _Ui.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 20, color: color),
           const SizedBox(height: 12),
-          Text(value, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: color)),
+          Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: -0.4, color: _Ui.heading)),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+          Text(label, style: const TextStyle(fontSize: 12, color: _Ui.muted, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -547,26 +718,50 @@ Widget _buildSessionCredits(UserSession session) {
 
 Widget _buildMembershipCard(UserSession session) {
     return Container(
-      padding: const EdgeInsets.all(25),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xff1CB5E0), Color(0xff000851)]),
-        borderRadius: BorderRadius.circular(20),
+        // Dark gray (same as the sidebar) instead of the cyan-to-navy gradient.
+        color: AppColors.darkCard,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Membership", style: TextStyle(color: Colors.white70, fontSize: 16)),
+          const Text(
+            "MEMBERSHIP",
+            style: TextStyle(
+              color: _Ui.railMuted,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.1,
+            ),
+          ),
           const SizedBox(height: 12),
-          Text(session.membershipPlan, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 35),
-          const Text("Valid Until", style: TextStyle(color: Colors.white70)),
-          const SizedBox(height: 8),
-          Text(session.renewsOnLabel, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
-          const SizedBox(height: 30),
+          Text(session.membershipPlan, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+          Container(
+            margin: const EdgeInsets.only(top: 10),
+            width: 40,
+            height: 3,
+            decoration: BoxDecoration(
+              color: AppColors.gold,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(height: 28),
+          const Text("Valid Until", style: TextStyle(color: _Ui.railMuted)),
+          const SizedBox(height: 6),
+          Text(session.renewsOnLabel, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20)),
+          const SizedBox(height: 28),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: _Ui.heading,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: const StadiumBorder(),
+              ),
               onPressed: () => onNavigate?.call(3),
               child: const Text("Manage Membership", style: TextStyle(fontWeight: FontWeight.w600)),
             ),
@@ -577,27 +772,34 @@ Widget _buildMembershipCard(UserSession session) {
   }
 
   Widget _buildAttendanceList() {
+    final rows = <List<dynamic>>[
+      ["Mon, Jul 14", "09:30 AM", true],
+      ["Tue, Jul 15", "08:15 AM", true],
+      ["Wed, Jul 16", "10:00 AM", true],
+      ["Thu, Jul 17", "07:45 AM", true],
+      ["Fri, Jul 18", "09:00 AM", true],
+      ["Sat, Jul 19", "11:30 AM", true],
+      ["Sun, Jul 20", "08:00 AM", false],
+    ];
     return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Attendance", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          _attendanceRow("Mon, Jul 14", "09:30 AM", true),
-          _attendanceRow("Tue, Jul 15", "08:15 AM", true),
-          _attendanceRow("Wed, Jul 16", "10:00 AM", true),
-          _attendanceRow("Thu, Jul 17", "07:45 AM", true),
-          _attendanceRow("Fri, Jul 18", "09:00 AM", true),
-          _attendanceRow("Sat, Jul 19", "11:30 AM", true),
-          _attendanceRow("Sun, Jul 20", "08:00 AM", false),
+          _panelTitle("Attendance"),
+          const SizedBox(height: 8),
+          for (var i = 0; i < rows.length; i++)
+            _attendanceRow(rows[i][0] as String, rows[i][1] as String, rows[i][2] as bool, first: i == 0),
         ],
       ),
     );
   }
 
-  Widget _attendanceRow(String date, String time, bool checkedIn) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+  Widget _attendanceRow(String date, String time, bool checkedIn, {bool first = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        border: first ? null : const Border(top: BorderSide(color: _Ui.border)),
+      ),
       child: Row(
         children: [
           Container(
@@ -605,7 +807,7 @@ Widget _buildMembershipCard(UserSession session) {
             height: 36,
             decoration: BoxDecoration(
               color: checkedIn ? const Color(0xFFE7F9EE) : const Color(0xFFFFF3D6),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
             ),
             alignment: Alignment.center,
             child: Icon(
@@ -619,18 +821,18 @@ Widget _buildMembershipCard(UserSession session) {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(date, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                Text(time, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                Text(date, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: _Ui.heading)),
+                Text(time, style: const TextStyle(color: _Ui.muted, fontSize: 12)),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: checkedIn ? const Color(0xFFE7F9EE) : const Color(0xFFFFF3D6),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(999),
             ),
-            child: Text(checkedIn ? 'Checked In' : 'Absent', style: TextStyle(fontSize: 11, color: checkedIn ? const Color(0xFF16A34A) : Colors.orange, fontWeight: FontWeight.w600)),
+            child: Text(checkedIn ? 'Checked In' : 'Absent', style: TextStyle(fontSize: 11.5, color: checkedIn ? const Color(0xFF16A34A) : Colors.orange, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -638,26 +840,19 @@ Widget _buildMembershipCard(UserSession session) {
   }
 
   Widget _buildQuickActions() {
-    return Container(
-      padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
+    return _Panel(
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Quick Actions", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
+          _panelTitle("Quick Actions"),
+          const SizedBox(height: 18),
           Row(
             children: [
               Expanded(child: _quickActionButton(Icons.qr_code_scanner, "Check-In", onTap: () => onNavigate?.call(4))),
-              const SizedBox(width: 20),
+              const SizedBox(width: 16),
               Expanded(child: _quickActionButton(Icons.bar_chart, "View Progress", onTap: () => onNavigate?.call(1))),
-              const SizedBox(width: 20),
+              const SizedBox(width: 16),
               Expanded(child: _quickActionButton(Icons.fitness_center, "My Programs", onTap: () => onNavigate?.call(2))),
             ],
           ),
@@ -667,17 +862,44 @@ Widget _buildMembershipCard(UserSession session) {
   }
 
   Widget _quickActionButton(IconData icon, String title, {VoidCallback? onTap}) {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.grey.shade100,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    return OutlinedButton.icon(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: _Ui.heading,
+        side: BorderSide(color: _Ui.heading.withValues(alpha: 0.35)),
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        shape: const StadiumBorder(),
       ),
       onPressed: onTap,
-      icon: Icon(icon),
+      icon: Icon(icon, size: 20),
       label: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+/// White rounded card with a hairline border and soft shadow.
+class _Panel extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  const _Panel({required this.child, this.padding = const EdgeInsets.all(24)});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _Ui.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }
@@ -688,16 +910,10 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))]),
-      child: child,
-    );
+    return _Panel(padding: const EdgeInsets.all(24), child: child);
   }
 }
 
 extension on Animate {
   Animate onHover({Duration? duration, Curve? curve}) => this;
 }
-

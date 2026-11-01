@@ -6,6 +6,10 @@ import '../theme/app_theme.dart';
 /// credits. Renders nothing if neither condition applies. [onManageTap]
 /// is called when the action button is tapped -- pass null to hide the
 /// button (e.g. on pages that don't need a navigation shortcut).
+///
+/// Restyled to match the admin portal: neutral white cards with a small
+/// colored icon tile and a thin colored bar on the left edge. The conditions
+/// that decide which banners show, their text and their actions are unchanged.
 class StatusAlertBanner extends StatelessWidget {
   final UserSession session;
   final VoidCallback? onManageTap;
@@ -22,8 +26,6 @@ class StatusAlertBanner extends StatelessWidget {
       banners.add(_Banner(
         icon: Icons.error_outline,
         color: const Color(0xFFDC2626),
-        bg: const Color(0xFFFEF2F2),
-        border: const Color(0xFFFECACA),
         title: 'Your membership has expired',
         subtitle:
             'Renew your plan to keep checking in and earning session credits.',
@@ -35,8 +37,6 @@ class StatusAlertBanner extends StatelessWidget {
       banners.add(_Banner(
         icon: Icons.schedule,
         color: const Color(0xFFD97706),
-        bg: const Color(0xFFFFFBEB),
-        border: const Color(0xFFFDE68A),
         title: days <= 0
             ? 'Your membership renews today'
             : 'Membership expiring in $days day${days == 1 ? '' : 's'}',
@@ -51,8 +51,6 @@ class StatusAlertBanner extends StatelessWidget {
       banners.add(_Banner(
         icon: Icons.confirmation_number_outlined,
         color: const Color(0xFFD97706),
-        bg: const Color(0xFFFFFBEB),
-        border: const Color(0xFFFDE68A),
         title: 'Session credits running low',
         subtitle:
             'Only $left of ${session.creditsTotal} credits left this period.',
@@ -64,9 +62,7 @@ class StatusAlertBanner extends StatelessWidget {
     if (session.needsFoodReminder) {
       banners.add(const _Banner(
         icon: Icons.restaurant_outlined,
-        color: Color(0xFF2563EB),
-        bg: Color(0xFFEFF6FF),
-        border: Color(0xFFBFDBFE),
+        color: AppColors.cyan,
         title: "You haven't logged food today",
         subtitle:
             'Log a meal in Progress Tracker to keep your nutrition on track.',
@@ -81,9 +77,7 @@ class StatusAlertBanner extends StatelessWidget {
           : 'Time for your weekly weigh-in';
       banners.add(_Banner(
         icon: Icons.monitor_weight_outlined,
-        color: const Color(0xFF7C3AED),
-        bg: const Color(0xFFF5F3FF),
-        border: const Color(0xFFDDD6FE),
+        color: AppColors.cyan,
         title: label,
         subtitle:
             'Log your weight in Progress Tracker to keep your BMI history up to date.',
@@ -107,8 +101,6 @@ class StatusAlertBanner extends StatelessWidget {
 class _Banner extends StatelessWidget {
   final IconData icon;
   final Color color;
-  final Color bg;
-  final Color border;
   final String title;
   final String subtitle;
   final String actionLabel;
@@ -117,8 +109,6 @@ class _Banner extends StatelessWidget {
   const _Banner({
     required this.icon,
     required this.color,
-    required this.bg,
-    required this.border,
     required this.title,
     required this.subtitle,
     required this.actionLabel,
@@ -127,50 +117,82 @@ class _Banner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = dark ? AppColors.darkCard : Colors.white;
+    final cardBorder = dark ? AppColors.darkBorder : AppColors.cardBorder;
+    final heading = dark ? Colors.white : const Color(0xFF1F2937);
+    final muted = dark ? AppColors.textMutedOnDark : const Color(0xFF6B7280);
+    // Lighten the icon color a bit in dark mode so it stays legible.
+    final iconFg = dark ? (Color.lerp(color, Colors.white, 0.45) ?? color) : color;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
-        boxShadow: AppColors.softCardShadow,
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+        boxShadow: dark ? const [] : AppColors.softCardShadow,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 16, 16, 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(title,
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13.5,
-                        color: color)),
-                const SizedBox(height: 3),
-                Text(subtitle,
-                    style: TextStyle(
-                        fontSize: 12.5, color: color.withValues(alpha: 0.85))),
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: dark ? 0.2 : 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(icon, color: iconFg, size: 19),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: heading)),
+                      const SizedBox(height: 3),
+                      Text(subtitle,
+                          style: TextStyle(fontSize: 12.5, color: muted)),
+                    ],
+                  ),
+                ),
+                if (onTap != null) ...[
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: onTap,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: dark ? AppColors.cyan : const Color(0xFF111827),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      shape: const StadiumBorder(),
+                    ),
+                    child: Text(actionLabel,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 12.5)),
+                  ),
+                ],
               ],
             ),
           ),
-          if (onTap != null) ...[
-            const SizedBox(width: 12),
-            TextButton(
-              onPressed: onTap,
-              style: TextButton.styleFrom(
-                foregroundColor: color,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              ),
-              child: Text(actionLabel,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 12.5)),
-            ),
-          ],
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: Container(width: 4, color: color),
+          ),
         ],
       ),
     );
