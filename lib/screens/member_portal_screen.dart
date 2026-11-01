@@ -202,6 +202,7 @@ class _MemberPortalScreenState extends State<MemberPortalScreen> {
           visitsThisWeek: session.visitsThisWeek,
           dayStreak: session.dayStreak,
           monthlyGoalPercent: session.monthlyGoalPercent,
+          monthlyVisits: session.visitsThisMonth,
           weekCheckins: session.weekCheckins,
           planName: session.membershipPlan,
           renewsOn: session.renewsOnLabel,

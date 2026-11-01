@@ -1,5 +1,4 @@
-import 'dart:ui';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/prime_fit_logo.dart';
@@ -12,38 +11,23 @@ import 'user_session.dart';
 // Adjust the path if login_service.dart lives somewhere else.
 import '../services/login_service.dart';
 
-/// Shared typography for the Sign In / Create Account flow, kept
-/// consistent with the PrimeFit landing page: Archivo Black for the
-/// bold page heading, Inter for everything else (subtitle, labels,
-/// inputs, links, buttons).
+/// Typography for the Sign In popup, kept consistent with the PrimeFit
+/// landing page: Inter for labels, inputs, links and buttons.
 class _AuthFonts {
-  // Page heading — bold, confident, not oversized.
-  static TextStyle heading({double size = 30, Color color = Colors.black}) =>
-      GoogleFonts.archivoBlack(
+  // Popup heading ("Sign in to your account").
+  static TextStyle heading({double size = 27, Color color = Colors.white}) =>
+      GoogleFonts.inter(
         fontSize: size,
         color: color,
-        height: 1.15,
-        letterSpacing: -0.3,
+        fontWeight: FontWeight.w800,
+        height: 1.2,
+        letterSpacing: -0.4,
       );
-
-  // Subtitle under the heading — kept black so it stays clearly
-  // legible over the glass cell.
-  static TextStyle subtitle({double size = 14.5, Color color = Colors.black}) =>
-      GoogleFonts.inter(
-          fontSize: size,
-          color: color,
-          height: 1.4,
-          fontWeight: FontWeight.w400);
-
-  // Form field labels.
-  static TextStyle label({double size = 13, Color color = Colors.black}) =>
-      GoogleFonts.inter(
-          fontSize: size, fontWeight: FontWeight.w600, color: color);
 
   // Body / description text.
   static TextStyle body(
-          {double size = 13.5,
-          Color color = Colors.black,
+          {double size = 14,
+          Color color = const Color(0xFF9CA3AF),
           double height = 1.5}) =>
       GoogleFonts.inter(
           fontSize: size,
@@ -51,93 +35,61 @@ class _AuthFonts {
           height: height,
           fontWeight: FontWeight.w400);
 
-  // Links (Forgot password?, Create one, Sign in).
+  // Field labels.
+  static TextStyle label({double size = 13}) => GoogleFonts.inter(
+      fontSize: size,
+      color: const Color(0xFFC4C8CE),
+      fontWeight: FontWeight.w600);
+
+  // Links.
   static TextStyle link(
-          {double size = 13.5,
-          Color color = AppColors.cyan,
+          {double size = 13,
+          Color color = AppColors.yellow,
           FontWeight weight = FontWeight.w600}) =>
       GoogleFonts.inter(fontSize: size, color: color, fontWeight: weight);
 
-  // Primary button label — bold, uppercase.
-  static TextStyle button({double size = 15, Color color = Colors.white}) =>
+  // Button label.
+  static TextStyle button({double size = 15.5, Color color = Colors.black}) =>
       GoogleFonts.inter(
           fontSize: size,
           fontWeight: FontWeight.w800,
           color: color,
-          letterSpacing: 0.6);
+          letterSpacing: 0.2);
 }
 
-/// Genuinely translucent frosted-glass panel that floats the form over
-/// the background photo — a strong backdrop blur diffuses the image
-/// into soft color/light so the low-opacity white tint still reads as
-/// legible "glass" rather than a flat white card, while the photo
-/// stays subtly visible through it.
-class _GlassCell extends StatelessWidget {
-  final Widget child;
-  const _GlassCell({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.22),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 50,
-                  offset: const Offset(0, 22)),
-            ],
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-/// Muted "← Back" link for the bottom-left corner of the auth card. Its
-/// icon size (15), gap (5), Inter label (12.5), and grey
-/// (`AppColors.textMutedOnLight` == 0xFF6B7280) are identical to the
-/// `_backButton` helper on the Create Account steps, so the affordance is
-/// the same on both entry screens and sits natively on the white card.
-class _BackLink extends StatelessWidget {
-  final VoidCallback onTap;
-  const _BackLink({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.arrow_back,
-              size: 15, color: AppColors.textMutedOnLight),
-          const SizedBox(width: 5),
-          Text('Back',
-              style: GoogleFonts.inter(
-                  color: AppColors.textMutedOnLight, fontSize: 12.5)),
-        ],
-      ),
-    );
-  }
-}
-
+/// Sign-in popup.
+///
+/// Open it from anywhere (landing page, navbar, etc.) with:
+///
+///     LoginPage.show(context);
+///
+/// It no longer navigates to a separate page -- it floats over whatever
+/// page the user is currently on. On a successful login the popup closes
+/// and the member portal opens.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  /// Shows the login popup over the current page.
+  ///
+  /// If the member taps "Sign Up" inside it, the popup closes and the
+  /// Create Account popup opens in its place.
+  static Future<void> show(BuildContext context) async {
+    final result = await showDialog<String>(
+      context: context,
+      barrierDismissible: true, // tap outside the card to close
+      barrierColor: Colors.black.withValues(alpha: 0.72),
+      builder: (_) => const LoginPage(),
+    );
+    if (result == 'signup' && context.mounted) {
+      await CreateAccountPage.show(context);
+    }
+  }
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -153,6 +105,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _handleSignIn() async {
+    if (_submitting) return;
+
     setState(() {
       _errorText = null;
       if (_emailController.text.trim().isEmpty ||
@@ -161,6 +115,9 @@ class _LoginPageState extends State<LoginPage> {
       }
     });
     if (_errorText != null) return;
+
+    // Grab the navigator now, before the async gap.
+    final navigator = Navigator.of(context);
 
     setState(() => _submitting = true);
 
@@ -232,7 +189,9 @@ class _LoginPageState extends State<LoginPage> {
             '',
       );
 
-      Navigator.of(context).pushReplacement(
+      // Close the popup first, then open the member portal.
+      navigator.pop();
+      navigator.push(
         MaterialPageRoute(builder: (_) => const MemberPortalScreen()),
       );
     } else {
@@ -242,264 +201,268 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _handleCreateAccount() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const CreateAccountPage()),
-    );
+    // Close this popup; LoginPage.show then opens the Create Account popup.
+    Navigator.of(context).pop('signup');
   }
+
+  void _close() {
+    if (_submitting) return;
+    Navigator.of(context).pop();
+  }
+
+  // ---------------- design tokens ----------------
+  static const Color _cardBg = Color(0xFF15161A);
+  static const Color _cardBorder = Color(0xFF262832);
+  static const Color _fieldFill = Color(0xFF1E2025);
+  static const Color _fieldBorder = Color(0xFF2C2F36);
+  static const Color _mutedIcon = Color(0xFF7D838C);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Full-bleed background photo. Falls back to the dark brand
-          // background if the asset isn't found, instead of crashing.
-          Image.asset(
-            'assets/images/auth_bg.jpg',
-            fit: BoxFit.cover,
-            filterQuality: FilterQuality.high,
-            errorBuilder: (context, error, stackTrace) =>
-                Container(color: AppColors.darkBg),
-          ),
-          // Vignette: lighter near the center (keeping the photo's subject
-          // visible behind the now-centered card) and darker toward the
-          // edges, for a moodier, more premium frame.
-          Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: const Alignment(0, -0.15),
-                radius: 1.3,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.32)
-                ],
-                stops: const [0.35, 1.0],
-              ),
-            ),
-          ),
-          // Bottom-heavy scrim so the lower edge of the frame reads darker
-          // and moodier, matching a premium gym-app aesthetic.
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.4)
-                ],
-                stops: const [0.5, 1.0],
-              ),
-            ),
-          ),
-          // Even, overall darkening wash so text/card contrast stays
-          // strong no matter where the card lands on the photo.
-          Container(color: Colors.black.withValues(alpha: 0.1)),
-          SafeArea(
-            child: Center(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 560),
-                  child: _GlassCell(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(40, 40, 40, 36),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Row(
-                            children: [
-                              PrimeFitBadge(size: 34),
-                              SizedBox(width: 10),
-                              PrimeFitWordmark(fontSize: 19),
-                            ],
-                          ),
-                          const SizedBox(height: 28),
-                          _SignInForm(
-                            formKey: _formKey,
-                            emailController: _emailController,
-                            passwordController: _passwordController,
-                            obscurePassword: _obscurePassword,
-                            rememberMe: _rememberMe,
-                            errorText: _errorText,
-                            submitting: _submitting,
-                            onToggleObscure: () => setState(
-                                () => _obscurePassword = !_obscurePassword),
-                            onToggleRemember: (v) =>
-                                setState(() => _rememberMe = v ?? false),
-                            onSignIn: _handleSignIn,
-                            onBack: () => Navigator.of(context).pop(),
-                            onCreateAccount: _handleCreateAccount,
-                          ),
-                          const SizedBox(height: 22),
-                          // Back to the previous screen (the landing page, or
-                          // wherever the user came from). Sits at the
-                          // bottom-left inside the card; the Create Account
-                          // form uses this exact control in the same spot.
-                          _BackLink(onTap: () => Navigator.of(context).pop()),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+    final width = MediaQuery.of(context).size.width;
+    final compact = width < 520;
 
-class _SignInForm extends StatelessWidget {
-  final GlobalKey<FormState> formKey;
-  final TextEditingController emailController;
-  final TextEditingController passwordController;
-  final bool obscurePassword;
-  final bool rememberMe;
-  final String? errorText;
-  final bool submitting;
-  final VoidCallback onToggleObscure;
-  final ValueChanged<bool?> onToggleRemember;
-  final VoidCallback onSignIn;
-  final VoidCallback onBack;
-  final VoidCallback onCreateAccount;
-
-  const _SignInForm({
-    required this.formKey,
-    required this.emailController,
-    required this.passwordController,
-    required this.obscurePassword,
-    required this.rememberMe,
-    required this.errorText,
-    required this.submitting,
-    required this.onToggleObscure,
-    required this.onToggleRemember,
-    required this.onSignIn,
-    required this.onBack,
-    required this.onCreateAccount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      key: formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Welcome Back', style: _AuthFonts.heading()),
-          const SizedBox(height: 6),
-          Text('Sign in to continue your fitness journey.',
-              style: _AuthFonts.subtitle()),
-          const SizedBox(height: 28),
-          Text('Email address', style: _AuthFonts.label()),
-          const SizedBox(height: 8),
-          TextField(
-            controller: emailController,
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.black),
-            cursorColor: AppColors.yellow,
-            decoration: _inputDecoration('member@primefit.com'),
-          ),
-          const SizedBox(height: 20),
-          Row(
+    return PopScope(
+      // Don't let Esc / back close the popup while a login is in flight.
+      canPop: !_submitting,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: compact ? 12 : 24,
+          vertical: 24,
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          // Scrolls on short windows so the card never overflows.
+          child: Stack(
             children: [
-              Text('Password', style: _AuthFonts.label()),
-              const Spacer(),
-              TextButton(
-                onPressed: () {},
-                style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero, minimumSize: Size.zero),
-                child: Text('Forgot password?',
-                    style: _AuthFonts.link(size: 13, color: Colors.black)
-                        .copyWith(decoration: TextDecoration.underline)),
+              // Scrolls on short windows so the card never overflows.
+              SingleChildScrollView(child: _buildCard(compact)),
+              // Close (X) button -- fixed at the popup's top-right.
+              Positioned(
+                top: 6,
+                right: 6,
+                child: IconButton(
+                  tooltip: 'Close',
+                  onPressed: _close,
+                  icon: const Icon(Icons.close_rounded,
+                      size: 22, color: Color(0xFF9CA3AF)),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: passwordController,
-            obscureText: obscurePassword,
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.black),
-            cursorColor: AppColors.yellow,
-            decoration: _inputDecoration('').copyWith(
-              suffixIcon: IconButton(
-                icon: Icon(
-                    obscurePassword
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    size: 20),
-                onPressed: onToggleObscure,
-              ),
-            ),
-          ),
-          if (errorText != null) ...[
-            const SizedBox(height: 10),
-            Text(errorText!,
-                style:
-                    GoogleFonts.inter(color: Colors.redAccent, fontSize: 13)),
-          ],
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: submitting ? null : onSignIn,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
-              ),
-              child: Text(submitting ? 'SIGNING IN…' : 'SIGN IN',
-                  style: _AuthFonts.button()),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Don't have an account? ",
-                    style: _AuthFonts.body(size: 13.5, color: Colors.black)),
-                GestureDetector(
-                  onTap: onCreateAccount,
-                  behavior: HitTestBehavior.opaque,
-                  child: Text('Create one',
-                      style: _AuthFonts.link(color: Colors.black)
-                          .copyWith(decoration: TextDecoration.underline)),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  InputDecoration _inputDecoration(String hint) {
+  // ==================== SIGN-IN CARD ====================
+
+  Widget _buildCard(bool compact) {
+    const logoSize = 66.0;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(compact ? 22 : 52, 36, compact ? 22 : 52, 30),
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: _cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.55),
+            blurRadius: 80,
+            offset: const Offset(0, 30),
+          ),
+        ],
+      ),
+      child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ---- brand header ----
+              Center(
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/primefit_logo.jpg',
+                    width: logoSize,
+                    height: logoSize,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stack) =>
+                        PrimeFitLogoMark(size: logoSize),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Center(child: PrimeFitWordmark(fontSize: 24)),
+              const SizedBox(height: 6),
+              Center(
+                child: Text(
+                  'MEMBER PORTAL',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 3,
+                    color: const Color(0xFFC9CDD3),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // ---- heading ----
+              Text('Sign in to your account',
+                  textAlign: TextAlign.center,
+                  style: _AuthFonts.heading(size: compact ? 24 : 28)),
+              const SizedBox(height: 10),
+              Text(
+                'Welcome back! Enter your details to continue.',
+                textAlign: TextAlign.center,
+                style: _AuthFonts.body(size: compact ? 13.5 : 14.5),
+              ),
+              const SizedBox(height: 26),
+
+              // ---- fields ----
+              Text('Email address', style: _AuthFonts.label()),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                style: GoogleFonts.inter(fontSize: 15.5, color: Colors.white),
+                cursorColor: AppColors.cyan,
+                decoration: _inputDecoration(hint: 'you@email.com'),
+              ),
+              const SizedBox(height: 18),
+              Text('Password', style: _AuthFonts.label()),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _handleSignIn(), // Enter key signs in
+                style: GoogleFonts.inter(fontSize: 15.5, color: Colors.white),
+                cursorColor: AppColors.cyan,
+                decoration:
+                    _inputDecoration(hint: 'Enter your password').copyWith(
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 19,
+                        color: _mutedIcon),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // ---- keep me logged in / forgot password ----
+              Row(
+                children: [
+                  SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: Checkbox(
+                      value: _rememberMe,
+                      onChanged: (v) =>
+                          setState(() => _rememberMe = v ?? false),
+                      activeColor: AppColors.cyan,
+                      checkColor: Colors.black,
+                      side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.3),
+                          width: 1.5),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                  const SizedBox(width: 9),
+                  Flexible(
+                    child: Text('Keep me logged in',
+                        style: _AuthFonts.body(
+                            size: 13, color: const Color(0xFFA7ADB5))),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {},
+                    style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero, minimumSize: Size.zero),
+                    child: Text('Forgot password?', style: _AuthFonts.link()),
+                  ),
+                ],
+              ),
+
+              if (_errorText != null) ...[
+                const SizedBox(height: 10),
+                Text(_errorText!,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                        color: Colors.redAccent, fontSize: 13)),
+              ],
+              const SizedBox(height: 22),
+
+              // ---- sign in ----
+              SizedBox(
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _submitting ? null : _handleSignIn,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.yellow,
+                    foregroundColor: Colors.black,
+                    disabledBackgroundColor:
+                        AppColors.yellow.withValues(alpha: 0.5),
+                    elevation: 0,
+                    shape: const StadiumBorder(),
+                  ),
+                  child: Text(_submitting ? 'Signing in…' : 'Sign In',
+                      style: _AuthFonts.button()),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // ---- sign up ----
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Don't have an account? ",
+                      style: _AuthFonts.body(
+                          size: 13.5, color: const Color(0xFFA7ADB5))),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: _handleCreateAccount,
+                      behavior: HitTestBehavior.opaque,
+                      child: Text('Sign Up',
+                          style: _AuthFonts.link(
+                              size: 13.5,
+                              color: AppColors.cyan,
+                              weight: FontWeight.w700)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+    );
+  }
+
+  // Dark filled input with the label above it (see _AuthFonts.label).
+  InputDecoration _inputDecoration({required String hint}) {
+    OutlineInputBorder border(Color c, [double w = 1.2]) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: c, width: w),
+        );
     return InputDecoration(
       hintText: hint,
-      hintStyle: GoogleFonts.inter(color: Colors.grey.shade600, fontSize: 14),
+      hintStyle:
+          GoogleFonts.inter(fontSize: 15.5, color: const Color(0xFF6F7681)),
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.92),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide:
-            BorderSide(color: Colors.black.withValues(alpha: 0.22), width: 1),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide:
-            BorderSide(color: Colors.black.withValues(alpha: 0.22), width: 1),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: AppColors.yellow, width: 1.8),
-      ),
+      fillColor: _fieldFill,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      border: border(_fieldBorder),
+      enabledBorder: border(_fieldBorder),
+      focusedBorder: border(AppColors.cyan, 1.6),
     );
   }
 }

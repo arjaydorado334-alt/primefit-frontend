@@ -19,6 +19,8 @@ class UserSession {
   String email = 'john.doe@example.com';
   String phone = '+1 (555) 987-6543';
   String dateOfBirth = '';
+  // '' means "not set" -- expected values are 'Male' / 'Female' / 'Other'.
+  String gender = '';
   String address = '';
   String membershipPlan = '7 Months';
   String membershipStatus = 'Active';
@@ -185,6 +187,15 @@ class UserSession {
     return streak;
   }
 
+  /// Count of visits in the current calendar month, computed from
+  /// [visitDates]. Powers the Dashboard's "Monthly Attendance" stat tile.
+  int get visitsThisMonth {
+    final now = DateTime.now();
+    return visitDates
+        .where((d) => d.year == now.year && d.month == now.month)
+        .length;
+  }
+
   static const List<String> _monthAbbr = [
     'Jan',
     'Feb',
@@ -327,6 +338,7 @@ class UserSession {
     required String email,
     required String phone,
     required String dateOfBirth,
+    String gender = '',
     required String address,
   }) {
     this.firstName = firstName;
@@ -334,6 +346,45 @@ class UserSession {
     this.email = email;
     this.phone = phone;
     this.dateOfBirth = dateOfBirth;
+    this.gender = gender;
     this.address = address;
+  }
+
+  /// Age in whole years, computed from [dateOfBirth]. Accepts either
+  /// "YYYY-MM-DD" (MySQL/API format) or "MM/DD/YYYY" (this app's Profile
+  /// Settings UI format) since callers have stored either historically.
+  /// Null when no date of birth is on file yet, or it can't be parsed.
+  int? get age {
+    final dob = _parseDob(dateOfBirth);
+    if (dob == null) return null;
+    final now = DateTime.now();
+    int years = now.year - dob.year;
+    final hadBirthdayThisYear =
+        (now.month > dob.month) || (now.month == dob.month && now.day >= dob.day);
+    if (!hadBirthdayThisYear) years--;
+    return years;
+  }
+
+  static DateTime? _parseDob(String raw) {
+    if (raw.isEmpty) return null;
+    try {
+      return DateTime.parse(raw); // "YYYY-MM-DD"
+    } catch (_) {
+      // fall through to MM/DD/YYYY
+    }
+    final parts = raw.split('/');
+    if (parts.length == 3) {
+      final m = int.tryParse(parts[0]);
+      final d = int.tryParse(parts[1]);
+      final y = int.tryParse(parts[2]);
+      if (m != null && d != null && y != null) {
+        try {
+          return DateTime(y, m, d);
+        } catch (_) {
+          return null;
+        }
+      }
+    }
+    return null;
   }
 }

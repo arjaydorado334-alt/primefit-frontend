@@ -2,38 +2,49 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
-/// PrimeFit member-portal sidebar. Dark (near-black) surface keeping the
-/// brand cyan/gold accents. The active nav item is a soft cyan-tinted pill
-/// with a short left accent bar; inactive items are plain and lighten on
-/// hover. Menu items, their icons, and their navigation targets are
-/// unchanged from before.
+/// PrimeFit member-portal sidebar, restyled to match the staff login page and
+/// the admin portal:
+///  * near-black rail with a thin right border, in both light and dark mode;
+///  * gold-ringed logo + two-tone wordmark ("Prime" cyan, "Fit" gold) with a
+///    divider underneath;
+///  * thin icons; the active item is a solid gold pill with black bold text
+///    (like the Sign In button); hovering gives a soft white wash;
+///  * the footer is a bordered profile card with a gold tier pill, and an
+///    outlined "Sign Out" pill below it.
+/// Menu items, their icons, the widget's constructor and the navigation
+/// callbacks are unchanged.
 class _SidebarColors {
-  // Near-black surface (matches the app's canonical dark background).
-  static const Color background = AppColors.darkBg;
+  /// Brand cyan (same value the member dashboard uses for its accents).
+  static const Color cyan = Color(0xFF18B7D9);
 
-  // Gold — brand accent, used for the membership tier badge and the
-  // "Fit" half of the PrimeFit wordmark.
-  static const Color gold = AppColors.yellow;
-  static const Color goldText = Color(0xFF3A2B00); // readable on a gold chip
+  static const Color gold = AppColors.gold; // wordmark "Fit", active pill, tier
 
-  // Cyan — brand accent, used for the menu icons and the "Prime" half
-  // of the PrimeFit wordmark.
-  static const Color cyan = AppColors.cyan;
+  /// Rail background (same near-black as the login screen).
+  static const Color background = Color(0xFF0A0A0A);
 
-  // Red — used for the Logout row's hover/pressed state.
+  /// Hairline border / divider on the rail.
+  static const Color border = Color(0xFF1F1F23);
+
+  /// Profile card surface + border, and the Sign Out outline.
+  static const Color cardSurface = Color(0xFF121214);
+  static const Color cardBorder = Color(0xFF26262B);
+  static const Color outline = Color(0xFF2E2E34);
+
+  /// Row hover wash.
+  static const Color hoverOverlay = Color(0x14FFFFFF);
+
+  /// Text colors on the dark rail.
+  static const Color mutedText = Color(0xFF8A8A93);
+  static const Color inactiveText = Color(0xFFB4B4BC);
+
+  /// Text/icon color placed on top of the gold active pill.
+  static const Color onGold = Color(0xFF0A0A0A);
+
   static const Color red = Color(0xFFEF4444);
   static Color redOverlay(double opacity) => red.withValues(alpha: opacity);
 
-  static const Color textPrimary = Colors.white;
-  static const Color textSecondary = Color(0xFFB6BAC2);
-  static const Color textMuted = Color(0xFF7A7F8A);
-  static const Color iconInactive = Color(0xFF9CA3AF);
-
-  static const Color divider = Color(0x14FFFFFF);
-
-  // Soft cyan wash behind the active item; white wash for hover.
-  static Color activeWash(double alpha) => cyan.withValues(alpha: alpha);
-  static Color hoverWash(double alpha) => Colors.white.withValues(alpha: alpha);
+  /// Soft red for the Sign Out label/icon while hovered or pressed.
+  static const Color softRed = Color(0xFFFCA5A5);
 }
 
 class SidebarItemData {
@@ -70,72 +81,112 @@ class MemberSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 260,
-      color: _SidebarColors.background,
+      width: 280,
+      decoration: const BoxDecoration(
+        color: _SidebarColors.background,
+        border: Border(
+          right: BorderSide(color: _SidebarColors.border, width: 1),
+        ),
+      ),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ---------------- Branding ----------------
+            // Tapping the logo/wordmark takes the member back to their
+            // Dashboard (index 0), same as clicking a site's logo goes home.
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
-              child: Row(
+              padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ClipOval(
-                    child: Image.asset(
-                      'assets/images/primefit_logo.jpg',
-                      width: 38,
-                      height: 38,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text.rich(
-                        TextSpan(
-                          // Same face as the Login page's PrimeFit wordmark.
-                          style: GoogleFonts.archivoBlack(
-                            fontSize: 16,
-                            letterSpacing: -0.3,
-                          ),
-                          children: const [
-                            TextSpan(text: 'Prime', style: TextStyle(color: _SidebarColors.cyan)),
-                            TextSpan(text: 'Fit', style: TextStyle(color: _SidebarColors.gold)),
+                  Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(14),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => onSelect(0),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 6),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 48,
+                              height: 48,
+                              child: ClipOval(
+                                child: Image.asset(
+                                  'assets/images/primefit_logo.jpg',
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text.rich(
+                                    TextSpan(
+                                      style: GoogleFonts.archivoBlack(
+                                        fontSize: 21,
+                                        letterSpacing: -0.3,
+                                      ),
+                                      children: const [
+                                        TextSpan(
+                                            text: 'Prime',
+                                            style: TextStyle(
+                                                color: _SidebarColors.cyan)),
+                                        TextSpan(
+                                            text: 'Fit',
+                                            style: TextStyle(
+                                                color: _SidebarColors.gold)),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Member Portal'.toUpperCase(),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 1.8,
+                                      color: _SidebarColors.inactiveText,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      const Text('Member Portal',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: _SidebarColors.textMuted,
-                            letterSpacing: 0.2,
-                          )),
-                    ],
+                    ),
                   ),
+                  const SizedBox(height: 16),
+                  const Divider(height: 1, color: _SidebarColors.border),
                 ],
               ),
             ),
-            const Divider(height: 1, color: _SidebarColors.divider),
-            const SizedBox(height: 18),
 
             // ---------------- Navigation ----------------
             const Padding(
-              padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+              padding: EdgeInsets.fromLTRB(32, 22, 20, 8),
               child: Text(
-                'MENU',
+                'MY PORTAL',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 1.4,
-                  color: _SidebarColors.textMuted,
+                  letterSpacing: 2.0,
+                  color: _SidebarColors.mutedText,
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
                   for (int i = 0; i < sidebarItems.length; i++)
@@ -149,61 +200,86 @@ class MemberSidebar extends StatelessWidget {
             ),
             const Spacer(),
 
-            // ---------------- Member profile + Logout ----------------
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: _SidebarColors.divider)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _SidebarColors.hoverWash(0.08),
-                          border: Border.all(color: _SidebarColors.hoverWash(0.12)),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Icon(Icons.person_outline,
-                            color: _SidebarColors.textPrimary, size: 18),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(memberName,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13.5,
-                                  color: _SidebarColors.textPrimary,
-                                )),
-                            const SizedBox(height: 4),
-                            _TierBadge(tier: memberTier),
-                          ],
+            // ---------------- Member profile + Sign Out ----------------
+            // Bordered dark card, like the "Restricted access" box on login.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: _SidebarColors.cardSurface,
+                  borderRadius: BorderRadius.circular(16),
+                  border:
+                      Border.all(color: _SidebarColors.cardBorder, width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF1A1A1D),
+                        border: Border.all(
+                          color: _SidebarColors.cyan,
+                          width: 1.5,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  _LogoutTile(onTap: onLogout),
-                ],
+                      child: Text(
+                        _initials(memberName),
+                        style: const TextStyle(
+                          color: _SidebarColors.cyan,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            memberName,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          _TierBadge(tier: memberTier),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              child: _LogoutTile(onTap: onLogout),
             ),
           ],
         ),
       ),
     );
   }
+
+  static String _initials(String name) {
+    final parts =
+        name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.characters.first.toUpperCase();
+    return (parts.first.characters.first + parts.last.characters.first)
+        .toUpperCase();
+  }
 }
 
-/// The gold membership-tier chip in the sidebar footer.
+/// The membership-tier chip in the profile card: a gold-tinted pill with a
+/// thin gold border (no solid gold block).
 class _TierBadge extends StatelessWidget {
   final String tier;
   const _TierBadge({required this.tier});
@@ -211,10 +287,14 @@ class _TierBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: _SidebarColors.gold,
-        borderRadius: BorderRadius.circular(6),
+        color: _SidebarColors.gold.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: _SidebarColors.gold.withValues(alpha: 0.45),
+          width: 1,
+        ),
       ),
       child: Text(
         tier,
@@ -222,7 +302,7 @@ class _TierBadge extends StatelessWidget {
         style: const TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: _SidebarColors.goldText,
+          color: _SidebarColors.gold,
           letterSpacing: 0.2,
         ),
       ),
@@ -230,14 +310,15 @@ class _TierBadge extends StatelessWidget {
   }
 }
 
-/// A single sidebar nav row. Active = soft cyan pill + short left accent
-/// bar + cyan icon; inactive = plain, lightening a touch on hover.
+/// A single sidebar nav row. Active = solid gold pill with black bold label
+/// and icon; inactive = muted grey; hover = soft white wash with a gold icon.
 class _SidebarTile extends StatefulWidget {
   final SidebarItemData data;
   final bool selected;
   final VoidCallback onTap;
 
-  const _SidebarTile({required this.data, required this.selected, required this.onTap});
+  const _SidebarTile(
+      {required this.data, required this.selected, required this.onTap});
 
   @override
   State<_SidebarTile> createState() => _SidebarTileState();
@@ -248,59 +329,46 @@ class _SidebarTileState extends State<_SidebarTile> {
 
   @override
   Widget build(BuildContext context) {
-    final selected = widget.selected;
+    final active = widget.selected;
 
-    final Color rowBg = selected
-        ? _SidebarColors.activeWash(0.14)
-        : (_hovered ? _SidebarColors.hoverWash(0.06) : Colors.transparent);
-    final Color iconColor =
-        selected ? _SidebarColors.cyan : _SidebarColors.iconInactive;
-    final Color labelColor = selected
-        ? _SidebarColors.textPrimary
-        : (_hovered ? _SidebarColors.textPrimary : _SidebarColors.textSecondary);
+    final Color rowBg = active
+        ? _SidebarColors.gold
+        : (_hovered ? _SidebarColors.hoverOverlay : Colors.transparent);
+    final Color labelColor = active
+        ? _SidebarColors.onGold
+        : (_hovered ? Colors.white : _SidebarColors.inactiveText);
+    final Color iconColor = active
+        ? _SidebarColors.onGold
+        : (_hovered ? _SidebarColors.gold : _SidebarColors.inactiveText);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: MouseRegion(
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
           decoration: BoxDecoration(
             color: rowBg,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(999),
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(999),
               onTap: widget.onTap,
-              splashColor: _SidebarColors.activeWash(0.10),
-              highlightColor: _SidebarColors.activeWash(0.08),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
                 child: Row(
                   children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      width: 3,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: selected ? _SidebarColors.cyan : Colors.transparent,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                    const SizedBox(width: 11),
                     Icon(widget.data.icon, size: 20, color: iconColor),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Text(
                         widget.data.label,
-                        style: TextStyle(
-                          color: labelColor,
-                          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                          fontSize: 14,
-                        ),
+                        style: AppText.navItem(active: active, color: labelColor),
                       ),
                     ),
                   ],
@@ -314,7 +382,8 @@ class _SidebarTileState extends State<_SidebarTile> {
   }
 }
 
-/// Logout row — turns red on hover, and a deeper red while pressed.
+/// Sign Out — an outlined pill, quiet by default; on hover the border,
+/// label and icon turn soft red with a faint red wash, deeper while pressed.
 class _LogoutTile extends StatefulWidget {
   final VoidCallback onTap;
   const _LogoutTile({required this.onTap});
@@ -331,10 +400,13 @@ class _LogoutTileState extends State<_LogoutTile> {
   Widget build(BuildContext context) {
     final bool active = _hovered || _pressed;
     final Color rowBg = active
-        ? _SidebarColors.redOverlay(_pressed ? 0.24 : 0.13)
+        ? _SidebarColors.redOverlay(_pressed ? 0.22 : 0.12)
         : Colors.transparent;
+    final Color borderColor = active
+        ? _SidebarColors.softRed.withValues(alpha: 0.45)
+        : _SidebarColors.outline;
     final Color fgColor =
-        active ? _SidebarColors.red : _SidebarColors.textSecondary;
+        active ? _SidebarColors.softRed : const Color(0xFFE4E4E7);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -343,29 +415,25 @@ class _LogoutTileState extends State<_LogoutTile> {
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
           color: rowBg,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: borderColor, width: 1),
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(999),
             onTap: widget.onTap,
             onHighlightChanged: (pressed) => setState(() => _pressed = pressed),
-            splashColor: _SidebarColors.redOverlay(0.22),
-            highlightColor: _SidebarColors.redOverlay(0.16),
+            splashColor: _SidebarColors.redOverlay(0.18),
+            highlightColor: _SidebarColors.redOverlay(0.12),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(width: 14),
-                  Icon(Icons.logout, size: 20, color: fgColor),
-                  const SizedBox(width: 12),
-                  Text('Logout',
-                      style: TextStyle(
-                        color: fgColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      )),
+                  Icon(Icons.logout, size: 18, color: fgColor),
+                  const SizedBox(width: 10),
+                  Text('Sign Out', style: AppText.navItem(color: fgColor)),
                 ],
               ),
             ),

@@ -10,6 +10,7 @@ import '../services/profile_picture_service.dart';
 import '../services/notification_prefs_service.dart';
 import '../theme/theme_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/portal_hero.dart';
 
 /// Profile Settings screen.
 ///
@@ -33,11 +34,16 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   Color get bgGrey => _dark ? AppColors.darkBg : AppColors.portalPageBg;
   Color get cardBg => _dark ? AppColors.darkCard : Colors.white;
   List<BoxShadow> get cardShadow => _dark ? const [] : AppColors.softCardShadow;
+  // Plain fields (no tinted fill): white on the white card in light mode.
   Color get fieldFill => _dark ? AppColors.darkBg : Colors.white;
-  Color get textDark => _dark ? Colors.white : const Color(0xFF1A1A1A);
+  Color get textDark => _dark ? Colors.white : const Color(0xFF1F2937);
   Color get textGrey => _dark ? AppColors.textMutedOnDark : const Color(0xFF6B7280);
   Color get borderGrey => _dark ? AppColors.darkBorder : const Color(0xFFE1E4E8);
   Color get hintColor => _dark ? AppColors.textMutedOnDark : const Color(0xFFB0B4BA);
+
+  /// Fill for the primary button: dark gray in light mode, cyan in dark mode
+  /// (replaces the old gold button).
+  Color get primaryFill => _dark ? cyan : const Color(0xFF111827);
 
   late final TextEditingController _firstNameCtrl;
   late final TextEditingController _lastNameCtrl;
@@ -45,6 +51,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   late final TextEditingController _phoneCtrl;
   late final TextEditingController _dobCtrl;
   late final TextEditingController _addressCtrl;
+  // '' means "not set". Options shown in the dropdown: Male / Female / Other.
+  String _gender = '';
 
   bool _saving = false;
   bool _uploadingPhoto = false;
@@ -105,6 +113,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         _emailCtrl.text = profile['Email']?.toString() ?? _emailCtrl.text;
         _phoneCtrl.text = profile['Phone']?.toString() ?? '';
         _dobCtrl.text = dobDisplay;
+        _gender = profile['Gender']?.toString() ?? '';
         _addressCtrl.text = profile['Address']?.toString() ?? '';
         _profilePictureUrl = profile['ProfilePictureURL']?.toString() ?? '';
         final qrData = profile['QRCodeData']?.toString() ?? '';
@@ -150,7 +159,11 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       firstDate: DateTime(1930),
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(colorScheme: ColorScheme.light(primary: cyan)),
+        data: Theme.of(context).copyWith(
+          colorScheme: _dark
+              ? ColorScheme.dark(primary: cyan, surface: cardBg, onSurface: textDark)
+              : ColorScheme.light(primary: cyan),
+        ),
         child: child!,
       ),
     );
@@ -196,6 +209,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       email: _emailCtrl.text.trim(),
       phone: _phoneCtrl.text.trim(),
       dateOfBirth: dobForApi,
+      gender: _gender,
       address: _addressCtrl.text.trim(),
     );
 
@@ -210,6 +224,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         email: _emailCtrl.text.trim(),
         phone: _phoneCtrl.text.trim(),
         dateOfBirth: _dobCtrl.text.trim(),
+        gender: _gender,
         address: _addressCtrl.text.trim(),
       );
       setState(() {}); // refreshes the avatar initials / any derived labels
@@ -283,33 +298,27 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Profile Settings', style: AppText.pageTitle(size: 30, color: textDark)),
-                const SizedBox(height: 6),
-                Text('Manage your personal information and preferences',
-                    style: TextStyle(color: textGrey, fontSize: 15)),
+                const PortalHero(
+                  eyebrow: 'Profile',
+                  icon: Icons.person_outline,
+                  title: 'Profile Settings',
+                  subtitle: 'Manage your personal information and preferences',
+                ),
                 const SizedBox(height: 28),
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final isWide = constraints.maxWidth > 760;
-                    final personalInfoCard = _card(
-                        accent: AppColors.accentCyan,
-                        child: _buildPersonalInformation());
+                    final personalInfoCard = _card(child: _buildPersonalInformation());
                     final sideColumn = Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _card(
-                            accent: AppColors.accentCyan,
-                            child: _buildProfilePicture()),
+                        _card(child: _buildProfilePicture()),
                         const SizedBox(height: 24),
-                        _card(
-                            accent: AppColors.accentGold,
-                            child: _buildQuickStats()),
+                        _card(child: _buildQuickStats()),
                         const SizedBox(height: 24),
                         _card(child: _buildSecurity()),
                         const SizedBox(height: 24),
-                        _card(
-                            accent: AppColors.accentViolet,
-                            child: _buildPreferences()),
+                        _card(child: _buildPreferences()),
                       ],
                     );
 
@@ -340,29 +349,33 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     );
   }
 
-  Widget _card({required Widget child, Color? accent}) {
-    final tinted = accent != null && !_dark;
+  /// Neutral white card with a hairline border and soft shadow (no tinted fill).
+  Widget _card({required Widget child}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: tinted ? AppColors.cardTint(accent) : cardBg,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: tinted ? AppColors.cardTintBorder(accent) : borderGrey),
+        border: Border.all(color: borderGrey),
         boxShadow: cardShadow,
       ),
       child: child,
     );
   }
 
+  /// Small uppercase gray card title (Haws Prints style). The [icon] is kept
+  /// in the signature so existing calls stay the same, but it is no longer
+  /// drawn.
   Widget _sectionTitle(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, color: cyan, size: 20),
-        const SizedBox(width: 10),
-        Text(text, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: textDark)),
-      ],
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        fontSize: 12.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.1,
+        color: textGrey,
+      ),
     );
   }
 
@@ -384,14 +397,37 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         ),
         _field(label: 'Email', controller: _emailCtrl, keyboardType: TextInputType.emailAddress),
         _field(label: 'Phone', controller: _phoneCtrl, keyboardType: TextInputType.phone),
-        _field(
-          label: 'Date of Birth',
-          controller: _dobCtrl,
-          hint: 'MM/DD/YYYY',
-          readOnly: true,
-          onTap: _pickDateOfBirth,
-          suffixIcon: Icons.calendar_today_outlined,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _field(
+                label: 'Date of Birth',
+                controller: _dobCtrl,
+                hint: 'MM/DD/YYYY',
+                readOnly: true,
+                onTap: _pickDateOfBirth,
+                suffixIcon: Icons.calendar_today_outlined,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(child: _genderField()),
+          ],
         ),
+        if (UserSession.instance.age != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 13),
+            child: Row(
+              children: [
+                Icon(Icons.cake_outlined, size: 16, color: textGrey),
+                const SizedBox(width: 6),
+                Text(
+                  'Age: ${UserSession.instance.age} years old',
+                  style: TextStyle(fontSize: 13, color: textGrey, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
         _field(
           label: 'Address',
           controller: _addressCtrl,
@@ -405,15 +441,53 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           child: ElevatedButton(
             onPressed: _saving ? null : _handleSaveChanges,
             style: ElevatedButton.styleFrom(
-              backgroundColor: cyan,
+              backgroundColor: primaryFill,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: const StadiumBorder(),
             ),
             child: Text(_saving ? 'Saving…' : 'Save Changes', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
           ),
         ),
       ],
+    );
+  }
+
+  // Gender -- a dropdown rather than free text. Optional: members who
+  // skipped this at registration can set it here later.
+  Widget _genderField() {
+    const options = ['Male', 'Female', 'Other'];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 13),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Gender', style: TextStyle(fontSize: 13, color: textGrey, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: fieldFill,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: borderGrey),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: options.contains(_gender) ? _gender : null,
+                isExpanded: true,
+                hint: Text('Not set', style: TextStyle(fontSize: 13.5, color: hintColor)),
+                icon: Icon(Icons.keyboard_arrow_down_rounded, color: textGrey),
+                dropdownColor: cardBg,
+                style: TextStyle(fontSize: 13.5, color: textDark),
+                items: options
+                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                    .toList(),
+                onChanged: (v) => setState(() => _gender = v ?? ''),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -467,7 +541,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Profile Picture', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: textDark)),
+        _sectionTitle(Icons.photo_camera_outlined, 'Profile Picture'),
         const SizedBox(height: 20),
         Center(
           child: Column(
@@ -496,10 +570,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               OutlinedButton(
                 onPressed: _uploadingPhoto ? null : _handleUploadPhoto,
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: borderGrey),
+                  side: BorderSide(color: textDark.withValues(alpha: 0.35)),
                   foregroundColor: textDark,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  shape: const StadiumBorder(),
                 ),
                 child: Text(_uploadingPhoto ? 'Uploading…' : 'Upload Photo',
                     style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
@@ -518,7 +592,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Quick Stats', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: textDark)),
+        _sectionTitle(Icons.insights_outlined, 'Quick Stats'),
         const SizedBox(height: 18),
         _statRow(Icons.calendar_today_outlined, 'Member Since', session.memberSinceLabel),
         const SizedBox(height: 16),
@@ -538,12 +612,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           height: 36,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: _dark
-                ? cyan.withValues(alpha: 0.16)
-                : AppColors.cyanTint,
-            borderRadius: BorderRadius.circular(11),
+            color: cyan.withValues(alpha: _dark ? 0.16 : 0.12),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 17, color: const Color(0xFF0E7490)),
+          child: Icon(icon, size: 17, color: cyan),
         ),
         const SizedBox(width: 12),
         Column(
@@ -575,10 +647,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                 ..showSnackBar(const SnackBar(content: Text('Change password flow not wired up yet.')));
             },
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: borderGrey),
+              side: BorderSide(color: textDark.withValues(alpha: 0.35)),
               foregroundColor: textDark,
               padding: const EdgeInsets.symmetric(vertical: 13),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: const StadiumBorder(),
             ),
             child: const Text('Change Password', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
           ),

@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 // (personal_records_api.php). Adjust the path if
 // personal_records_service.dart lives somewhere else.
 import '../services/personal_records_service.dart';
+import '../services/personal_records_pdf_service.dart';
 import '../services/body_photos_service.dart';
 import '../services/monthly_goals_service.dart';
 import '../services/body_metrics_service.dart';
@@ -13,6 +14,7 @@ import '../services/food_logs_service.dart';
 import '../services/food_search_service.dart';
 import '../services/user_targets_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/portal_hero.dart';
 import 'user_session.dart';
 
 // ---------------------------------------------------------------------------
@@ -22,8 +24,8 @@ import 'user_session.dart';
 /// Dark-mode-aware token set. Call `_Colors.sync(context)` once at the top
 /// of a build() method before reading any of these -- surface tokens
 /// (bg/cardBorder/text*) swap for dark equivalents; brand/status colors
-/// (cyan, amber, purple, pink, emerald, red) stay identical in both themes
-/// since they already read fine on light and dark backgrounds alike.
+/// (cyan, amber, emerald, red) stay identical in both themes since they
+/// already read fine on light and dark backgrounds alike.
 class _Colors {
   static bool _dark = false;
   static void sync(BuildContext c) => _dark = Theme.of(c).brightness == Brightness.dark;
@@ -35,10 +37,6 @@ class _Colors {
   static List<BoxShadow> get cardShadow =>
       _dark ? const [] : AppColors.softCardShadow;
 
-  static Color cardBgFor(Color? accent) =>
-      (accent == null || _dark) ? surface : AppColors.cardTint(accent);
-  static Color cardBorderFor(Color? accent) =>
-      (accent == null || _dark) ? cardBorder : AppColors.cardTintBorder(accent);
   static Color get textPrimary => _dark ? Colors.white : const Color(0xFF0F172A); // slate-900
   static Color get textSecondary => _dark ? AppColors.textMutedOnDark : const Color(0xFF64748B); // slate-500
   static Color get textMuted => _dark ? AppColors.textMutedOnDark : const Color(0xFF94A3B8); // slate-400
@@ -47,16 +45,53 @@ class _Colors {
   static const cyan = Color(0xFF06B6D4); // cyan-500
   static Color get cyanLight =>
       _dark ? cyan.withValues(alpha: 0.15) : const Color(0xFFECFEFF); // cyan-50
-  static Color get cyanBorder =>
-      _dark ? cyan.withValues(alpha: 0.3) : const Color(0xFFCFFAFE); // cyan-100
   static const cyanText = Color(0xFF0E7490); // cyan-700
+  /// [cyanText] loses contrast on a dark card surface -- lighten toward the
+  /// brand cyan in dark mode so "Set your daily goals..." links stay legible.
+  static Color get cyanTextOn => _dark ? cyan : cyanText;
 
   static const amber = Color(0xFFFBBF24); // amber-400
-  static const purple = Color(0xFF8B5CF6); // purple-500
-  static const pink = Color(0xFFEC4899); // pink-500
   static const emerald = Color(0xFF059669); // emerald-600
   static const red = Color(0xFFEF4444);
+
+  /// Fill for primary buttons: dark gray in light mode, cyan in dark mode
+  /// (replaces the old gold buttons, like the admin portal).
+  static Color get primaryFill => _dark ? cyan : const Color(0xFF111827);
+
+  /// Section titles are plain dark text now (they used to be plum).
+  static Color get sectionTitle => textPrimary;
 }
+
+/// Primary action button style: dark pill (cyan in dark mode).
+ButtonStyle _primaryStyle({EdgeInsetsGeometry? padding, double radius = 999}) {
+  return ElevatedButton.styleFrom(
+    backgroundColor: _Colors.primaryFill,
+    foregroundColor: Colors.white,
+    elevation: 0,
+    padding: padding,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
+    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+  );
+}
+
+/// Secondary action button style: outlined pill.
+ButtonStyle _outlineStyle({EdgeInsetsGeometry? padding}) {
+  return OutlinedButton.styleFrom(
+    foregroundColor: _Colors.textPrimary,
+    side: BorderSide(color: _Colors.textPrimary.withValues(alpha: 0.35)),
+    padding: padding,
+    shape: const StadiumBorder(),
+    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+  );
+}
+
+/// Small uppercase gray table-header style.
+TextStyle _thStyle() => TextStyle(
+      fontSize: 11.5,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.6,
+      color: _Colors.textSecondary,
+    );
 
 // ---------------------------------------------------------------------------
 // Models
@@ -71,6 +106,9 @@ class PersonalRecord {
   final int weight;
   final int sets;
   final int reps;
+  /// Optional -- only set for time-based exercises (planks, cardio, etc.).
+  /// Null means "not tracked" for this PR.
+  final int? durationSeconds;
   final DateTime date;
 
   PersonalRecord({
@@ -80,8 +118,19 @@ class PersonalRecord {
     required this.weight,
     required this.sets,
     required this.reps,
+    this.durationSeconds,
     required this.date,
   });
+
+  /// "1:30" for 90 seconds, "45s" for under a minute. Empty when not set.
+  String get durationLabel {
+    final d = durationSeconds;
+    if (d == null || d <= 0) return '';
+    if (d < 60) return '${d}s';
+    final m = d ~/ 60;
+    final s = d % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
 }
 
 class ProgressPhoto {
@@ -205,6 +254,57 @@ const List<String> kMuscles = [
   'Glutes',
 ];
 
+/// Predefined exercise choices for the "Log Personal Record" dropdown
+/// (replaces free-text entry), grouped loosely by [kMuscles] category.
+const List<String> kExercises = [
+  // Chest
+  'Bench Press',
+  'Incline Bench Press',
+  'Dumbbell Chest Press',
+  'Chest Fly',
+  'Push-Up',
+  // Back
+  'Deadlift',
+  'Lat Pulldown',
+  'Pull-Up',
+  'Bent-Over Row',
+  'Seated Cable Row',
+  // Shoulders
+  'Overhead Press',
+  'Dumbbell Shoulder Press',
+  'Lateral Raise',
+  'Face Pull',
+  // Biceps
+  'Barbell Curl',
+  'Dumbbell Curl',
+  'Hammer Curl',
+  // Triceps
+  'Tricep Pushdown',
+  'Skull Crusher',
+  'Overhead Tricep Extension',
+  // Legs
+  'Squat',
+  'Leg Press',
+  'Lunge',
+  'Leg Extension',
+  'Leg Curl',
+  'Calf Raise',
+  // Core
+  'Plank',
+  'Crunch',
+  'Hanging Leg Raise',
+  'Russian Twist',
+  // Glutes
+  'Hip Thrust',
+  'Glute Bridge',
+  'Cable Kickback',
+  // Cardio / conditioning (time-based -- pairs with the optional Duration field)
+  'Treadmill Run',
+  'Cycling',
+  'Rowing Machine',
+  'Jump Rope',
+];
+
 const List<String> kMealTypes = [
   'Breakfast',
   'Lunch',
@@ -313,6 +413,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                 (double.tryParse('${r['Weight']}')?.round() ?? 0),
             sets: int.tryParse('${r['Sets']}') ?? 0,
             reps: int.tryParse('${r['Reps']}') ?? 0,
+            durationSeconds: int.tryParse('${r['DurationSeconds']}'),
             date: parsedDate,
           );
         }).toList();
@@ -323,8 +424,58 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
     }
   }
 
+  /// Builds the printable/downloadable PR summary PDF from the currently
+  /// loaded records plus the member's Age/Gender/current BMI context.
+  Future<void> _exportPrsPdf() async {
+    final memberName =
+        '${UserSession.instance.firstName} ${UserSession.instance.lastName}'.trim();
+
+    final rows = _prs
+        .map((p) => [
+              p.exercise,
+              p.muscle,
+              '${p.weight}',
+              '${p.sets}',
+              '${p.reps}',
+              p.durationLabel.isEmpty ? '—' : p.durationLabel,
+              _fmtDate(p.date),
+            ])
+        .toList();
+
+    final age = UserSession.instance.age;
+    final bmi = _bodyMetrics.isNotEmpty ? _bodyMetrics.first.bmi : null;
+    final bmiCategory = _bodyMetrics.isNotEmpty ? _bodyMetrics.first.category : null;
+
+    await PersonalRecordsPdfService.printOrDownload(
+      memberName: memberName.isEmpty ? 'PrimeFit Member' : memberName,
+      ageLabel: age == null ? null : '$age yrs',
+      genderLabel: UserSession.instance.gender.isEmpty ? null : UserSession.instance.gender,
+      bmiLabel: bmi == null ? null : '${bmi.toStringAsFixed(1)}${bmiCategory != null ? ' · $bmiCategory' : ''}',
+      rows: rows,
+    );
+  }
+
   String _fmtDate(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  /// Parses the optional Duration field: accepts "mm:ss" (e.g. "1:30") or
+  /// a plain number of seconds (e.g. "45"). Returns null for blank/invalid
+  /// input -- duration is optional, so a bad entry just means "not set"
+  /// rather than blocking the save.
+  int? _parseDurationInput(String raw) {
+    final text = raw.trim();
+    if (text.isEmpty) return null;
+    if (text.contains(':')) {
+      final parts = text.split(':');
+      if (parts.length == 2) {
+        final m = int.tryParse(parts[0]);
+        final s = int.tryParse(parts[1]);
+        if (m != null && s != null) return m * 60 + s;
+      }
+      return null;
+    }
+    return int.tryParse(text);
+  }
 
   bool _isToday(DateTime d) {
     final now = DateTime.now();
@@ -335,20 +486,22 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
 
   Future<void> _openLogPrDialog() async {
     String muscle = kMuscles.first;
-    final exerciseCtrl = TextEditingController();
+    String exercise = kExercises.first;
     final weightCtrl = TextEditingController();
     final setsCtrl = TextEditingController();
     final repsCtrl = TextEditingController();
+    // Optional -- only relevant for time-based exercises (planks, cardio).
+    // Accepts either plain seconds ("45") or "mm:ss" ("1:30").
+    final durationCtrl = TextEditingController();
     bool saving = false;
 
     await showDialog(
       context: context,
       builder: (ctx) {
+        _Colors.sync(ctx);
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             Future<void> handleSave() async {
-              if (exerciseCtrl.text.trim().isEmpty) return;
-
               final memberId = UserSession.instance.dbMemberId;
               if (memberId == null) {
                 Navigator.of(ctx).pop();
@@ -367,14 +520,16 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
               final weight = int.tryParse(weightCtrl.text) ?? 0;
               final sets = int.tryParse(setsCtrl.text) ?? 0;
               final reps = int.tryParse(repsCtrl.text) ?? 0;
+              final durationSeconds = _parseDurationInput(durationCtrl.text);
 
               final result = await PersonalRecordsService.addRecord(
                 memberId: memberId,
-                exercise: exerciseCtrl.text.trim(),
+                exercise: exercise,
                 muscle: muscle,
                 weight: weight,
                 sets: sets,
                 reps: reps,
+                durationSeconds: durationSeconds,
               );
 
               if (!ctx.mounted) return;
@@ -385,11 +540,12 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                     0,
                     PersonalRecord(
                       prId: int.tryParse('${result['pr_id']}'),
-                      exercise: exerciseCtrl.text.trim(),
+                      exercise: exercise,
                       muscle: muscle,
                       weight: weight,
                       sets: sets,
                       reps: reps,
+                      durationSeconds: durationSeconds,
                       date: DateTime.now(),
                     ),
                   );
@@ -405,150 +561,62 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
               }
             }
 
-            return Dialog(
-              backgroundColor: _Colors.surface,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 460),
-                child: Padding(
-                  padding: const EdgeInsets.all(28),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Log Personal Record',
-                                style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: _Colors.textPrimary)),
-                            InkWell(
-                              onTap: () => Navigator.of(ctx).pop(),
-                              borderRadius: BorderRadius.circular(20),
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: Icon(Icons.close,
-                                    color: _Colors.textMuted, size: 22),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        const _FieldLabel('Target Muscle'),
-                        const SizedBox(height: 8),
-                        _Dropdown(
-                          value: muscle,
-                          items: kMuscles,
-                          onChanged: (v) =>
-                              setDialogState(() => muscle = v ?? muscle),
-                        ),
-                        const SizedBox(height: 20),
-                        const _FieldLabel('Exercise'),
-                        const SizedBox(height: 8),
-                        _TextInput(
-                            controller: exerciseCtrl,
-                            hint: 'e.g., Bench Press'),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const _FieldLabel('Weight (kg)'),
-                                  const SizedBox(height: 8),
-                                  _TextInput(
-                                      controller: weightCtrl,
-                                      hint: '0',
-                                      number: true),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const _FieldLabel('Sets'),
-                                  const SizedBox(height: 8),
-                                  _TextInput(
-                                      controller: setsCtrl,
-                                      hint: '0',
-                                      number: true),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const _FieldLabel('Reps'),
-                                  const SizedBox(height: 8),
-                                  _TextInput(
-                                      controller: repsCtrl,
-                                      hint: '0',
-                                      number: true),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 28),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: _Colors.surface,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 15),
-                                  side: BorderSide(
-                                      color: _Colors.cardBorder),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                ),
-                                onPressed: saving
-                                    ? null
-                                    : () => Navigator.of(ctx).pop(),
-                                child: Text('Cancel',
-                                    style: TextStyle(
-                                        color: _Colors.textPrimary,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15)),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _Colors.cyan,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 15),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  elevation: 0,
-                                ),
-                                onPressed: saving ? null : handleSave,
-                                child: Text(saving ? 'Saving…' : 'Save PR',
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+            return _DialogFrame(
+              title: 'Log Personal Record',
+              onClose: () => Navigator.of(ctx).pop(),
+              children: [
+                _Field(
+                  'Target Muscle',
+                  _Dropdown(
+                    value: muscle,
+                    items: kMuscles,
+                    onChanged: (v) => setDialogState(() => muscle = v ?? muscle),
                   ),
                 ),
-              ),
+                const SizedBox(height: 20),
+                _Field(
+                  'Exercise',
+                  _Dropdown(
+                    value: exercise,
+                    items: kExercises,
+                    onChanged: (v) =>
+                        setDialogState(() => exercise = v ?? exercise),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Field('Weight (kg)',
+                          _TextInput(controller: weightCtrl, hint: '0', number: true)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _Field('Sets',
+                          _TextInput(controller: setsCtrl, hint: '0', number: true)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _Field('Reps',
+                          _TextInput(controller: repsCtrl, hint: '0', number: true)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                _Field(
+                  'Duration (optional, e.g. 1:30 or 45)',
+                  _TextInput(
+                      controller: durationCtrl,
+                      hint: 'mm:ss or seconds -- for planks, cardio, etc.'),
+                ),
+                const SizedBox(height: 28),
+                _DialogActions(
+                  saveLabel: 'Save PR',
+                  saving: saving,
+                  onCancel: () => Navigator.of(ctx).pop(),
+                  onSave: handleSave,
+                ),
+              ],
             );
           },
         );
@@ -792,6 +860,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
     await showDialog(
       context: context,
       builder: (ctx) {
+        _Colors.sync(ctx);
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             Future<void> handleSave() async {
@@ -858,121 +927,31 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
               }
             }
 
-            return Dialog(
-              backgroundColor: _Colors.surface,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 460),
-                child: Padding(
-                  padding: const EdgeInsets.all(28),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Log Body Metrics',
-                                style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: _Colors.textPrimary)),
-                            InkWell(
-                              onTap: () => Navigator.of(ctx).pop(),
-                              borderRadius: BorderRadius.circular(20),
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: Icon(Icons.close,
-                                    color: _Colors.textMuted, size: 22),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const _FieldLabel('Weight (kg)'),
-                                  const SizedBox(height: 8),
-                                  _TextInput(
-                                      controller: weightCtrl,
-                                      hint: '0',
-                                      number: true),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const _FieldLabel('Height (cm)'),
-                                  const SizedBox(height: 8),
-                                  _TextInput(
-                                      controller: heightCtrl,
-                                      hint: '0',
-                                      number: true),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 28),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: _Colors.surface,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 15),
-                                  side: BorderSide(
-                                      color: _Colors.cardBorder),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                ),
-                                onPressed: saving
-                                    ? null
-                                    : () => Navigator.of(ctx).pop(),
-                                child: Text('Cancel',
-                                    style: TextStyle(
-                                        color: _Colors.textPrimary,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15)),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _Colors.cyan,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 15),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  elevation: 0,
-                                ),
-                                onPressed: saving ? null : handleSave,
-                                child: Text(saving ? 'Saving…' : 'Save Entry',
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+            return _DialogFrame(
+              title: 'Log Body Metrics',
+              onClose: () => Navigator.of(ctx).pop(),
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Field('Weight (kg)',
+                          _TextInput(controller: weightCtrl, hint: '0', number: true)),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _Field('Height (cm)',
+                          _TextInput(controller: heightCtrl, hint: '0', number: true)),
+                    ),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 28),
+                _DialogActions(
+                  saveLabel: 'Save Entry',
+                  saving: saving,
+                  onCancel: () => Navigator.of(ctx).pop(),
+                  onSave: handleSave,
+                ),
+              ],
             );
           },
         );
@@ -1078,6 +1057,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
     await showDialog(
       context: context,
       builder: (ctx) {
+        _Colors.sync(ctx);
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             void closeDialog() {
@@ -1241,238 +1221,132 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
               }
             }
 
-            return Dialog(
-              backgroundColor: _Colors.surface,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 460),
-                child: Padding(
-                  padding: const EdgeInsets.all(28),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Log Food Entry',
-                                style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: _Colors.textPrimary)),
-                            InkWell(
-                              onTap: closeDialog,
-                              borderRadius: BorderRadius.circular(20),
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: Icon(Icons.close,
-                                    color: _Colors.textMuted, size: 22),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        const _FieldLabel('Meal Type'),
-                        const SizedBox(height: 8),
-                        _Dropdown(
-                          value: mealType,
-                          items: kMealTypes,
-                          onChanged: (v) =>
-                              setDialogState(() => mealType = v ?? mealType),
-                        ),
-                        const SizedBox(height: 20),
-                        const _FieldLabel('Food Name'),
-                        const SizedBox(height: 8),
-                        _TextInput(
-                            controller: foodNameCtrl,
-                            hint: 'e.g., Grilled Chicken Breast',
-                            onChanged: handleFoodNameChanged),
-                        if (searching)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Row(
-                              children: [
-                                const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2, color: _Colors.cyan)),
-                                const SizedBox(width: 8),
-                                Text('Searching…',
-                                    style: TextStyle(
-                                        fontSize: 12.5,
-                                        color: _Colors.textMuted)),
-                              ],
-                            ),
-                          )
-                        else if (showResults && searchResults.isNotEmpty)
-                          Container(
-                            margin: const EdgeInsets.only(top: 8),
-                            constraints: const BoxConstraints(maxHeight: 220),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: _Colors.cardBorder),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: ListView.separated(
-                              shrinkWrap: true,
-                              padding: EdgeInsets.zero,
-                              itemCount: searchResults.length,
-                              separatorBuilder: (_, __) => Divider(
-                                  height: 1, color: _Colors.cardBorder),
-                              itemBuilder: (context, i) {
-                                final r = searchResults[i];
-                                return InkWell(
-                                  onTap: () => selectSearchResult(r),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 14, vertical: 10),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(r.name,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                                fontSize: 13.5,
-                                                fontWeight: FontWeight.w600,
-                                                color: _Colors.textPrimary)),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                            '${r.calories} kcal · P ${_fmtNum(r.protein)}g · C ${_fmtNum(r.carbs)}g · F ${_fmtNum(r.fats)}g',
-                                            style: TextStyle(
-                                                fontSize: 11.5,
-                                                color: _Colors.textSecondary)),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          )
-                        else if (showResults && searchResults.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text('No matches — enter manually.',
-                                style: TextStyle(
-                                    fontSize: 12.5, color: _Colors.textMuted)),
-                          ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const _FieldLabel('Calories'),
-                                  const SizedBox(height: 8),
-                                  _TextInput(
-                                      controller: caloriesCtrl,
-                                      hint: '0',
-                                      number: true),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const _FieldLabel('Protein (g)'),
-                                  const SizedBox(height: 8),
-                                  _TextInput(
-                                      controller: proteinCtrl,
-                                      hint: '0',
-                                      number: true),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const _FieldLabel('Carbs (g)'),
-                                  const SizedBox(height: 8),
-                                  _TextInput(
-                                      controller: carbsCtrl,
-                                      hint: '0',
-                                      number: true),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const _FieldLabel('Fats (g)'),
-                                  const SizedBox(height: 8),
-                                  _TextInput(
-                                      controller: fatsCtrl,
-                                      hint: '0',
-                                      number: true),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 28),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: _Colors.surface,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 15),
-                                  side: BorderSide(
-                                      color: _Colors.cardBorder),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                ),
-                                onPressed: saving ? null : closeDialog,
-                                child: Text('Cancel',
-                                    style: TextStyle(
-                                        color: _Colors.textPrimary,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15)),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _Colors.cyan,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 15),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  elevation: 0,
-                                ),
-                                onPressed: saving ? null : handleSave,
-                                child: Text(saving ? 'Saving…' : 'Save Food',
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+            return _DialogFrame(
+              title: 'Log Food Entry',
+              onClose: closeDialog,
+              children: [
+                _Field(
+                  'Meal Type',
+                  _Dropdown(
+                    value: mealType,
+                    items: kMealTypes,
+                    onChanged: (v) =>
+                        setDialogState(() => mealType = v ?? mealType),
                   ),
                 ),
-              ),
+                const SizedBox(height: 20),
+                _Field(
+                  'Food Name',
+                  _TextInput(
+                      controller: foodNameCtrl,
+                      hint: 'e.g., Grilled Chicken Breast',
+                      onChanged: handleFoodNameChanged),
+                ),
+                if (searching)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(
+                      children: [
+                        const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: _Colors.cyan)),
+                        const SizedBox(width: 8),
+                        Text('Searching…',
+                            style: TextStyle(
+                                fontSize: 12.5, color: _Colors.textMuted)),
+                      ],
+                    ),
+                  )
+                else if (showResults && searchResults.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    constraints: const BoxConstraints(maxHeight: 220),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: _Colors.cardBorder),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      itemCount: searchResults.length,
+                      separatorBuilder: (_, __) =>
+                          Divider(height: 1, color: _Colors.cardBorder),
+                      itemBuilder: (context, i) {
+                        final r = searchResults[i];
+                        return InkWell(
+                          onTap: () => selectSearchResult(r),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(r.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: _Colors.textPrimary)),
+                                const SizedBox(height: 2),
+                                Text(
+                                    '${r.calories} kcal · P ${_fmtNum(r.protein)}g · C ${_fmtNum(r.carbs)}g · F ${_fmtNum(r.fats)}g',
+                                    style: TextStyle(
+                                        fontSize: 11.5,
+                                        color: _Colors.textSecondary)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                else if (showResults && searchResults.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text('No matches — enter manually.',
+                        style: TextStyle(
+                            fontSize: 12.5, color: _Colors.textMuted)),
+                  ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Field('Calories',
+                          _TextInput(controller: caloriesCtrl, hint: '0', number: true)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _Field('Protein (g)',
+                          _TextInput(controller: proteinCtrl, hint: '0', number: true)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Field('Carbs (g)',
+                          _TextInput(controller: carbsCtrl, hint: '0', number: true)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _Field('Fats (g)',
+                          _TextInput(controller: fatsCtrl, hint: '0', number: true)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                _DialogActions(
+                  saveLabel: 'Save Food',
+                  saving: saving,
+                  onCancel: closeDialog,
+                  onSave: handleSave,
+                ),
+              ],
             );
           },
         );
@@ -1534,6 +1408,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
     await showDialog(
       context: context,
       builder: (ctx) {
+        _Colors.sync(ctx);
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             Future<void> handleSave() async {
@@ -1646,147 +1521,42 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
               }
             }
 
-            return Dialog(
-              backgroundColor: _Colors.surface,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 460),
-                child: Padding(
-                  padding: const EdgeInsets.all(28),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Set Daily Targets',
-                                style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: _Colors.textPrimary)),
-                            InkWell(
-                              onTap: () => Navigator.of(ctx).pop(),
-                              borderRadius: BorderRadius.circular(20),
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: Icon(Icons.close,
-                                    color: _Colors.textMuted, size: 22),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        const _FieldLabel('Daily Calorie Target'),
-                        const SizedBox(height: 8),
-                        _TextInput(
-                            controller: calorieCtrl, hint: '0', number: true),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const _FieldLabel('Protein (g)'),
-                                  const SizedBox(height: 8),
-                                  _TextInput(
-                                      controller: proteinCtrl,
-                                      hint: '0',
-                                      number: true),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const _FieldLabel('Carbs (g)'),
-                                  const SizedBox(height: 8),
-                                  _TextInput(
-                                      controller: carbsCtrl,
-                                      hint: '0',
-                                      number: true),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const _FieldLabel('Fats (g)'),
-                                  const SizedBox(height: 8),
-                                  _TextInput(
-                                      controller: fatsCtrl,
-                                      hint: '0',
-                                      number: true),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        const _FieldLabel('Target Weight (kg)'),
-                        const SizedBox(height: 8),
-                        _TextInput(
-                            controller: targetWeightCtrl,
-                            hint: '0',
-                            number: true),
-                        const SizedBox(height: 28),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: _Colors.surface,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 15),
-                                  side: BorderSide(
-                                      color: _Colors.cardBorder),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                ),
-                                onPressed: saving
-                                    ? null
-                                    : () => Navigator.of(ctx).pop(),
-                                child: Text('Cancel',
-                                    style: TextStyle(
-                                        color: _Colors.textPrimary,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15)),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _Colors.cyan,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 15),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  elevation: 0,
-                                ),
-                                onPressed: saving ? null : handleSave,
-                                child: Text(saving ? 'Saving…' : 'Save Targets',
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+            return _DialogFrame(
+              title: 'Set Daily Targets',
+              onClose: () => Navigator.of(ctx).pop(),
+              children: [
+                _Field('Daily Calorie Target',
+                    _TextInput(controller: calorieCtrl, hint: '0', number: true)),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Field('Protein (g)',
+                          _TextInput(controller: proteinCtrl, hint: '0', number: true)),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _Field('Carbs (g)',
+                          _TextInput(controller: carbsCtrl, hint: '0', number: true)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _Field('Fats (g)',
+                          _TextInput(controller: fatsCtrl, hint: '0', number: true)),
+                    ),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 20),
+                _Field('Target Weight (kg)',
+                    _TextInput(controller: targetWeightCtrl, hint: '0', number: true)),
+                const SizedBox(height: 28),
+                _DialogActions(
+                  saveLabel: 'Save Targets',
+                  saving: saving,
+                  onCancel: () => Navigator.of(ctx).pop(),
+                  onSave: handleSave,
+                ),
+              ],
             );
           },
         );
@@ -1805,22 +1575,14 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Progress Tracker',
-                    style: AppText.pageTitle(size: 26, color: _Colors.textPrimary),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: PortalHero(
+                eyebrow: 'Progress',
+                icon: Icons.fitness_center,
+                title: 'Progress Tracker',
+                subtitle:
                     'Monitor your body, records, and personalized programs',
-                    style:
-                        TextStyle(fontSize: 14, color: _Colors.textSecondary),
-                  ),
-                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -1887,6 +1649,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                     onAdd: _openLogPrDialog,
                     onRemove: _removePr,
                     fmtDate: _fmtDate,
+                    onExport: _exportPrsPdf,
                   ),
                   _BodyPhotosTab(
                     photos: _photos,
@@ -1927,6 +1690,135 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
 // Shared small widgets
 // ---------------------------------------------------------------------------
 
+/// Shared dialog shell: rounded white card, title row with a close button,
+/// then [children].
+class _DialogFrame extends StatelessWidget {
+  final String title;
+  final VoidCallback onClose;
+  final List<Widget> children;
+  const _DialogFrame({
+    required this.title,
+    required this.onClose,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    _Colors.sync(context);
+    return Dialog(
+      backgroundColor: _Colors.surface,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(title,
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                            color: _Colors.sectionTitle)),
+                    InkWell(
+                      onTap: onClose,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(Icons.close,
+                            color: _Colors.textMuted, size: 22),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ...children,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Cancel / Save row used at the bottom of every dialog.
+class _DialogActions extends StatelessWidget {
+  final String saveLabel;
+  final bool saving;
+  final VoidCallback onCancel;
+  final VoidCallback onSave;
+  const _DialogActions({
+    required this.saveLabel,
+    required this.saving,
+    required this.onCancel,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    _Colors.sync(context);
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: _Colors.surface,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              side: BorderSide(color: _Colors.cardBorder),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: saving ? null : onCancel,
+            child: Text('Cancel',
+                style: TextStyle(
+                    color: _Colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15)),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            style: _primaryStyle(
+                padding: const EdgeInsets.symmetric(vertical: 15), radius: 12),
+            onPressed: saving ? null : onSave,
+            child: Text(saving ? 'Saving…' : saveLabel,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600, fontSize: 15)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A label stacked above an input/dropdown.
+class _Field extends StatelessWidget {
+  final String label;
+  final Widget child;
+  const _Field(this.label, this.child);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _FieldLabel(label),
+        const SizedBox(height: 8),
+        child,
+      ],
+    );
+  }
+}
+
 class _FieldLabel extends StatelessWidget {
   final String text;
   const _FieldLabel(this.text);
@@ -1937,8 +1829,28 @@ class _FieldLabel extends StatelessWidget {
     return Text(text,
         style: TextStyle(
             fontSize: 13,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: _Colors.textPrimary));
+  }
+}
+
+/// Small uppercase gray card title (Haws Prints style).
+class _PanelTitle extends StatelessWidget {
+  final String text;
+  const _PanelTitle(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    _Colors.sync(context);
+    return Text(
+      text.toUpperCase(),
+      style: TextStyle(
+        fontSize: 12.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.1,
+        color: _Colors.textSecondary,
+      ),
+    );
   }
 }
 
@@ -1974,7 +1886,8 @@ class _TextInput extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: _Colors.cyan, width: 1.5),
         ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(10))),
       ),
     );
   }
@@ -2013,14 +1926,13 @@ class _Dropdown extends StatelessWidget {
   }
 }
 
+/// Neutral white card with a hairline border and soft shadow (no tinted fill).
 class _Card extends StatelessWidget {
   final Widget child;
   final EdgeInsets padding;
-  final Color? accent;
   const _Card({
     required this.child,
     this.padding = const EdgeInsets.all(20),
-    this.accent,
   });
 
   @override
@@ -2029,9 +1941,9 @@ class _Card extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: _Colors.cardBgFor(accent),
+        color: _Colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _Colors.cardBorderFor(accent)),
+        border: Border.all(color: _Colors.cardBorder),
         boxShadow: _Colors.cardShadow,
       ),
       child: child,
@@ -2094,40 +2006,48 @@ class _OverviewTab extends StatelessWidget {
             final cards = [
               _StatCard(
                   icon: Icons.show_chart,
-                  iconColor: _Colors.cyan,
                   label: 'Total Sessions',
                   value: '$totalSessions'),
               _StatCard(
                   icon: Icons.local_fire_department,
-                  iconColor: _Colors.amber,
                   label: 'Current Streak',
                   value: '$currentStreak Days'),
               _StatCard(
                   icon: Icons.emoji_events,
-                  iconColor: _Colors.purple,
                   label: 'PRs Logged',
                   value: '$prsCount'),
               _StatCard(
                   icon: Icons.camera_alt,
-                  iconColor: _Colors.pink,
                   label: 'Body Photos',
                   value: '$photosCount'),
               _StatCard(
                   icon: Icons.monitor_weight_outlined,
-                  iconColor: _Colors.emerald,
                   label: 'Current BMI',
                   value: currentBmi == null
                       ? 'Not logged yet'
                       : '${currentBmi!.toStringAsFixed(1)} · $bmiCategory'),
               _StatCard(
                   icon: Icons.restaurant_outlined,
-                  iconColor: _Colors.red,
                   label: "Today's Calories",
                   value: todayCalories == 0
                       ? 'Not logged yet'
                       : hasCalorieTarget
                           ? '$todayCalories/$calorieTarget kcal'
                           : '$todayCalories kcal'),
+              // Context for interpreting PRs/BMI -- set once in Profile
+              // Settings (or at registration), shown read-only here.
+              _StatCard(
+                  icon: Icons.cake_outlined,
+                  label: 'Age',
+                  value: UserSession.instance.age == null
+                      ? 'Not set'
+                      : '${UserSession.instance.age} yrs'),
+              _StatCard(
+                  icon: Icons.person_outline,
+                  label: 'Gender',
+                  value: UserSession.instance.gender.isEmpty
+                      ? 'Not set'
+                      : UserSession.instance.gender),
             ];
             return GridView.count(
               crossAxisCount: crossAxisCount,
@@ -2135,22 +2055,21 @@ class _OverviewTab extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 1.7,
+              childAspectRatio: crossAxisCount == 1
+                  ? 3.2
+                  : crossAxisCount == 2
+                      ? 2.4
+                      : 2.6,
               children: cards,
             );
           }),
           const SizedBox(height: 20),
           _Card(
-            accent: _Colors.cyan,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Monthly Attendance',
-                    style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: _Colors.textPrimary)),
-                const SizedBox(height: 3),
+                const _PanelTitle('Monthly Attendance'),
+                const SizedBox(height: 4),
                 Text('Gym sessions logged per month',
                     style: TextStyle(
                         fontSize: 12.5, color: _Colors.textSecondary)),
@@ -2163,21 +2082,10 @@ class _OverviewTab extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           _Card(
-            accent: _Colors.cyan,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.track_changes, size: 18, color: _Colors.cyan),
-                    const SizedBox(width: 8),
-                    Text('Monthly Goal Progress',
-                        style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                            color: _Colors.textPrimary)),
-                  ],
-                ),
+                const _PanelTitle('Monthly Goal Progress'),
                 const SizedBox(height: 20),
                 _GoalProgressRow(
                     label: 'Workout Sessions',
@@ -2197,55 +2105,56 @@ class _OverviewTab extends StatelessWidget {
   }
 }
 
+/// KPI card: small gray label + small cyan icon tile on top, bold value below.
 class _StatCard extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
   final String label;
   final String value;
 
   const _StatCard(
-      {required this.icon,
-      required this.iconColor,
-      required this.label,
-      required this.value});
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     _Colors.sync(context);
     return _Card(
-      padding: const EdgeInsets.all(14),
-      accent: iconColor,
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: _Colors._dark ? 0.22 : 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(label,
+          Row(
+            children: [
+              Expanded(
+                child: Text(label,
                     style: TextStyle(
-                        fontSize: 12.5, color: _Colors.textSecondary),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: _Colors.textSecondary),
                     overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 2),
-                Text(value,
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _Colors.textPrimary)),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _Colors.cyan.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: _Colors.cyan, size: 18),
+              ),
+            ],
           ),
+          const SizedBox(height: 8),
+          Text(value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
+                  color: _Colors.textPrimary)),
         ],
       ),
     );
@@ -2326,8 +2235,8 @@ class _ChartGridlines extends StatelessWidget {
   }
 }
 
-/// A single rounded, softly-gradiented bar with a small ring marker at its
-/// top. `heightFactor` is 0..1 of the available height.
+/// A single flat bar with rounded top corners. `heightFactor` is 0..1 of the
+/// available height.
 class _ChartBar extends StatelessWidget {
   final double heightFactor;
   final Color color;
@@ -2338,35 +2247,16 @@ class _ChartBar extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, c) {
         final barH = (c.maxHeight * heightFactor).clamp(3.0, c.maxHeight);
-        return Stack(
+        return Align(
           alignment: Alignment.bottomCenter,
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              height: barH,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [color, color.withValues(alpha: 0.55)],
-                ),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(7)),
-              ),
+          child: Container(
+            height: barH,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(7)),
             ),
-            Positioned(
-              bottom: barH - 5,
-              child: Container(
-                width: 9,
-                height: 9,
-                decoration: BoxDecoration(
-                  color: _Colors.surface,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: color, width: 2),
-                ),
-              ),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -2436,6 +2326,7 @@ class _PrRecordsTab extends StatelessWidget {
   final VoidCallback onAdd;
   final void Function(int) onRemove;
   final String Function(DateTime) fmtDate;
+  final VoidCallback onExport;
 
   const _PrRecordsTab({
     required this.prs,
@@ -2443,6 +2334,7 @@ class _PrRecordsTab extends StatelessWidget {
     required this.onAdd,
     required this.onRemove,
     required this.fmtDate,
+    required this.onExport,
   });
 
   @override
@@ -2459,22 +2351,29 @@ class _PrRecordsTab extends StatelessWidget {
               Text('Personal Records',
                   style: TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: _Colors.textPrimary)),
-              ElevatedButton.icon(
-                onPressed: onAdd,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _Colors.cyan,
-                  elevation: 0,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-                icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                label: const Text('Log PR',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
+                      color: _Colors.sectionTitle)),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: prs.isEmpty ? null : onExport,
+                    style: _outlineStyle(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 12)),
+                    icon: const Icon(Icons.print_outlined, size: 18),
+                    label: const Text('Print / Download'),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    onPressed: onAdd,
+                    style: _primaryStyle(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 12)),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Log PR'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -2492,8 +2391,9 @@ class _PrRecordsTab extends StatelessWidget {
                     : Container(
                         decoration: BoxDecoration(
                           color: _Colors.surface,
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: _Colors.cardBorder),
+                          boxShadow: _Colors.cardShadow,
                         ),
                         clipBehavior: Clip.antiAlias,
                         // Custom flex-based table (instead of DataTable) so
@@ -2502,132 +2402,113 @@ class _PrRecordsTab extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Container(
-                              color: _Colors.bg,
+                            Padding(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 14),
                               child: Row(
                                 children: [
-                                  Expanded(
-                                      flex: 3,
-                                      child: Text('Exercise',
-                                          style: TextStyle(
-                                              color: _Colors.textSecondary,
-                                              fontWeight: FontWeight.w600))),
-                                  Expanded(
-                                      flex: 2,
-                                      child: Text('Muscle',
-                                          style: TextStyle(
-                                              color: _Colors.textSecondary,
-                                              fontWeight: FontWeight.w600))),
-                                  Expanded(
-                                      flex: 2,
-                                      child: Text('Weight (kg)',
-                                          style: TextStyle(
-                                              color: _Colors.textSecondary,
-                                              fontWeight: FontWeight.w600))),
-                                  Expanded(
-                                      flex: 1,
-                                      child: Text('Sets',
-                                          style: TextStyle(
-                                              color: _Colors.textSecondary,
-                                              fontWeight: FontWeight.w600))),
-                                  Expanded(
-                                      flex: 1,
-                                      child: Text('Reps',
-                                          style: TextStyle(
-                                              color: _Colors.textSecondary,
-                                              fontWeight: FontWeight.w600))),
-                                  Expanded(
-                                      flex: 2,
-                                      child: Text('Date',
-                                          style: TextStyle(
-                                              color: _Colors.textSecondary,
-                                              fontWeight: FontWeight.w600))),
+                                  Expanded(flex: 3, child: Text('EXERCISE', style: _thStyle())),
+                                  Expanded(flex: 2, child: Text('MUSCLE', style: _thStyle())),
+                                  Expanded(flex: 2, child: Text('WEIGHT (KG)', style: _thStyle())),
+                                  Expanded(flex: 1, child: Text('SETS', style: _thStyle())),
+                                  Expanded(flex: 1, child: Text('REPS', style: _thStyle())),
+                                  Expanded(flex: 1, child: Text('DURATION', style: _thStyle())),
+                                  Expanded(flex: 2, child: Text('DATE', style: _thStyle())),
                                   const SizedBox(width: 40),
                                 ],
                               ),
                             ),
-                            ...List.generate(prs.length, (i) {
-                              final p = prs[i];
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 12),
-                                decoration: BoxDecoration(
-                                  border: i < prs.length - 1
-                                      ? Border(
-                                          bottom: BorderSide(
-                                              color: _Colors.cardBorder))
-                                      : null,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 3,
+                            Expanded(
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  children: List.generate(prs.length, (i) {
+                                    final p = prs[i];
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20, vertical: 14),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                            top: BorderSide(
+                                                color: _Colors.cardBorder)),
+                                      ),
                                       child: Row(
-                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(Icons.emoji_events,
-                                              size: 16, color: _Colors.amber),
-                                          const SizedBox(width: 6),
-                                          Flexible(
-                                            child: Text(p.exercise,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.w600)),
+                                          Expanded(
+                                            flex: 3,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(Icons.emoji_events,
+                                                    size: 16, color: _Colors.amber),
+                                                const SizedBox(width: 6),
+                                                Flexible(
+                                                  child: Text(p.exercise,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                          fontWeight: FontWeight.w700)),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 2,
+                                            child: Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 10, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                    color: _Colors.cyanLight,
+                                                    borderRadius:
+                                                        BorderRadius.circular(20)),
+                                                child: Text(p.muscle,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                        color: _Colors.cyanTextOn,
+                                                        fontSize: 12.5,
+                                                        fontWeight: FontWeight.w600)),
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 2,
+                                            child: Text('${p.weight} kg',
+                                                style: TextStyle(
+                                                    color: _Colors.textPrimary,
+                                                    fontWeight: FontWeight.w800)),
+                                          ),
+                                          Expanded(flex: 1, child: Text('${p.sets}')),
+                                          Expanded(flex: 1, child: Text('${p.reps}')),
+                                          Expanded(
+                                              flex: 1,
+                                              child: Text(
+                                                  p.durationLabel.isEmpty
+                                                      ? '—'
+                                                      : p.durationLabel,
+                                                  style: TextStyle(
+                                                      color: _Colors.textSecondary))),
+                                          Expanded(
+                                              flex: 2,
+                                              child: Text(fmtDate(p.date),
+                                                  style: TextStyle(
+                                                      color: _Colors.textSecondary))),
+                                          SizedBox(
+                                            width: 40,
+                                            child: IconButton(
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(),
+                                              icon: Icon(Icons.delete_outline,
+                                                  size: 18, color: _Colors.textMuted),
+                                              onPressed: () => onRemove(i),
+                                            ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 4),
-                                          decoration: BoxDecoration(
-                                              color: _Colors.cyanLight,
-                                              borderRadius:
-                                                  BorderRadius.circular(20)),
-                                          child: Text(p.muscle,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                  color: _Colors.cyanText,
-                                                  fontSize: 12.5,
-                                                  fontWeight: FontWeight.w500)),
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text('${p.weight} kg',
-                                          style: const TextStyle(
-                                              color: _Colors.emerald,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                    Expanded(flex: 1, child: Text('${p.sets}')),
-                                    Expanded(flex: 1, child: Text('${p.reps}')),
-                                    Expanded(
-                                        flex: 2,
-                                        child: Text(fmtDate(p.date),
-                                            style: TextStyle(
-                                                color: _Colors.textSecondary))),
-                                    SizedBox(
-                                      width: 40,
-                                      child: IconButton(
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                        icon: Icon(Icons.delete_outline,
-                                            size: 18, color: _Colors.textMuted),
-                                        onPressed: () => onRemove(i),
-                                      ),
-                                    ),
-                                  ],
+                                    );
+                                  }),
                                 ),
-                              );
-                            }),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -2672,7 +2553,8 @@ class _BodyPhotosTab extends StatelessWidget {
                     Text('Body Progress Photos',
                         style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
                             color: _Colors.textPrimary)),
                     const SizedBox(height: 4),
                     Text(
@@ -2685,35 +2567,32 @@ class _BodyPhotosTab extends StatelessWidget {
               const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: onUpload,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _Colors.cyan,
-                  elevation: 0,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-                icon: const Icon(Icons.upload, size: 18, color: Colors.white),
-                label: const Text('Upload Photo',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                style: _primaryStyle(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 18, vertical: 12)),
+                icon: const Icon(Icons.upload, size: 18),
+                label: const Text('Upload Photo'),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          Container(
+          _Card(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _Colors.cyanLight,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _Colors.cyanBorder),
-            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.psychology_alt_outlined,
-                    size: 20, color: _Colors.cyan),
-                const SizedBox(width: 10),
+                Container(
+                  width: 34,
+                  height: 34,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _Colors.cyan.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.psychology_alt_outlined,
+                      size: 18, color: _Colors.cyan),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'After uploading, our AI analyzes your physique and delivers tailored feedback on muscle development, body composition, and training recommendations specific to your visible progress.',
@@ -2735,12 +2614,12 @@ class _BodyPhotosTab extends StatelessWidget {
           else if (photos.isEmpty)
             InkWell(
               onTap: onUpload,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 72),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: _Colors.cardBorder, width: 1.5),
                 ),
                 child: Column(
@@ -2766,107 +2645,108 @@ class _BodyPhotosTab extends StatelessWidget {
               // tablet with the sidebar open), 2 otherwise.
               final crossAxisCount = constraints.maxWidth < 420 ? 1 : 2;
               return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: photos.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                mainAxisSpacing: 18,
-                crossAxisSpacing: 18,
-                childAspectRatio: crossAxisCount == 1 ? 1.6 : 0.8,
-              ),
-              itemBuilder: (context, i) {
-                final p = photos[i];
-                return Container(
-                  decoration: BoxDecoration(
-                    color: _Colors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _Colors.cardBorder),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Image.network(
-                              p.url,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (context, child, progress) {
-                                if (progress == null) return child;
-                                return const Center(
-                                    child: CircularProgressIndicator(
-                                        color: _Colors.cyan));
-                              },
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Container(
-                                color: _Colors.subtleBg,
-                                alignment: Alignment.center,
-                                child: Icon(Icons.broken_image_outlined,
-                                    color: _Colors.textMuted, size: 32),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: photos.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: 18,
+                  crossAxisSpacing: 18,
+                  childAspectRatio: crossAxisCount == 1 ? 1.6 : 0.8,
+                ),
+                itemBuilder: (context, i) {
+                  final p = photos[i];
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: _Colors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _Colors.cardBorder),
+                      boxShadow: _Colors.cardShadow,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.network(
+                                p.url,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (context, child, progress) {
+                                  if (progress == null) return child;
+                                  return const Center(
+                                      child: CircularProgressIndicator(
+                                          color: _Colors.cyan));
+                                },
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                  color: _Colors.subtleBg,
+                                  alignment: Alignment.center,
+                                  child: Icon(Icons.broken_image_outlined,
+                                      color: _Colors.textMuted, size: 32),
+                                ),
                               ),
-                            ),
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: InkWell(
-                                onTap: () => onRemove(i),
-                                borderRadius: BorderRadius.circular(20),
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: InkWell(
+                                  onTap: () => onRemove(i),
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.9),
+                                        shape: BoxShape.circle),
+                                    child: const Icon(Icons.delete_outline,
+                                        size: 15, color: _Colors.red),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 8,
+                                left: 8,
                                 child: Container(
-                                  padding: const EdgeInsets.all(6),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.9),
-                                      shape: BoxShape.circle),
-                                  child: const Icon(Icons.delete_outline,
-                                      size: 15, color: _Colors.red),
+                                    color: Colors.black.withValues(alpha: 0.65),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '${p.date.year}-${p.date.month.toString().padLeft(2, '0')}-${p.date.day.toString().padLeft(2, '0')}',
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 11),
+                                  ),
                                 ),
                               ),
-                            ),
-                            Positioned(
-                              bottom: 8,
-                              left: 8,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.65),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  '${p.date.year}-${p.date.month.toString().padLeft(2, '0')}-${p.date.day.toString().padLeft(2, '0')}',
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 11),
-                                ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.psychology_alt_outlined,
+                                  size: 15, color: _Colors.cyan),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(p.insight,
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: _Colors.textSecondary,
+                                        height: 1.3)),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(Icons.psychology_alt_outlined,
-                                size: 15, color: _Colors.cyan),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(p.insight,
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: _Colors.textSecondary,
-                                      height: 1.3)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                      ],
+                    ),
+                  );
+                },
               );
             }),
         ],
@@ -2929,22 +2809,16 @@ class _BodyMetricsTab extends StatelessWidget {
               Text('BMI Tracking',
                   style: TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: _Colors.textPrimary)),
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
+                      color: _Colors.sectionTitle)),
               ElevatedButton.icon(
                 onPressed: onAdd,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _Colors.cyan,
-                  elevation: 0,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-                icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                label: const Text('Add Entry',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                style: _primaryStyle(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 18, vertical: 12)),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add Entry'),
               ),
             ],
           ),
@@ -2956,7 +2830,6 @@ class _BodyMetricsTab extends StatelessWidget {
                     child: CircularProgressIndicator(color: _Colors.cyan)))
           else ...[
             _Card(
-              accent: _Colors.purple,
               child: Row(
                 children: [
                   Container(
@@ -2988,8 +2861,9 @@ class _BodyMetricsTab extends StatelessWidget {
                         Text(
                           latest == null ? '--' : latest.bmi.toStringAsFixed(1),
                           style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 30,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
                               color: _Colors.textPrimary),
                         ),
                         const SizedBox(height: 6),
@@ -3021,26 +2895,21 @@ class _BodyMetricsTab extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             _Card(
-              accent: _Colors.emerald,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Weight Goal',
-                      style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: _Colors.textPrimary)),
+                  const _PanelTitle('Weight Goal'),
                   const SizedBox(height: 16),
                   if (targets.targetWeight == null ||
                       targets.targetWeight! <= 0)
                     InkWell(
                       onTap: onSetTargets,
                       borderRadius: BorderRadius.circular(8),
-                      child: const Text(
+                      child: Text(
                           'Set your daily goals to track progress.',
                           style: TextStyle(
                               fontSize: 13,
-                              color: _Colors.cyanText,
+                              color: _Colors.cyanTextOn,
                               fontWeight: FontWeight.w500)),
                     )
                   else if (latest == null)
@@ -3060,16 +2929,11 @@ class _BodyMetricsTab extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             _Card(
-              accent: _Colors.purple,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('BMI Over Time',
-                      style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          color: _Colors.textPrimary)),
-                  const SizedBox(height: 3),
+                  const _PanelTitle('BMI Over Time'),
+                  const SizedBox(height: 4),
                   Text('Relative trend across your recorded entries',
                       style: TextStyle(
                           fontSize: 12.5, color: _Colors.textSecondary)),
@@ -3089,15 +2953,10 @@ class _BodyMetricsTab extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             _Card(
-              accent: _Colors.purple,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('History',
-                      style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: _Colors.textPrimary)),
+                  const _PanelTitle('History'),
                   const SizedBox(height: 16),
                   if (metrics.isEmpty)
                     Padding(
@@ -3117,42 +2976,16 @@ class _BodyMetricsTab extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Container(
-                            color: _Colors.bg,
+                          Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 20, vertical: 14),
                             child: Row(
                               children: [
-                                Expanded(
-                                    flex: 2,
-                                    child: Text('Date',
-                                        style: TextStyle(
-                                            color: _Colors.textSecondary,
-                                            fontWeight: FontWeight.w600))),
-                                Expanded(
-                                    flex: 2,
-                                    child: Text('Weight',
-                                        style: TextStyle(
-                                            color: _Colors.textSecondary,
-                                            fontWeight: FontWeight.w600))),
-                                Expanded(
-                                    flex: 2,
-                                    child: Text('Height',
-                                        style: TextStyle(
-                                            color: _Colors.textSecondary,
-                                            fontWeight: FontWeight.w600))),
-                                Expanded(
-                                    flex: 1,
-                                    child: Text('BMI',
-                                        style: TextStyle(
-                                            color: _Colors.textSecondary,
-                                            fontWeight: FontWeight.w600))),
-                                Expanded(
-                                    flex: 2,
-                                    child: Text('Category',
-                                        style: TextStyle(
-                                            color: _Colors.textSecondary,
-                                            fontWeight: FontWeight.w600))),
+                                Expanded(flex: 2, child: Text('DATE', style: _thStyle())),
+                                Expanded(flex: 2, child: Text('WEIGHT', style: _thStyle())),
+                                Expanded(flex: 2, child: Text('HEIGHT', style: _thStyle())),
+                                Expanded(flex: 1, child: Text('BMI', style: _thStyle())),
+                                Expanded(flex: 2, child: Text('CATEGORY', style: _thStyle())),
                                 const SizedBox(width: 40),
                               ],
                             ),
@@ -3163,11 +2996,8 @@ class _BodyMetricsTab extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 12),
                               decoration: BoxDecoration(
-                                border: i < metrics.length - 1
-                                    ? Border(
-                                        bottom: BorderSide(
-                                            color: _Colors.cardBorder))
-                                    : null,
+                                border: Border(
+                                    top: BorderSide(color: _Colors.cardBorder)),
                               ),
                               child: Row(
                                 children: [
@@ -3185,9 +3015,9 @@ class _BodyMetricsTab extends StatelessWidget {
                                   Expanded(
                                       flex: 1,
                                       child: Text(m.bmi.toStringAsFixed(1),
-                                          style: const TextStyle(
-                                              color: _Colors.emerald,
-                                              fontWeight: FontWeight.bold))),
+                                          style: TextStyle(
+                                              color: _Colors.textPrimary,
+                                              fontWeight: FontWeight.w800))),
                                   Expanded(
                                     flex: 2,
                                     child: Align(
@@ -3207,7 +3037,7 @@ class _BodyMetricsTab extends StatelessWidget {
                                                 color:
                                                     _categoryColor(m.category),
                                                 fontSize: 12.5,
-                                                fontWeight: FontWeight.w500)),
+                                                fontWeight: FontWeight.w600)),
                                       ),
                                     ),
                                   ),
@@ -3283,7 +3113,7 @@ class _BmiChart extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 7),
                       child: _ChartBar(
                           heightFactor: hf <= 0 ? 0.06 : hf,
-                          color: _Colors.purple),
+                          color: _Colors.cyan),
                     ),
                   );
                 }).toList(),
@@ -3358,11 +3188,23 @@ class _FoodLogTab extends StatelessWidget {
   }
 
   Future<void> _pickDate(BuildContext context) async {
+    _Colors.sync(context);
     final picked = await showDatePicker(
       context: context,
       initialDate: selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
+      // Same brand-cyan-accented dark/light picker theme as the Settings
+      // date-of-birth picker (profile_settings.dart), instead of Flutter's
+      // generic Material dark/light defaults.
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: _Colors._dark
+              ? ColorScheme.dark(primary: _Colors.cyan, surface: _Colors.surface, onSurface: _Colors.textPrimary)
+              : const ColorScheme.light(primary: _Colors.cyan),
+        ),
+        child: child!,
+      ),
     );
     if (picked != null) onDateChange(picked);
   }
@@ -3415,42 +3257,28 @@ class _FoodLogTab extends StatelessWidget {
               Text('Food Log',
                   style: TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: _Colors.textPrimary)),
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
+                      color: _Colors.sectionTitle)),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ElevatedButton.icon(
+                  OutlinedButton.icon(
                     onPressed: onSetTargets,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _Colors.cyan,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                    icon: const Icon(Icons.track_changes,
-                        size: 18, color: Colors.white),
-                    label: const Text('Set Targets',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w600)),
+                    style: _outlineStyle(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 12)),
+                    icon: const Icon(Icons.track_changes, size: 18),
+                    label: const Text('Set Targets'),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
                     onPressed: isToday ? onAdd : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _Colors.cyan,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                    icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                    label: const Text('Add Food',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w600)),
+                    style: _primaryStyle(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 12)),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Add Food'),
                   ),
                 ],
               ),
@@ -3464,31 +3292,20 @@ class _FoodLogTab extends StatelessWidget {
                     child: CircularProgressIndicator(color: _Colors.cyan)))
           else ...[
             _Card(
-              accent: _Colors.amber,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.track_changes, size: 18, color: _Colors.cyan),
-                      const SizedBox(width: 8),
-                      Text('Daily Goals',
-                          style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: _Colors.textPrimary)),
-                    ],
-                  ),
+                  const _PanelTitle('Daily Goals'),
                   const SizedBox(height: 16),
                   if (!targets.hasAnyTarget)
                     InkWell(
                       onTap: onSetTargets,
                       borderRadius: BorderRadius.circular(8),
-                      child: const Text(
+                      child: Text(
                           'Set your daily goals to track progress.',
                           style: TextStyle(
                               fontSize: 13,
-                              color: _Colors.cyanText,
+                              color: _Colors.cyanTextOn,
                               fontWeight: FontWeight.w500)),
                     )
                   else ...[
@@ -3531,7 +3348,7 @@ class _FoodLogTab extends StatelessWidget {
                   child: Text(_fmtHeaderDate(selectedDate),
                       style: TextStyle(
                           fontSize: 17,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w800,
                           color: _Colors.textPrimary)),
                 ),
                 const SizedBox(width: 8),
@@ -3569,17 +3386,14 @@ class _FoodLogTab extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(meal,
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: _Colors.textSecondary)),
+                      _PanelTitle(meal),
                       const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
                           color: _Colors.surface,
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: _Colors.cardBorder),
+                          boxShadow: _Colors.cardShadow,
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: Column(
@@ -3590,11 +3404,11 @@ class _FoodLogTab extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 12),
                               decoration: BoxDecoration(
-                                border: i < entries.length - 1
-                                    ? Border(
-                                        bottom: BorderSide(
-                                            color: _Colors.cardBorder))
-                                    : null,
+                                border: i == 0
+                                    ? null
+                                    : Border(
+                                        top: BorderSide(
+                                            color: _Colors.cardBorder)),
                               ),
                               child: Row(
                                 children: [
@@ -3603,14 +3417,14 @@ class _FoodLogTab extends StatelessWidget {
                                     child: Text(entry.foodName,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
-                                            fontWeight: FontWeight.w600)),
+                                            fontWeight: FontWeight.w700)),
                                   ),
                                   Expanded(
                                     flex: 2,
                                     child: Text('${entry.calories} kcal',
-                                        style: const TextStyle(
-                                            color: _Colors.emerald,
-                                            fontWeight: FontWeight.bold)),
+                                        style: TextStyle(
+                                            color: _Colors.textPrimary,
+                                            fontWeight: FontWeight.w800)),
                                   ),
                                   Expanded(
                                       flex: 2,

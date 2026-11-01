@@ -29,6 +29,17 @@ class _Colors {
 
   static const Color cyan = Color(0xFF22B8D8);
   static const Color gold = Color(0xFFCB8A00);
+
+  /// Badge/status-box background: a translucent wash of [accent] in dark
+  /// mode instead of the light pastel [lightBg] at full strength (which
+  /// would read as a jarringly bright chip against a dark card).
+  static Color badgeBg(Color accent, Color lightBg) =>
+      _dark ? accent.withValues(alpha: 0.16) : lightBg;
+
+  /// Matching badge icon/text colour: lightened toward white in dark mode
+  /// so it stays legible against the translucent background above.
+  static Color badgeFg(Color accent, Color lightFg) =>
+      _dark ? (Color.lerp(accent, Colors.white, 0.45) ?? accent) : lightFg;
 }
 
 /// Payment-account details shown to the member. Placeholder values for now —
@@ -44,7 +55,6 @@ class _PayTarget {
 }
 
 const Map<String, _PayTarget> _payTargets = {
-  // TODO: replace the placeholder account name / number with the real ones.
   'GCash': _PayTarget('GCash', 'PrimeFitness Gym', '0917 000 0000',
       Icons.smartphone_outlined, 'assets/qr/gcash_qr.jpg'),
   'Maya': _PayTarget('Maya', 'PrimeFitness Gym', '0918 000 0000',
@@ -245,19 +255,21 @@ class _SubmitReceiptPageState extends State<SubmitReceiptPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFFEF2F2),
+              color: _Colors.badgeBg(AppColors.danger, const Color(0xFFFEF2F2)),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFFECACA)),
+              border: Border.all(
+                  color: _Colors.badgeBg(AppColors.danger, const Color(0xFFFECACA))),
             ),
             child: Row(
               children: [
-                const Icon(Icons.error_outline,
-                    color: Color(0xFFDC2626), size: 18),
+                Icon(Icons.error_outline,
+                    color: _Colors.badgeFg(AppColors.danger, AppColors.danger), size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(_errorMessage!,
-                      style: const TextStyle(
-                          color: Color(0xFFB91C1C), fontSize: 13)),
+                      style: TextStyle(
+                          color: _Colors.badgeFg(AppColors.danger, AppColors.danger),
+                          fontSize: 13)),
                 ),
               ],
             ),
@@ -271,8 +283,8 @@ class _SubmitReceiptPageState extends State<SubmitReceiptPage> {
           child: ElevatedButton(
             onPressed: _canSubmit ? _submit : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _Colors.cyan,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.gold,
+              foregroundColor: AppColors.onGold,
               disabledBackgroundColor: _Colors.borderMuted,
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -297,10 +309,9 @@ class _SubmitReceiptPageState extends State<SubmitReceiptPage> {
 
   Widget _sectionTitle(String text) => Text(
         text,
-        style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            color: _Colors.textPrimary),
+        style: AppText.sectionTitle(
+            size: 15,
+            color: _Colors._dark ? const Color(0xFFB39DDB) : AppColors.plum),
       );
 
   Widget _planTile(int index) {
@@ -573,12 +584,12 @@ class _SubmitReceiptPageState extends State<SubmitReceiptPage> {
           Container(
             width: 64,
             height: 64,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE7F9EF),
+            decoration: BoxDecoration(
+              color: _Colors.badgeBg(AppColors.success, const Color(0xFFE7F9EF)),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check_rounded,
-                color: Color(0xFF16A34A), size: 34),
+            child: Icon(Icons.check_rounded,
+                color: _Colors.badgeFg(AppColors.success, AppColors.success), size: 34),
           ),
           const SizedBox(height: 18),
           Text('Receipt submitted!',
@@ -600,8 +611,8 @@ class _SubmitReceiptPageState extends State<SubmitReceiptPage> {
             child: ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _Colors.cyan,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.gold,
+                foregroundColor: AppColors.onGold,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),

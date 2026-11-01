@@ -12,7 +12,6 @@ dependencies:
   cupertino_icons: ^1.0.6
   qr_flutter: ^4.1.0
   flutter_animate: ^4.5.0
-  http: ^1.2.0
   image_picker: ^1.1.2
   http_parser: ^4.0.2
   url_launcher: ^6.3.0
@@ -21,6 +20,11 @@ dependencies:
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
   flutter_markdown_plus: ^1.0.12
+  pdf: ^3.13.0
+  printing: ^5.15.0
+  path_provider: ^2.1.1
+  geolocator: ^13.0.1
+  http: ^1.2.0
 
 
 
@@ -41,4 +45,9 @@ flutter:
     - assets/images/merch/sando_sleeveless.jpg
     - assets/images/merch/tshirt.jpg
     - assets/images/auth_bg.jpg
+    # Landing-page "Step inside the gym" gallery. Directory registration:
+    # every image dropped in here is bundled automatically and picked up by
+    # the gallery grid on the next `flutter pub get` + restart — no code
+    # change needed. See lib/data/gallery_images.dart.
+    - assets/images/gallery/
     
