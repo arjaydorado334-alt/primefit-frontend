@@ -708,7 +708,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
           }
           return ProgressPhoto(
             photoId: int.tryParse('${r['PhotoID']}'),
-            url: r['PhotoURL']?.toString() ?? '',
+             url: (r['PhotoURL']?.toString() ?? '').replaceFirst('http://', 'https://'),
             date: parsedDate,
             insight: r['InsightText']?.toString() ??
                 'AI insight is temporarily unavailable for this photo.',
