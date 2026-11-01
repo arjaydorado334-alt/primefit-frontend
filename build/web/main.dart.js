@@ -38962,7 +38962,7 @@ bp9(a){var s=0,r=A.B(t.P),q,p=2,o=[],n,m,l,k,j
 var $async$akb=A.x(function(b,c){if(b===1){o.push(c)
 s=p}for(;;)switch(s){case 0:p=4
 s=7
-return A.v(A.jH(A.c6("http://localhost/memberaccount/attendance_stats_api.php?member_id="+a,0,null),null),$async$akb)
+return A.v(A.jH(A.c6("https://member-account-backend.onrender.com/attendance_stats_api.php?member_id="+a,0,null),null),$async$akb)
 case 7:n=c
 l=n
 l=B.aE.dG(0,A.dQ(A.dP(l.e)).bH(0,l.w),null)
@@ -39303,7 +39303,7 @@ Xe(a,b,c,d,e,f,g,h,i,j,k,l){return A.bq0(a,b,c,d,e,f,g,h,i,j,k,l)},
 bq0(a,b,c,d,a0,a1,a2,a3,a4,a5,a6,a7){var s=0,r=A.B(t.P),q,p=2,o=[],n,m,l,k,j,i,h,g,f,e
 var $async$Xe=A.x(function(a9,b0){if(a9===1){o.push(b0)
 s=p}for(;;)switch(s){case 0:p=4
-n=A.Ku("POST",A.c6("http://localhost/memberaccount/complete_registration_api.php",0,null))
+n=A.Ku("POST",A.c6("https://member-account-backend.onrender.com/complete_registration_api.php",0,null))
 n.x.l(0,"first_name",d)
 n.x.l(0,"last_name",a1)
 n.x.l(0,"email",c)
@@ -39612,7 +39612,7 @@ buh(a){var s=0,r=A.B(t.P),q,p=2,o=[],n,m,l,k,j
 var $async$aAt=A.x(function(b,c){if(b===1){o.push(c)
 s=p}for(;;)switch(s){case 0:p=4
 s=7
-return A.v(A.jH(A.c6("http://localhost/memberaccount/personal_records_api.php?member_id="+a,0,null),null),$async$aAt)
+return A.v(A.jH(A.c6("https://member-account-backend.onrender.com/personal_records_api.php?member_id="+a,0,null),null),$async$aAt)
 case 7:n=c
 l=n
 l=B.aE.dG(0,A.dQ(A.dP(l.e)).bH(0,l.w),null)
@@ -39640,7 +39640,7 @@ aAr(a,b,c,d,e,f,g){return A.buf(a,b,c,d,e,f,g)},
 buf(a,b,c,d,e,f,g){var s=0,r=A.B(t.P),q,p=2,o=[],n,m,l,k,j,i,h
 var $async$aAr=A.x(function(a0,a1){if(a0===1){o.push(a1)
 s=p}for(;;)switch(s){case 0:p=4
-l=A.c6("http://localhost/memberaccount/personal_records_api.php",0,null)
+l=A.c6("https://member-account-backend.onrender.com/personal_records_api.php",0,null)
 k=t.N
 j=A.a8(["Content-Type","application/json"],k,k)
 s=7
@@ -39673,7 +39673,7 @@ bug(a){var s=0,r=A.B(t.P),q,p=2,o=[],n,m,l,k,j
 var $async$aAs=A.x(function(b,c){if(b===1){o.push(c)
 s=p}for(;;)switch(s){case 0:p=4
 s=7
-return A.v(A.aiU(A.c6("http://localhost/memberaccount/personal_records_api.php?pr_id="+a,0,null)),$async$aAs)
+return A.v(A.aiU(A.c6("https://member-account-backend.onrender.com/personal_records_api.php?pr_id="+a,0,null)),$async$aAs)
 case 7:n=c
 l=n
 l=B.aE.dG(0,A.dQ(A.dP(l.e)).bH(0,l.w),null)
@@ -39777,7 +39777,7 @@ buJ(a){var s=0,r=A.B(t.P),q,p=2,o=[],n,m,l,k,j
 var $async$a2f=A.x(function(b,c){if(b===1){o.push(c)
 s=p}for(;;)switch(s){case 0:p=4
 s=7
-return A.v(A.jH(A.c6("http://localhost/memberaccount/profile_api.php?member_id="+a,0,null),null),$async$a2f)
+return A.v(A.jH(A.c6("https://member-account-backend.onrender.com/profile_api.php?member_id="+a,0,null),null),$async$a2f)
 case 7:n=c
 l=n
 l=B.aE.dG(0,A.dQ(A.dP(l.e)).bH(0,l.w),null)
@@ -39805,7 +39805,7 @@ aBl(a,b,c,d,e,f,g,h){return A.buK(a,b,c,d,e,f,g,h)},
 buK(a,b,c,d,e,f,g,a0){var s=0,r=A.B(t.P),q,p=2,o=[],n,m,l,k,j,i,h
 var $async$aBl=A.x(function(a1,a2){if(a1===1){o.push(a2)
 s=p}for(;;)switch(s){case 0:p=4
-l=A.c6("http://localhost/memberaccount/profile_api.php",0,null)
+l=A.c6("https://member-account-backend.onrender.com/profile_api.php",0,null)
 k=t.N
 j=A.a8(["Content-Type","application/json"],k,k)
 s=7
@@ -39916,7 +39916,7 @@ var $async$aDh=A.x(function(b,c){if(b===1){o.push(c)
 s=p}for(;;)switch(s){case 0:j=6
 p=4
 s=7
-return A.v(A.jH(A.c6("http://localhost/memberaccount/reviews_api.php?"+("action=list_reviews&page="+a+"&limit="+A.i(j)),0,null),null).uJ(0,B.zq),$async$aDh)
+return A.v(A.jH(A.c6("https://member-account-backend.onrender.com/reviews_api.php?"+("action=list_reviews&page="+a+"&limit="+A.i(j)),0,null),null).uJ(0,B.zq),$async$aDh)
 case 7:n=c
 l=A.bgk(n)
 q=l
@@ -39943,7 +39943,7 @@ aDi(a,b,c){return A.bvi(a,b,c)},
 bvi(a,b,c){var s=0,r=A.B(t.P),q,p=2,o=[],n,m,l,k,j,i,h
 var $async$aDi=A.x(function(d,e){if(d===1){o.push(e)
 s=p}for(;;)switch(s){case 0:p=4
-l=A.c6("http://localhost/memberaccount/reviews_api.php?action=submit_review",0,null)
+l=A.c6("https://member-account-backend.onrender.com/reviews_api.php?action=submit_review",0,null)
 k=t.N
 j=A.a8(["Content-Type","application/json"],k,k)
 s=7
@@ -150861,7 +150861,7 @@ s($,"bKt","ajb",()=>A.Zi(null,t.i1))
 s($,"bJK","aj6",()=>A.Zi(null,t.i1))
 s($,"bKy","Gq",()=>A.tQ(0,null,null))
 s($,"bIs","cC",()=>new A.aJF(A.bqi(),A.b([],t.If)))
-s($,"bFp","bl0",()=>A.c6("http://localhost/memberaccount/billing_api.php?action=submit_receipt",0,null))
+s($,"bFp","bl0",()=>A.c6("https://member-account-backend.onrender.com/billing_api.php?action=submit_receipt",0,null))
 s($,"bFi","baU",()=>A.bhu(new A.ak0(),t._))
 s($,"bFg","baS",()=>{var q=null,p=A.b6y(q)
 return A.br8(A.lq(q,q,q,q,B.Zy,q,0,q,q,B.cN,q,q,B.rF,q,A.b8y(A.a6(10),B.R),q,q,q,p,q).a9q($.baU()))})
