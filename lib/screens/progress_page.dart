@@ -103,7 +103,7 @@ class PersonalRecord {
   final int? prId;
   final String exercise;
   final String muscle;
-  final int weight;
+  final double weight;
   final int sets;
   final int reps;
   /// Optional -- only set for time-based exercises (planks, cardio, etc.).
@@ -131,6 +131,8 @@ class PersonalRecord {
     final s = d % 60;
     return '$m:${s.toString().padLeft(2, '0')}';
   }
+
+  String get weightLabel => weight.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
 }
 
 class ProgressPhoto {
@@ -338,6 +340,8 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
 
   List<PersonalRecord> _prs = [];
   bool _loadingPrs = true;
+  String? _prError;
+  int _prFetchVersion = 0;
 
   final List<ProgressPhoto> _photos = [];
   bool _loadingPhotos = true;
@@ -378,20 +382,21 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
   }
 
   Future<void> _loadRecords() async {
+    final version = ++_prFetchVersion;
     final memberId = UserSession.instance.dbMemberId;
-    debugPrint('🔍 UserSession.instance.dbMemberId = $memberId');
-    debugPrint(
-        '🔍 UserSession.instance.memberId (display) = ${UserSession.instance.memberId}');
-    debugPrint(
-        '🔍 UserSession.instance.firstName = ${UserSession.instance.firstName}');
     if (memberId == null) {
-      setState(() => _loadingPrs = false);
+      setState(() {
+        _loadingPrs = false;
+        _prError = 'Please sign in again to view your records.';
+      });
       return;
     }
 
+    setState(() { _loadingPrs = true; _prError = null; });
+
     final result = await PersonalRecordsService.fetchRecords(memberId);
 
-    if (!mounted) return;
+    if (!mounted || version != _prFetchVersion || UserSession.instance.dbMemberId != memberId) return;
 
     if (result['success'] == true && result['records'] is List) {
       setState(() {
@@ -406,11 +411,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
             prId: int.tryParse('${r['PRID']}'),
             exercise: r['Exercise']?.toString() ?? '',
             muscle: r['Muscle']?.toString() ?? '',
-            // Weight comes from a DECIMAL column, so the API may return
-            // it as "40.00" -- int.tryParse() alone can't handle the
-            // decimal point, so we parse as double first, then round.
-            weight: int.tryParse('${r['Weight']}') ??
-                (double.tryParse('${r['Weight']}')?.round() ?? 0),
+            weight: double.tryParse('${r['Weight']}') ?? 0,
             sets: int.tryParse('${r['Sets']}') ?? 0,
             reps: int.tryParse('${r['Reps']}') ?? 0,
             durationSeconds: int.tryParse('${r['DurationSeconds']}'),
@@ -418,9 +419,13 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
           );
         }).toList();
         _loadingPrs = false;
+        _prError = null;
       });
     } else {
-      setState(() => _loadingPrs = false);
+      setState(() {
+        _loadingPrs = false;
+        _prError = 'Could not load personal records. Please try again.';
+      });
     }
   }
 
@@ -434,7 +439,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
         .map((p) => [
               p.exercise,
               p.muscle,
-              '${p.weight}',
+              p.weightLabel,
               '${p.sets}',
               '${p.reps}',
               p.durationLabel.isEmpty ? '—' : p.durationLabel,
@@ -515,9 +520,15 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                 return;
               }
 
+              final weightText = weightCtrl.text.trim();
+              final weight = weightText.isEmpty ? 0.0 : double.tryParse(weightText);
+              if (weight == null || !weight.isFinite || weight < 0 || weight > 9999.99) {
+                ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+                  content: Text('Please enter a valid weight.'),
+                ));
+                return;
+              }
               setDialogState(() => saving = true);
-
-              final weight = int.tryParse(weightCtrl.text) ?? 0;
               final sets = int.tryParse(setsCtrl.text) ?? 0;
               final reps = int.tryParse(repsCtrl.text) ?? 0;
               final durationSeconds = _parseDurationInput(durationCtrl.text);
@@ -536,6 +547,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
 
               if (result['success'] == true) {
                 setState(() {
+                  _prError = null;
                   _prs.insert(
                     0,
                     PersonalRecord(
@@ -551,6 +563,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                   );
                 });
                 Navigator.of(ctx).pop();
+                _loadRecords();
               } else {
                 setDialogState(() => saving = false);
                 ScaffoldMessenger.of(ctx).showSnackBar(
@@ -588,7 +601,7 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                   children: [
                     Expanded(
                       child: _Field('Weight (kg)',
-                          _TextInput(controller: weightCtrl, hint: '0', number: true)),
+                          _TextInput(controller: weightCtrl, hint: '0', number: true, decimal: true)),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1631,6 +1644,11 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                     totalSessions: UserSession.instance.creditsTotal,
                     currentStreak: UserSession.instance.dayStreak,
                     prsCount: _prs.length,
+                    recentPrs: _prs,
+                    loadingPrs: _loadingPrs,
+                    prError: _prError,
+                    onViewPrs: () => _tabController.animateTo(1),
+                    onRetryPrs: _loadRecords,
                     photosCount: _photos.length,
                     goalTarget: _goalTarget,
                     goalCompleted: _goalCompleted,
@@ -1651,6 +1669,8 @@ class _ProgressTrackerPageState extends State<ProgressTrackerPage>
                   _PrRecordsTab(
                     prs: _prs,
                     loading: _loadingPrs,
+                    error: _prError,
+                    onRetry: _loadRecords,
                     onAdd: _openLogPrDialog,
                     onRemove: _removePr,
                     fmtDate: _fmtDate,
@@ -1863,11 +1883,13 @@ class _TextInput extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final bool number;
+  final bool decimal;
   final ValueChanged<String>? onChanged;
   const _TextInput(
       {required this.controller,
       required this.hint,
       this.number = false,
+      this.decimal = false,
       this.onChanged});
 
   @override
@@ -1876,7 +1898,7 @@ class _TextInput extends StatelessWidget {
     return TextField(
       controller: controller,
       onChanged: onChanged,
-      keyboardType: number ? TextInputType.number : TextInputType.text,
+      keyboardType: number ? TextInputType.numberWithOptions(decimal: decimal) : TextInputType.text,
       style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
@@ -1964,6 +1986,11 @@ class _OverviewTab extends StatelessWidget {
   final int totalSessions;
   final int currentStreak;
   final int prsCount;
+  final List<PersonalRecord> recentPrs;
+  final bool loadingPrs;
+  final String? prError;
+  final VoidCallback onViewPrs;
+  final VoidCallback onRetryPrs;
   final int photosCount;
   final int goalTarget;
   final int goalCompleted;
@@ -1978,6 +2005,11 @@ class _OverviewTab extends StatelessWidget {
     required this.totalSessions,
     required this.currentStreak,
     required this.prsCount,
+    required this.recentPrs,
+    required this.loadingPrs,
+    required this.prError,
+    required this.onViewPrs,
+    required this.onRetryPrs,
     required this.photosCount,
     required this.goalTarget,
     required this.goalCompleted,
@@ -2020,7 +2052,7 @@ class _OverviewTab extends StatelessWidget {
               _StatCard(
                   icon: Icons.emoji_events,
                   label: 'PRs Logged',
-                  value: '$prsCount'),
+                  value: loadingPrs || prError != null ? '—' : '$prsCount'),
               _StatCard(
                   icon: Icons.camera_alt,
                   label: 'Body Photos',
@@ -2068,6 +2100,40 @@ class _OverviewTab extends StatelessWidget {
               children: cards,
             );
           }),
+          const SizedBox(height: 20),
+          _Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  const Expanded(child: _PanelTitle('Recent Personal Records')),
+                  TextButton(onPressed: onViewPrs, child: const Text('View all')),
+                ]),
+                const SizedBox(height: 12),
+                if (loadingPrs)
+                  const Center(child: CircularProgressIndicator())
+                else if (prError != null)
+                  Row(children: [
+                    Expanded(child: Text(prError!, style: TextStyle(color: _Colors.textSecondary))),
+                    TextButton(onPressed: onRetryPrs, child: const Text('Retry')),
+                  ])
+                else if (recentPrs.isEmpty)
+                  Text('No personal records yet.', style: TextStyle(color: _Colors.textSecondary))
+                else
+                  ...recentPrs.take(3).map((pr) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(pr.exercise, style: TextStyle(fontWeight: FontWeight.w700, color: _Colors.textPrimary)),
+                      Text(
+                        '${pr.muscle} · ${pr.weightLabel} kg · ${pr.sets} sets × ${pr.reps} reps'
+                        '${pr.durationLabel.isEmpty ? '' : ' · ${pr.durationLabel}'}',
+                        style: TextStyle(color: _Colors.textSecondary),
+                      ),
+                    ]),
+                  )),
+              ],
+            ),
+          ),
           const SizedBox(height: 20),
           _Card(
             child: Column(
@@ -2328,6 +2394,8 @@ class _GoalProgressRow extends StatelessWidget {
 class _PrRecordsTab extends StatelessWidget {
   final List<PersonalRecord> prs;
   final bool loading;
+  final String? error;
+  final VoidCallback onRetry;
   final VoidCallback onAdd;
   final void Function(int) onRemove;
   final String Function(DateTime) fmtDate;
@@ -2336,6 +2404,8 @@ class _PrRecordsTab extends StatelessWidget {
   const _PrRecordsTab({
     required this.prs,
     required this.loading,
+    required this.error,
+    required this.onRetry,
     required this.onAdd,
     required this.onRemove,
     required this.fmtDate,
@@ -2387,6 +2457,11 @@ class _PrRecordsTab extends StatelessWidget {
             child: loading
                 ? const Center(
                     child: CircularProgressIndicator(color: _Colors.cyan))
+                : error != null
+                    ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        Text(error!, style: TextStyle(color: _Colors.textMuted)),
+                        TextButton(onPressed: onRetry, child: const Text('Retry')),
+                      ]))
                 : prs.isEmpty
                     ? Center(
                         child: Text(
@@ -2477,7 +2552,7 @@ class _PrRecordsTab extends StatelessWidget {
                                           ),
                                           Expanded(
                                             flex: 2,
-                                            child: Text('${p.weight} kg',
+                                            child: Text('${p.weightLabel} kg',
                                                 style: TextStyle(
                                                     color: _Colors.textPrimary,
                                                     fontWeight: FontWeight.w800)),

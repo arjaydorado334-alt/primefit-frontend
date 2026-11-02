@@ -3,8 +3,7 @@
 // Calls personal_records_api.php to list, add, and delete PRs.
 // ============================================================
 
-   import 'dart:convert';
-import '../config.dart';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config.dart';
 
@@ -24,7 +23,7 @@ class PersonalRecordsService {
     required int memberId,
     required String exercise,
     required String muscle,
-    required int weight,
+    required double weight,
     required int sets,
     required int reps,
     // Optional -- only relevant for time-based exercises (planks, cardio).
