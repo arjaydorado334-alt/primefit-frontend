@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'user_session.dart';
@@ -7,6 +7,7 @@ import 'user_session.dart';
 // if these service files live somewhere else.
 import '../services/profile_service.dart';
 import '../services/profile_picture_service.dart';
+import '../config.dart';
 import '../services/notification_prefs_service.dart';
 import '../theme/theme_controller.dart';
 import '../theme/app_theme.dart';
@@ -31,6 +32,26 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   bool _dark = false;
 
   Color get cyan => _dark ? const Color(0xFF4DD8EF) : const Color(0xFF22B8D8);
+
+  String _normalizeProfilePictureUrl(String value) {
+    final raw = value.trim();
+    if (raw.isEmpty) return '';
+    final parsed = Uri.tryParse(raw);
+    if (raw.contains('/memberaccount/uploads/profile_pictures/')) {
+      final filename = parsed?.pathSegments.isNotEmpty == true
+          ? parsed!.pathSegments.last
+          : '';
+      if (filename.isNotEmpty) {
+        return Uri.parse('${AppConfig.baseUrl}/').resolve(
+          'uploads/profile_pictures/${Uri.encodeComponent(filename)}',
+        ).toString();
+      }
+    }
+    if (parsed != null && parsed.hasScheme && kReleaseMode && parsed.scheme == 'http') {
+      return parsed.replace(scheme: 'https').toString();
+    }
+    return raw;
+  }
   Color get bgGrey => _dark ? AppColors.darkBg : AppColors.portalPageBg;
   Color get cardBg => _dark ? AppColors.darkCard : Colors.white;
   List<BoxShadow> get cardShadow => _dark ? const [] : AppColors.softCardShadow;
@@ -69,7 +90,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     _phoneCtrl = TextEditingController(text: session.phone);
     _dobCtrl = TextEditingController(text: session.dateOfBirth);
     _addressCtrl = TextEditingController(text: session.address);
-    _profilePictureUrl = session.profilePictureUrl;
+    _profilePictureUrl = _normalizeProfilePictureUrl(session.profilePictureUrl);
     _loadProfile();
     _loadNotificationPref();
   }
@@ -115,7 +136,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         _dobCtrl.text = dobDisplay;
         _gender = profile['Gender']?.toString() ?? '';
         _addressCtrl.text = profile['Address']?.toString() ?? '';
-        _profilePictureUrl = profile['ProfilePictureURL']?.toString() ?? '';
+        _profilePictureUrl = _normalizeProfilePictureUrl(profile['ProfilePictureURL']?.toString() ?? '');
         final qrData = profile['QRCodeData']?.toString() ?? '';
         if (qrData.isNotEmpty) {
           UserSession.instance.qrCodeData = qrData;
@@ -271,7 +292,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     setState(() => _uploadingPhoto = false);
 
     if (result['success'] == true) {
-      final url = result['url']?.toString() ?? '';
+      final url = _normalizeProfilePictureUrl(result['url']?.toString() ?? '');
       setState(() => _profilePictureUrl = url);
       UserSession.instance.profilePictureUrl = url;
       ScaffoldMessenger.of(context)
@@ -552,19 +573,30 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: cyan,
-                  image: _profilePictureUrl.isNotEmpty
-                      ? DecorationImage(image: NetworkImage(_profilePictureUrl), fit: BoxFit.cover)
-                      : null,
+                image: null,
                 ),
                 alignment: Alignment.center,
-                child: _uploadingPhoto
-                    ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
-                    : (_profilePictureUrl.isEmpty
-                        ? Text(
-                            session.initials,
-                            style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
-                          )
-                        : null),
+              child: _uploadingPhoto
+                  ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
+                  : _profilePictureUrl.isEmpty
+                      ? Text(
+                          session.initials,
+                          style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
+                        )
+                      : ClipOval(
+                          child: Image.network(
+                            _profilePictureUrl,
+                            width: 96,
+                            height: 96,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Center(
+                              child: Text(
+                                session.initials,
+                                style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                          ),
+                        ),
               ),
               const SizedBox(height: 16),
               OutlinedButton(
