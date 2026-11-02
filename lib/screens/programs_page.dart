@@ -299,6 +299,26 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
 
     final nameCtrl = TextEditingController();
     final muscleCtrl = TextEditingController();
+    String? selectedProgramName;
+    String? selectedMuscleGroup;
+    const programNameChoices = [
+      'Chest Builder',
+      'Back & Thickness',
+      'Leg Power',
+      'Shoulder Sculptor',
+      'Arm Blast',
+      'Core & Abs',
+      'Other…',
+    ];
+    const muscleGroupChoices = [
+      'Chest',
+      'Back',
+      'Legs',
+      'Shoulders',
+      'Biceps & Triceps',
+      'Core',
+      'Other…',
+    ];
     final descCtrl = TextEditingController();
     final durationCtrl = TextEditingController();
     final freqCtrl = TextEditingController(text: '2');
@@ -496,9 +516,29 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                               ),
                               const SizedBox(height: 16),
                               _dialogLabel('Program Name'),
-                              _dialogInput(nameCtrl, hint: 'e.g., Full Body Blast'),
+                              _programChoiceDropdown(
+                                value: selectedProgramName,
+                                choices: programNameChoices,
+                                hint: 'Choose a program name',
+                                onChanged: (value) => setDialogState(() {
+                                  selectedProgramName = value;
+                                  nameCtrl.text = value == null || value == 'Other…' ? '' : value;
+                                }),
+                              ),
+                              if (selectedProgramName == 'Other…')
+                                _dialogInput(nameCtrl, hint: 'Enter a custom program name'),
                               _dialogLabel('Muscle Group'),
-                              _dialogInput(muscleCtrl, hint: 'e.g., Full Body'),
+                              _programChoiceDropdown(
+                                value: selectedMuscleGroup,
+                                choices: muscleGroupChoices,
+                                hint: 'Choose a muscle group',
+                                onChanged: (value) => setDialogState(() {
+                                  selectedMuscleGroup = value;
+                                  muscleCtrl.text = value == null || value == 'Other…' ? '' : value;
+                                }),
+                              ),
+                              if (selectedMuscleGroup == 'Other…')
+                                _dialogInput(muscleCtrl, hint: 'Enter a custom muscle group'),
                               _dialogLabel('Description'),
                               _dialogInput(descCtrl, hint: 'Short description of this program', maxLines: 2),
                               Row(
@@ -709,6 +749,42 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
         fillColor: _Colors.fieldFill,
         border: OutlineInputBorder(borderSide: BorderSide(color: _Colors.border)),
         enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: _Colors.border)),
+      );
+
+  Widget _programChoiceDropdown({
+    required String? value,
+    required List<String> choices,
+    required String hint,
+    required ValueChanged<String?> onChanged,
+  }) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: DropdownButtonFormField<String>(
+          initialValue: value,
+          isExpanded: true,
+          dropdownColor: _Colors.surface,
+          style: TextStyle(color: _Colors.textPrimary, fontSize: 14),
+          decoration: InputDecoration(
+            hintText: hint,
+            filled: true,
+            fillColor: _Colors.fieldFill,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: _Colors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.cyan, width: 1.5),
+            ),
+          ),
+          items: choices
+              .map((choice) => DropdownMenuItem<String>(
+                    value: choice,
+                    child: Text(choice, style: TextStyle(color: _Colors.textPrimary)),
+                  ))
+              .toList(),
+          onChanged: onChanged,
+        ),
       );
 
   Widget _dialogLabel(String text) => Padding(
