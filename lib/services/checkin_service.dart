@@ -3,11 +3,12 @@
 // Calls checkin_api.php to log a gym visit and deduct a credit
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class CheckinService {
-  static const String apiUrl = "https://member-account-backend.onrender.com/checkin_api.php";
+  static const String apiUrl ="${AppConfig.baseUrl}/checkin_api.php";
 
   /// Preferred: check in using the member's signed, tamper-proof QR token.
   static Future<Map<String, dynamic>> checkInWithQr({required String qrData}) async {

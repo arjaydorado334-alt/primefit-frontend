@@ -3,12 +3,13 @@
 // Calls food_logs_api.php to list, add, and delete food log entries.
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class FoodLogsService {
   static const String apiUrl =
-      "https://member-account-backend.onrender.com/food_logs_api.php";
+     "${AppConfig.baseUrl}/food_logs_api.php";
 
   static Future<Map<String, dynamic>> fetchLogs(int memberId,
       {DateTime? date}) async {

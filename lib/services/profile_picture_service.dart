@@ -3,13 +3,14 @@
 // Uploads a profile picture (as bytes) to upload_profile_picture.php
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 class ProfilePictureService {
-  static const String apiUrl = "https://member-account-backend.onrender.com/upload_profile_picture.php";
+  static const String apiUrl ="${AppConfig.baseUrl}/upload_profile_picture.php";
 
   static Future<Map<String, dynamic>> upload({
     required int memberId,

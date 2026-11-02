@@ -3,12 +3,13 @@
 // Calls body_metrics_api.php to list, add, and delete BMI entries.
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class BodyMetricsService {
   static const String apiUrl =
-      "https://member-account-backend.onrender.com/body_metrics_api.php";
+     "${AppConfig.baseUrl}/body_metrics_api.php";
 
   static Future<Map<String, dynamic>> fetchHistory(int memberId) async {
     try {

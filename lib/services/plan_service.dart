@@ -3,13 +3,14 @@
 // Fetches the real PlanID for each plan from get_plans.php
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class PlanService {
   // Update this to match where your PHP files live (see register_service.dart
   // for notes on localhost vs. your PC's IP address).
-  static const String apiUrl = "https://member-account-backend.onrender.com/get_plans.php";
+  static const String apiUrl ="${AppConfig.baseUrl}/get_plans.php";
 
   /// Returns a map of { DurationLabel : PlanID }, e.g. { "1 Year": 4 }.
   /// Returns an empty map if the request fails -- callers should handle

@@ -4,11 +4,12 @@
 // complete payment history from the database.
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class PaymentHistoryService {
-  static const String apiUrl = "https://member-account-backend.onrender.com/payment_history_api.php";
+  static const String apiUrl ="${AppConfig.baseUrl}/payment_history_api.php";
 
   static Future<Map<String, dynamic>> fetchHistory(int memberId) async {
     try {

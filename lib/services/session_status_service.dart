@@ -5,15 +5,17 @@
 // an admin scans the member's QR at the front desk.
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class SessionStatusService {
-  static const String apiUrl = "https://member-account-backend.onrender.com/session_status_api.php";
+  static const String apiUrl ="${AppConfig.baseUrl}/session_status_api.php";
 
   static Future<Map<String, dynamic>> fetchStatus(int memberId) async {
     try {
-      final response = await http.get(Uri.parse("$apiUrl?member_id=$memberId"));
+      final response = await http.get(Uri.parse("$apiUrl?member_id=$memberId"))
+          .timeout(const Duration(seconds: 8));
       return jsonDecode(response.body);
     } catch (e) {
       return {"success": false, "message": "Connection error: $e"};

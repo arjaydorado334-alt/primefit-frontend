@@ -151,7 +151,7 @@ class _QrCheckinViewState extends State<QrCheckinView> {
     }
   }
 
-  int get _creditsLeft => widget.creditsTotal - _sessionsUsed;
+  int get _creditsLeft => _creditsTotal - _sessionsUsed;
 
   @override
   Widget build(BuildContext context) {

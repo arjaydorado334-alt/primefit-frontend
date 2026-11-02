@@ -12,6 +12,7 @@ import 'profile_settings.dart';
 import 'user_session.dart';
 import 'dart:async';
 import '../services/attendance_stats_service.dart';
+import '../services/session_status_service.dart';
 import '../services/body_metrics_service.dart';
 import '../services/food_logs_service.dart';
 import '../services/notification_prefs_service.dart';
@@ -28,6 +29,7 @@ class MemberPortalScreen extends StatefulWidget {
 class _MemberPortalScreenState extends State<MemberPortalScreen> {
   int _selectedIndex = 0;
   Timer? _attendanceTimer;
+  bool _refreshingAttendance = false;
 
   @override
   void initState() {
@@ -99,10 +101,28 @@ class _MemberPortalScreenState extends State<MemberPortalScreen> {
 
   Future<void> _fetchAttendanceStats() async {
     final memberId = UserSession.instance.dbMemberId;
-    if (memberId == null) return;
+    if (memberId == null || _refreshingAttendance) return;
 
-    final result = await AttendanceStatsService.fetchStats(memberId);
-    if (!mounted) return;
+    _refreshingAttendance = true;
+    final results = await Future.wait([
+      AttendanceStatsService.fetchStats(memberId),
+      SessionStatusService.fetchStatus(memberId),
+    ]);
+    _refreshingAttendance = false;
+    if (!mounted || UserSession.instance.dbMemberId != memberId) return;
+
+    final result = results[0];
+    final status = results[1];
+    if (status['success'] == true) {
+      final credits = int.tryParse('${status['session_credits']}');
+      final used = int.tryParse('${status['sessions_used']}');
+      if (credits != null && used != null) {
+        setState(() {
+          UserSession.instance.creditsTotal = credits;
+          UserSession.instance.sessionsUsed = used;
+        });
+      }
+    }
 
     if (result['success'] == true && result['visit_dates'] is List) {
       final parsedDates = <DateTime>[];
@@ -117,7 +137,7 @@ class _MemberPortalScreenState extends State<MemberPortalScreen> {
           .subtract(Duration(days: now.weekday - 1));
       final thisWeekDays = parsedDates
           .map((d) => DateTime(d.year, d.month, d.day))
-          .where((d) => !d.isBefore(monday))
+          .where((d) => !d.isBefore(monday) && d.isBefore(monday.add(const Duration(days: 7))))
           .toSet();
 
       setState(() {

@@ -3,13 +3,14 @@
 // Calls body_photos_api.php to upload, list, and delete photos.
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 class BodyPhotosService {
-  static const String apiUrl = "https://member-account-backend.onrender.com/body_photos_api.php";
+  static const String apiUrl ="${AppConfig.baseUrl}/body_photos_api.php";
 
   static Future<Map<String, dynamic>> fetchPhotos(int memberId) async {
     try {

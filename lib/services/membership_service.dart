@@ -3,11 +3,12 @@
 // Calls membership_api.php to create a Membership + Payment record
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class MembershipService {
-  static const String apiUrl = "https://member-account-backend.onrender.com/membership_api.php";
+  static const String apiUrl ="${AppConfig.baseUrl}/membership_api.php";
 
   static Future<Map<String, dynamic>> createMembership({
     required int memberId,

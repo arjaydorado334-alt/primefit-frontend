@@ -3,12 +3,13 @@
 // Calls login_api.php to verify a member's email + password
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginService {
-  static const String apiUrl = "https://member-account-backend.onrender.com/login_api.php";
+  static const String apiUrl ="${AppConfig.baseUrl}/login_api.php";
 
   static Future<Map<String, dynamic>> login({
     required String email,

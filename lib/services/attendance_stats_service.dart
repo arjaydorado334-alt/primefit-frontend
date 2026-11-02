@@ -14,7 +14,8 @@ class AttendanceStatsService {
 
   static Future<Map<String, dynamic>> fetchStats(int memberId) async {
     try {
-      final response = await http.get(Uri.parse("$apiUrl?member_id=$memberId"));
+      final response = await http.get(Uri.parse("$apiUrl?member_id=$memberId"))
+          .timeout(const Duration(seconds: 8));
       return jsonDecode(response.body);
     } catch (e) {
       return {"success": false, "message": "Connection error: $e"};

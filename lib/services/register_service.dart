@@ -12,17 +12,18 @@
 //
 // 3. Import and use the function below in your registration screen.
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class RegisterService {
   // IMPORTANT: Update this URL to match where your PHP files live.
   //
   // - If you're running against the deployed backend:
-  //     "https://member-account-backend.onrender.com/register_api.php"
+  //    "${AppConfig.baseUrl}/register_api.php"
   //   (Find your IP via `ipconfig` on Windows -> look for IPv4 Address)
 
-  static const String apiUrl = "https://member-account-backend.onrender.com/register_api.php";
+  static const String apiUrl ="${AppConfig.baseUrl}/register_api.php";
 
   static Future<Map<String, dynamic>> registerMember({
     required String firstName,

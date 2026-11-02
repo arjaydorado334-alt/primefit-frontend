@@ -4,12 +4,13 @@
 // calorie & macro targets and target weight.
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class UserTargetsService {
   static const String apiUrl =
-      "https://member-account-backend.onrender.com/user_targets_api.php";
+     "${AppConfig.baseUrl}/user_targets_api.php";
 
   static Future<Map<String, dynamic>> fetchTargets(int memberId) async {
     try {

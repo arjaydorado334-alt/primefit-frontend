@@ -4,11 +4,12 @@
 // month's workout session goal.
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class MonthlyGoalsService {
-  static const String apiUrl = "https://member-account-backend.onrender.com/monthly_goals_api.php";
+  static const String apiUrl ="${AppConfig.baseUrl}/monthly_goals_api.php";
 
   static Future<Map<String, dynamic>> fetchGoal(int memberId) async {
     try {

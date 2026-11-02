@@ -4,13 +4,14 @@
 // and exercises) from programs_api.php.
 // ============================================================
 
-import 'dart:convert';
+   import 'dart:convert';
+import '../config.dart';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 class ProgramsService {
-  static const String apiUrl = "https://member-account-backend.onrender.com/programs_api.php";
+  static const String apiUrl ="${AppConfig.baseUrl}/programs_api.php";
 
   static Future<Map<String, dynamic>> fetchPrograms() async {
     try {
