@@ -113,6 +113,13 @@ class _MemberPortalScreenState extends State<MemberPortalScreen> {
 
     final result = results[0];
     final status = results[1];
+    if (status['account_pending'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Your payment must be approved before you can use your account.'),
+      ));
+      _logout();
+      return;
+    }
     if (status['success'] == true) {
       final credits = int.tryParse('${status['session_credits']}');
       final used = int.tryParse('${status['sessions_used']}');

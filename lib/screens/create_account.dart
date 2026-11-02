@@ -458,6 +458,17 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       return;
     }
 
+    if (result['status']?.toString().toLowerCase() == 'pending') {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _paymentStatus = 'Pending';
+        _memberId = 'Pending approval';
+        _screen = _Screen.done;
+      });
+      return;
+    }
+
     _dbMemberId = result['member_id'] is int
         ? result['member_id'] as int
         : int.tryParse('${result['member_id']}');
@@ -1555,7 +1566,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: _ReceiptPaper(
-              title: 'OFFICIAL RECEIPT',
+              title: isPending ? 'SUBMISSION SUMMARY' : 'OFFICIAL RECEIPT',
               details: [
                 _RLine('Date', _todayText()),
                 _RLine('Member', name),
@@ -1563,7 +1574,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
               ],
               itemName: '${plan.name} Membership',
               itemAmount: _money(_computedPrice),
-              totalLabel: 'TOTAL PAID',
+              totalLabel: isPending ? 'AMOUNT FOR REVIEW' : 'TOTAL PAID',
               summary: [
                 _RLine('Payment method', payment.name),
                 _RLine('Status',
@@ -1578,7 +1589,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
           ),
         ),
         const SizedBox(height: 22),
-        _primaryButton('GO TO DASHBOARD →', _goToDashboard),
+        _primaryButton(isPending ? 'BACK TO HOME' : 'GO TO DASHBOARD →',
+            isPending ? () => Navigator.of(context).pop() : _goToDashboard),
         const SizedBox(height: 8),
         TextButton(
           onPressed: _startOver,

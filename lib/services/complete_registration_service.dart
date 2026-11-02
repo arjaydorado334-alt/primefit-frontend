@@ -27,7 +27,7 @@ class CompleteRegistrationService {
   // server behind it) was the root cause of the registration step's
   // "Failed to fetch" connection error.
   static const String apiUrl =
-      "${AppConfig.baseUrl}/complete_registration_api.php";
+      "${AppConfig.baseUrl}/pending_registration_api.php";
 
   static Future<Map<String, dynamic>> register({
     required String firstName,
@@ -113,7 +113,7 @@ class CompleteRegistrationService {
     } on TimeoutException {
       return {
         "success": false,
-        "message": "Registration is taking too long. Your account may have been created. Please try signing in before submitting again.",
+        "message": "Registration is taking too long. Your request may already be pending. Please contact the gym before submitting again.",
       };
     } catch (e) {
       // A transport-level failure (server unreachable, DNS failure, CORS
