@@ -12,8 +12,8 @@
 // and mobile alike.
 // ============================================================
 
-   import 'dart:convert';
-import '../config.dart';
+import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:http/http.dart' as http;
@@ -72,8 +72,10 @@ class CompleteRegistrationService {
         );
       }
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final response = await (() async {
+        final streamedResponse = await request.send();
+        return http.Response.fromStream(streamedResponse);
+      })().timeout(const Duration(seconds: 45));
 
       try {
         final decoded = jsonDecode(response.body);
@@ -108,6 +110,11 @@ class CompleteRegistrationService {
               "Server returned an unreadable response (HTTP ${response.statusCode}).",
         };
       }
+    } on TimeoutException {
+      return {
+        "success": false,
+        "message": "Registration is taking too long. Your account may have been created. Please try signing in before submitting again.",
+      };
     } catch (e) {
       // A transport-level failure (server unreachable, DNS failure, CORS
       // block, etc.) -- log the raw exception for developers, but hand the
