@@ -6,7 +6,7 @@
    import 'dart:convert';
 import '../config.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'member_session_service.dart';
 
 class LoginService {
   static const String apiUrl ="${AppConfig.baseUrl}/login_api.php";
@@ -14,6 +14,7 @@ class LoginService {
   static Future<Map<String, dynamic>> login({
     required String email,
     required String password,
+    bool rememberMe = false,
   }) async {
     try {
       final response = await http.post(
@@ -30,14 +31,12 @@ class LoginService {
       if (data["success"] == true && data["member"] != null) {
         final member = data["member"];
         final dynamic rawId = member["member_id"] ?? member["MemberID"];
-
-        if (rawId != null) {
-          final int memberId = int.tryParse(rawId.toString()) ?? 0;
-          if (memberId > 0) {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setInt("member_id", memberId);
-          }
+        final int memberId = int.tryParse('$rawId') ?? 0;
+        final token = data['session_token']?.toString() ?? '';
+        if (memberId <= 0 || !RegExp(r'^[a-f0-9]{64}$').hasMatch(token)) {
+          return {'success': false, 'message': 'Unable to start your session. Please try again.'};
         }
+        await MemberSessionService.saveLogin(token, memberId, rememberMe: rememberMe);
       }
 
       return data;

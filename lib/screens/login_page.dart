@@ -124,6 +124,7 @@ class _LoginPageState extends State<LoginPage> {
     final result = await LoginService.login(
       email: _emailController.text.trim(),
       password: _passwordController.text,
+      rememberMe: _rememberMe,
     );
 
     if (!mounted) return;
@@ -133,61 +134,8 @@ class _LoginPageState extends State<LoginPage> {
     if (result['success'] == true) {
       final member = result['member'] as Map<String, dynamic>;
 
-      // Parse MemberSince ("YYYY-MM-DD" from MySQL) into a DateTime.
-      DateTime memberSince;
-      try {
-        memberSince = DateTime.parse(member['member_since'].toString());
-      } catch (_) {
-        memberSince = DateTime.now();
-      }
-
-      // Parse the real NextRenewalDate from the Memberships table, if
-      // the member has an active membership.
-      DateTime? renewsOn;
-      final renewalRaw = member['next_renewal_date'];
-      if (renewalRaw != null) {
-        try {
-          renewsOn = DateTime.parse(renewalRaw.toString());
-        } catch (_) {
-          renewsOn = null;
-        }
-      }
-
-      // Parse the plan price (e.g. "3500.00" from MySQL DECIMAL column).
-      double? planPrice;
-      if (member['plan_price'] != null) {
-        planPrice = double.tryParse(member['plan_price'].toString());
-      }
-
-      final sessionCredits = int.tryParse('${member['session_credits']}') ?? 30;
-      final sessionsUsedVal = int.tryParse('${member['sessions_used']}') ?? 0;
-
-      // Save the logged-in member's info into the shared session so the
-      // rest of the app (dashboard, profile, etc.) can read it -- same
-      // mechanism CreateAccountPage uses right after signup.
-      UserSession.instance.applySignup(
-        firstName: member['first_name'] ?? '',
-        lastName: member['last_name'] ?? '',
-        email: member['email'] ?? '',
-        phone: member['phone'] ?? '',
-        membershipPlan: member['membership_plan'] ?? 'No active plan',
-        membershipStatus: member['membership_status'] ?? 'Active',
-        memberId: 'PF-${member['member_id'].toString().padLeft(5, '0')}',
-        memberSince: memberSince,
-        membershipRenewsOn: renewsOn,
-        planPrice: planPrice,
-        dbMemberId: member['member_id'] is int
-            ? member['member_id'] as int
-            : int.tryParse('${member['member_id']}'),
-        creditsTotal: sessionCredits,
-        sessionsUsed: sessionsUsedVal,
-        qrCodeData: member['qr_code_data']?.toString() ??
-            member['QRCodeData']?.toString() ??
-            '',
-        profilePictureUrl: member['profile_picture']?.toString() ??
-            member['ProfilePictureURL']?.toString() ??
-            '',
-      );
+      UserSession.reset();
+      UserSession.instance.applyMemberResponse(member);
 
       // Close the popup first, then open the member portal.
       navigator.pop();
@@ -289,7 +237,7 @@ class _LoginPageState extends State<LoginPage> {
                     height: logoSize,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stack) =>
-                        PrimeFitLogoMark(size: logoSize),
+                        const PrimeFitLogoMark(size: logoSize),
                   ),
                 ),
               ),

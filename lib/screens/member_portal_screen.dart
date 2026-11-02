@@ -13,6 +13,7 @@ import 'user_session.dart';
 import 'dart:async';
 import '../services/attendance_stats_service.dart';
 import '../services/session_status_service.dart';
+import '../services/member_session_service.dart';
 import '../services/body_metrics_service.dart';
 import '../services/food_logs_service.dart';
 import '../services/notification_prefs_service.dart';
@@ -30,6 +31,7 @@ class _MemberPortalScreenState extends State<MemberPortalScreen> {
   int _selectedIndex = 0;
   Timer? _attendanceTimer;
   bool _refreshingAttendance = false;
+  bool _loggingOut = false;
 
   @override
   void initState() {
@@ -161,7 +163,12 @@ class _MemberPortalScreenState extends State<MemberPortalScreen> {
 
   void _selectTab(int index) => setState(() => _selectedIndex = index);
 
-  void _logout() {
+  Future<void> _logout() async {
+    if (_loggingOut) return;
+    _loggingOut = true;
+    _attendanceTimer?.cancel();
+    await MemberSessionService.signOut();
+    if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LandingPage()),
       (route) => false,

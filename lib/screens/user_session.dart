@@ -12,7 +12,9 @@
 /// other file just calls `UserSession.instance`.
 class UserSession {
   UserSession._internal();
-  static final UserSession instance = UserSession._internal();
+  static UserSession _instance = UserSession._internal();
+  static UserSession get instance => _instance;
+  static void reset() => _instance = UserSession._internal();
 
   String firstName = 'John';
   String lastName = 'Doe';
@@ -287,6 +289,33 @@ class UserSession {
       return DateTime(date.year, date.month + months + 1, 0);
     }
     return newDate;
+  }
+
+  /// Populate the in-memory session from a server-verified member response.
+  void applyMemberResponse(Map<String, dynamic> member) {
+    final rawId = member['member_id'] ?? member['MemberID'];
+    final id = int.tryParse('$rawId');
+    if (id == null || id <= 0) throw const FormatException('Invalid member ID');
+    final since = DateTime.tryParse('${member['member_since']}') ?? DateTime.now();
+    final renewal = member['next_renewal_date'] == null
+        ? null : DateTime.tryParse('${member['next_renewal_date']}');
+    applySignup(
+      firstName: member['first_name']?.toString() ?? '',
+      lastName: member['last_name']?.toString() ?? '',
+      email: member['email']?.toString() ?? '',
+      phone: member['phone']?.toString() ?? '',
+      membershipPlan: member['membership_plan']?.toString() ?? 'No active plan',
+      membershipStatus: member['membership_status']?.toString() ?? 'Active',
+      memberId: 'PF-${id.toString().padLeft(5, '0')}',
+      memberSince: since,
+      membershipRenewsOn: renewal,
+      planPrice: double.tryParse('${member['plan_price']}'),
+      dbMemberId: id,
+      creditsTotal: int.tryParse('${member['session_credits']}') ?? 30,
+      sessionsUsed: int.tryParse('${member['sessions_used']}') ?? 0,
+      qrCodeData: (member['qr_code_data'] ?? member['QRCodeData'])?.toString() ?? '',
+      profilePictureUrl: (member['profile_picture'] ?? member['ProfilePictureURL'])?.toString() ?? '',
+    );
   }
 
   void applySignup({

@@ -17,6 +17,7 @@ dependencies:
   url_launcher: ^6.3.0
   google_fonts: ^6.2.1
   shared_preferences: ^2.3.0
+  web: ^1.1.1
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
   flutter_markdown_plus: ^1.0.12
@@ -50,4 +51,3 @@ flutter:
     # the gallery grid on the next `flutter pub get` + restart — no code
     # change needed. See lib/data/gallery_images.dart.
     - assets/images/gallery/
-    

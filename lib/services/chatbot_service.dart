@@ -1,14 +1,19 @@
-   import 'dart:convert';
-import '../config.dart';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../screens/user_session.dart';
 
 class ChatbotService {
   static const String _baseUrl = 'https://member-account-backend.onrender.com';
 
   static final List<Map<String, String>> _history = [];
+  static int _historyGeneration = 0;
+
+  static void clearHistory() {
+    _history.clear();
+    _historyGeneration++;
+  }
 
   /// Helper method to fetch member_id from local storage automatically
   static Future<int> _getMemberId(int? explicitMemberId) async {
@@ -16,12 +21,7 @@ class ChatbotService {
       return explicitMemberId;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    // Tries reading 'member_id', fallback to 'MemberID' or 'user_id' based on standard keys
-    return prefs.getInt('member_id') ?? 
-           prefs.getInt('MemberID') ?? 
-           prefs.getInt('user_id') ?? 
-           0;
+    return UserSession.instance.dbMemberId ?? 0;
   }
 
   static Future<String> sendTextMessage(String text, {int? memberId}) async {
@@ -29,6 +29,7 @@ class ChatbotService {
     
     // Automatically retrieve the stored member ID
     final activeMemberId = await _getMemberId(memberId);
+    final historyGeneration = _historyGeneration;
 
     if (activeMemberId <= 0) {
       throw Exception('Member ID not found. Please log in again.');
@@ -57,8 +58,10 @@ class ChatbotService {
 
     final reply = data['reply'] as String;
 
-    _history.add({'role': 'user', 'content': text});
-    _history.add({'role': 'assistant', 'content': reply});
+    if (historyGeneration == _historyGeneration) {
+      _history.add({'role': 'user', 'content': text});
+      _history.add({'role': 'assistant', 'content': reply});
+    }
 
     return reply;
   }

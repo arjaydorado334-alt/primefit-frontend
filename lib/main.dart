@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/landing_page.dart';
+import 'screens/session_gate.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
@@ -22,7 +22,7 @@ class PrimeFitApp extends StatelessWidget {
         theme: AppTheme.themeData,
         darkTheme: AppTheme.darkThemeData,
         themeMode: ThemeController.instance.mode,
-        home: const LandingPage(),
+        home: const SessionGate(),
       ),
     );
   }
