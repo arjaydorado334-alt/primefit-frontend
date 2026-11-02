@@ -6,13 +6,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config.dart';
+import 'member_api_auth.dart';
 
 class PersonalRecordsService {
   static const String apiUrl = "${AppConfig.baseUrl}/personal_records_api.php";
 
   static Future<Map<String, dynamic>> fetchRecords(int memberId) async {
     try {
-      final response = await http.get(Uri.parse("$apiUrl?member_id=$memberId"));
+      final response = await http.get(Uri.parse("$apiUrl?member_id=$memberId"), headers: await MemberApiAuth.headers());
       return jsonDecode(response.body);
     } catch (e) {
       return {"success": false, "message": "Connection error: $e"};
@@ -32,7 +33,7 @@ class PersonalRecordsService {
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"},
+        headers: await MemberApiAuth.headers({"Content-Type": "application/json"}),
         body: jsonEncode({
           "member_id": memberId,
           "exercise": exercise,
@@ -51,7 +52,7 @@ class PersonalRecordsService {
 
   static Future<Map<String, dynamic>> deleteRecord(int prId) async {
     try {
-      final response = await http.delete(Uri.parse("$apiUrl?pr_id=$prId"));
+      final response = await http.delete(Uri.parse("$apiUrl?pr_id=$prId"), headers: await MemberApiAuth.headers());
       return jsonDecode(response.body);
     } catch (e) {
       return {"success": false, "message": "Connection error: $e"};

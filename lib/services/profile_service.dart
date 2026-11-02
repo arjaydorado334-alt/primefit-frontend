@@ -5,15 +5,15 @@
 
    import 'dart:convert';
 import '../config.dart';
+import 'member_api_auth.dart';
 import 'package:http/http.dart' as http;
-import '../config.dart';
 
 class ProfileService {
   static const String apiUrl = "${AppConfig.baseUrl}/profile_api.php";
 
   static Future<Map<String, dynamic>> fetchProfile(int memberId) async {
     try {
-      final response = await http.get(Uri.parse("$apiUrl?member_id=$memberId"));
+      final response = await http.get(Uri.parse("$apiUrl?member_id=$memberId"), headers: await MemberApiAuth.headers());
       return jsonDecode(response.body);
     } catch (e) {
       return {"success": false, "message": "Connection error: $e"};
@@ -33,7 +33,7 @@ class ProfileService {
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"},
+        headers: await MemberApiAuth.headers({"Content-Type": "application/json"}),
         body: jsonEncode({
           "member_id": memberId,
           "first_name": firstName,

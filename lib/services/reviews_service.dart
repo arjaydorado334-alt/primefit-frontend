@@ -13,7 +13,6 @@
    import 'dart:convert';
 import '../config.dart';
 import 'package:http/http.dart' as http;
-import '../config.dart';
 
 class ReviewsService {
   static const bool _mock =

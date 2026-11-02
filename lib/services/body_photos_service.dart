@@ -8,16 +8,26 @@ import '../config.dart';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'member_api_auth.dart';
 
 class BodyPhotosService {
   static const String apiUrl ="${AppConfig.baseUrl}/body_photos_api.php";
 
   static Future<Map<String, dynamic>> fetchPhotos(int memberId) async {
     try {
-      final response = await http.get(Uri.parse("$apiUrl?member_id=$memberId"));
+      final response = await http.get(Uri.parse("$apiUrl?member_id=$memberId"), headers: await MemberApiAuth.headers());
       return jsonDecode(response.body);
     } catch (e) {
       return {"success": false, "message": "Connection error: $e"};
+    }
+  }
+
+  static Future<Uint8List?> downloadPhoto(String url) async {
+    try {
+      final response = await http.get(Uri.parse(url), headers: await MemberApiAuth.headers());
+      return response.statusCode == 200 ? response.bodyBytes : null;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -28,6 +38,7 @@ class BodyPhotosService {
   }) async {
     try {
       final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+      request.headers.addAll(await MemberApiAuth.headers());
       request.fields['member_id'] = memberId.toString();
 
       final ext = filename.split('.').last.toLowerCase();
@@ -54,7 +65,7 @@ class BodyPhotosService {
 
   static Future<Map<String, dynamic>> deletePhoto(int photoId) async {
     try {
-      final response = await http.delete(Uri.parse("$apiUrl?photo_id=$photoId"));
+      final response = await http.delete(Uri.parse("$apiUrl?photo_id=$photoId"), headers: await MemberApiAuth.headers());
       return jsonDecode(response.body);
     } catch (e) {
       return {"success": false, "message": "Connection error: $e"};

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../screens/user_session.dart';
+import 'member_api_auth.dart';
 
 class ChatbotService {
   static const String _baseUrl = 'https://member-account-backend.onrender.com';
@@ -37,7 +38,7 @@ class ChatbotService {
 
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json; charset=UTF-8'},
+      headers: await MemberApiAuth.headers({'Content-Type': 'application/json; charset=UTF-8'}),
       body: jsonEncode({
         'message': text,
         'history': _history,
@@ -82,6 +83,7 @@ class ChatbotService {
     }
 
     final request = http.MultipartRequest('POST', uri);
+    request.headers.addAll(await MemberApiAuth.headers());
     request.fields['message'] = caption;
     request.fields['member_id'] = activeMemberId.toString();
 

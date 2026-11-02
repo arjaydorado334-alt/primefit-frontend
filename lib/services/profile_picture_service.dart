@@ -8,6 +8,7 @@ import '../config.dart';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'member_api_auth.dart';
 
 class ProfilePictureService {
   static const String apiUrl ="${AppConfig.baseUrl}/upload_profile_picture.php";
@@ -19,6 +20,7 @@ class ProfilePictureService {
   }) async {
     try {
       final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+      request.headers.addAll(await MemberApiAuth.headers());
       request.fields['member_id'] = memberId.toString();
 
       // Determine the correct content type from the file extension so

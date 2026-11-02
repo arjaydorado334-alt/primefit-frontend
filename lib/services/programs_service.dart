@@ -9,13 +9,14 @@ import '../config.dart';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'member_api_auth.dart';
 
 class ProgramsService {
   static const String apiUrl ="${AppConfig.baseUrl}/programs_api.php";
 
   static Future<Map<String, dynamic>> fetchPrograms() async {
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response = await http.get(Uri.parse(apiUrl), headers: await MemberApiAuth.headers());
       return jsonDecode(response.body);
     } catch (e) {
       return {"success": false, "message": "Connection error: $e"};
@@ -50,6 +51,7 @@ class ProgramsService {
   }) async {
     try {
       final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+      request.headers.addAll(await MemberApiAuth.headers());
       request.fields['member_id'] = memberId.toString();
       request.fields['program_name'] = programName;
       request.fields['muscle_group'] = muscleGroup;

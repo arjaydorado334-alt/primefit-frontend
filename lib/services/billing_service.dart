@@ -14,7 +14,7 @@
 import '../config.dart';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
-import '../config.dart';
+import 'member_api_auth.dart';
 
 class BillingService {
   static final Uri _submitReceiptUrl =
@@ -38,6 +38,7 @@ class BillingService {
   }) async {
     try {
       final request = http.MultipartRequest('POST', _submitReceiptUrl);
+      request.headers.addAll(await MemberApiAuth.headers());
       request.fields['member_id'] = memberId.toString();
       request.fields['plan_id'] = planId.toString();
       request.fields['method'] = method;

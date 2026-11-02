@@ -6,6 +6,7 @@
    import 'dart:convert';
 import '../config.dart';
 import 'package:http/http.dart' as http;
+import 'member_api_auth.dart';
 
 class FoodLogsService {
   static const String apiUrl =
@@ -18,7 +19,7 @@ class FoodLogsService {
           ? ""
           : "&date=${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
       final response =
-          await http.get(Uri.parse("$apiUrl?member_id=$memberId$dateParam"));
+          await http.get(Uri.parse("$apiUrl?member_id=$memberId$dateParam"), headers: await MemberApiAuth.headers());
       return jsonDecode(response.body);
     } catch (e) {
       return {"success": false, "message": "Connection error: $e"};
@@ -37,7 +38,7 @@ class FoodLogsService {
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"},
+        headers: await MemberApiAuth.headers({"Content-Type": "application/json"}),
         body: jsonEncode({
           "member_id": memberId,
           "food_name": foodName,
@@ -58,7 +59,7 @@ class FoodLogsService {
       int logId, int memberId) async {
     try {
       final response = await http
-          .delete(Uri.parse("$apiUrl?log_id=$logId&member_id=$memberId"));
+          .delete(Uri.parse("$apiUrl?log_id=$logId&member_id=$memberId"), headers: await MemberApiAuth.headers());
       return jsonDecode(response.body);
     } catch (e) {
       return {"success": false, "message": "Connection error: $e"};

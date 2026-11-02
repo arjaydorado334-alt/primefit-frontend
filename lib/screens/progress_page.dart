@@ -2751,23 +2751,7 @@ class _BodyPhotosTab extends StatelessWidget {
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                                Image.network(
-                                p.url.replaceFirst('http://', 'https://'),
-                                fit: BoxFit.cover,
-                                loadingBuilder: (context, child, progress) {
-                                  if (progress == null) return child;
-                                  return const Center(
-                                      child: CircularProgressIndicator(
-                                          color: _Colors.cyan));
-                                },
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                  color: _Colors.subtleBg,
-                                  alignment: Alignment.center,
-                                  child: Icon(Icons.broken_image_outlined,
-                                      color: _Colors.textMuted, size: 32),
-                                ),
-                              ),
+                                _PrivateProgressPhotoImage(url: p.url),
                               Positioned(
                                 top: 8,
                                 right: 8,
@@ -2833,6 +2817,47 @@ class _BodyPhotosTab extends StatelessWidget {
       ),
     );
   }
+}
+
+class _PrivateProgressPhotoImage extends StatefulWidget {
+  const _PrivateProgressPhotoImage({required this.url});
+  final String url;
+
+  @override
+  State<_PrivateProgressPhotoImage> createState() => _PrivateProgressPhotoImageState();
+}
+
+class _PrivateProgressPhotoImageState extends State<_PrivateProgressPhotoImage> {
+  late Future<Uint8List?> _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _bytes = BodyPhotosService.downloadPhoto(widget.url);
+  }
+
+  @override
+  void didUpdateWidget(covariant _PrivateProgressPhotoImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url) _bytes = BodyPhotosService.downloadPhoto(widget.url);
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<Uint8List?>(
+        future: _bytes,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: _Colors.cyan));
+          }
+          final data = snapshot.data;
+          if (data != null) return Image.memory(data, fit: BoxFit.cover);
+          return Container(
+            color: _Colors.subtleBg,
+            alignment: Alignment.center,
+            child: Icon(Icons.broken_image_outlined, color: _Colors.textMuted, size: 32),
+          );
+        },
+      );
 }
 
 // ---------------------------------------------------------------------------

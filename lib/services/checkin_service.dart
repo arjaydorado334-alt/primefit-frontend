@@ -6,6 +6,7 @@
    import 'dart:convert';
 import '../config.dart';
 import 'package:http/http.dart' as http;
+import 'member_api_auth.dart';
 
 class CheckinService {
   static const String apiUrl ="${AppConfig.baseUrl}/checkin_api.php";
@@ -15,7 +16,7 @@ class CheckinService {
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"},
+        headers: await MemberApiAuth.headers({"Content-Type": "application/json"}),
         body: jsonEncode({"qr_data": qrData}),
       );
       return jsonDecode(response.body);
@@ -31,7 +32,7 @@ class CheckinService {
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"},
+        headers: await MemberApiAuth.headers({"Content-Type": "application/json"}),
         body: jsonEncode({"member_id": memberId}),
       );
       return jsonDecode(response.body);

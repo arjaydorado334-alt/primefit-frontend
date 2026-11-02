@@ -8,13 +8,14 @@
    import 'dart:convert';
 import '../config.dart';
 import 'package:http/http.dart' as http;
+import 'member_api_auth.dart';
 
 class SessionStatusService {
   static const String apiUrl ="${AppConfig.baseUrl}/session_status_api.php";
 
   static Future<Map<String, dynamic>> fetchStatus(int memberId) async {
     try {
-      final response = await http.get(Uri.parse("$apiUrl?member_id=$memberId"))
+      final response = await http.get(Uri.parse("$apiUrl?member_id=$memberId"), headers: await MemberApiAuth.headers())
           .timeout(const Duration(seconds: 8));
       return jsonDecode(response.body);
     } catch (e) {
