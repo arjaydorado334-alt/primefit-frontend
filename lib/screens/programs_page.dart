@@ -536,8 +536,13 @@ class _WorkoutProgramsScreenState extends State<WorkoutProgramsScreen> {
                                   child: DropdownButton<String>(
                                     value: level,
                                     isExpanded: true,
+                                    dropdownColor: _Colors.surface,
+                                    style: TextStyle(color: _Colors.textPrimary, fontSize: 14),
                                     items: const ['Beginner', 'Intermediate', 'Advanced']
-                                        .map((l) => DropdownMenuItem(value: l, child: Text(l)))
+                                        .map((l) => DropdownMenuItem(
+                                              value: l,
+                                              child: Text(l, style: TextStyle(color: _Colors.textPrimary)),
+                                            ))
                                         .toList(),
                                     onChanged: (v) => setDialogState(() => level = v ?? level),
                                   ),
