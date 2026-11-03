@@ -18,6 +18,7 @@ import '../data/membership_plans.dart';
 import '../screens/user_session.dart';
 import '../services/billing_service.dart';
 import '../services/payment_history_service.dart';
+import '../services/member_session_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/portal_hero.dart';
 import '../widgets/status_alert_banner.dart';
@@ -161,7 +162,13 @@ class _MembershipPageState extends State<MembershipPage> {
     super.initState();
     today = DateTime.now();
     _loadFromSession();
+    _refreshMembershipFromServer();
     _loadPaymentHistory();
+  }
+
+  Future<void> _refreshMembershipFromServer() async {
+    await MemberSessionService.restore();
+    if (mounted) _loadFromSession();
   }
 
   Future<void> _loadPaymentHistory() async {
@@ -979,6 +986,14 @@ class _PayAndUploadDialogState extends State<_PayAndUploadDialog> {
       if (picked == null) return;
       final bytes = await picked.readAsBytes();
       if (!mounted) return;
+      if (bytes.length > 10 * 1024 * 1024) {
+        setState(() {
+          _receiptBytes = null;
+          _receiptName = null;
+          _errorMessage = 'Receipt image must be under 10 MB. Please choose a smaller image.';
+        });
+        return;
+      }
       setState(() {
         _receiptBytes = bytes;
         _receiptName = picked.name;
